@@ -65,3 +65,64 @@ export function isSoft(hand: Card[]): boolean {
   while (total > 21 && softAces > 0) { total -= 10; softAces-- }
   return softAces > 0
 }
+
+export function canDouble(hand: Card[], isPostSplit: boolean, rules: TableRules): boolean {
+  if (hand.length !== 2) return false
+  if (isPostSplit && !rules.doubleAfterSplit) return false
+  return true
+}
+
+export function canSplit(hand: Card[]): boolean {
+  if (hand.length !== 2) return false
+  const val = (v: Value) => (['J','Q','K','10'].includes(v) ? '10' : v)
+  return val(hand[0].value) === val(hand[1].value)
+}
+
+export function canResplitAces(hand: Card[], rules: TableRules): boolean {
+  return rules.resplitAces && canSplit(hand) && hand[0].value === 'A'
+}
+
+export function canSurrender(hand: Card[], rules: TableRules): boolean {
+  if (rules.surrender === 'none') return false
+  return hand.length === 2
+}
+
+export function shouldDealerHit(dealerHand: Card[], rules: TableRules): boolean {
+  const score = scoreHand(dealerHand)
+  if (score < 17) return true
+  if (score === 17 && isSoft(dealerHand) && rules.dealerSoft17 === 'H17') return true
+  return false
+}
+
+function isBlackjack(hand: Card[]): boolean {
+  return hand.length === 2 && scoreHand(hand) === 21
+}
+
+export function resolveHand(
+  playerHand: Card[],
+  dealerHand: Card[],
+  bet: number,
+  rules: TableRules
+): { outcome: Outcome; delta: number } {
+  const playerScore = scoreHand(playerHand)
+  const dealerScore = scoreHand(dealerHand)
+
+  if (playerScore > 21) return { outcome: 'bust', delta: -bet }
+
+  if (isBlackjack(playerHand) && !isBlackjack(dealerHand)) {
+    const multiplier = rules.payoutMode === '3:2' ? 1.5 : 1.2
+    return { outcome: 'blackjack', delta: Math.floor(bet * multiplier) }
+  }
+
+  if (isBlackjack(dealerHand) && !isBlackjack(playerHand)) {
+    return { outcome: 'lose', delta: -bet }
+  }
+
+  if (playerScore > dealerScore || dealerScore > 21) return { outcome: 'win', delta: bet }
+  if (playerScore === dealerScore) return { outcome: 'push', delta: 0 }
+  return { outcome: 'lose', delta: -bet }
+}
+
+export function needsReshuffle(deck: Card[], deckCount: number): boolean {
+  return deck.length < deckCount * 52 * 0.25
+}
