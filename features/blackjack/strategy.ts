@@ -23,7 +23,7 @@ function getSurrenderAction(score: number, dk: DealerKey, rules: TableRules): Ac
 }
 
 // Pairs split table
-function getSplitAction(hand: Card[], dk: DealerKey, rules: TableRules): Action | null {
+function getSplitAction(hand: Card[], dk: DealerKey): Action | null {
   if (!canSplit(hand)) return null
   const v = hand[0].value
   if (v === 'A') return 'split'
@@ -86,7 +86,7 @@ export function getOptimalAction(
   const surrender = getSurrenderAction(score, dk, rules)
   if (surrender) return surrender
 
-  const split = getSplitAction(playerHand, dk, rules)
+  const split = getSplitAction(playerHand, dk)
   if (split) return split
 
   if (soft) return getSoftAction(score, dk, rules)
