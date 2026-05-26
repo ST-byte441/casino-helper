@@ -190,6 +190,18 @@ describe('resolveHand', () => {
     expect(result.outcome).toBe('lose')
     expect(result.delta).toBe(-50)
   })
+
+  test('both blackjack is a push', () => {
+    const result = resolveHand([card('A'), card('K')], [card('A'), card('Q')], 50, rules)
+    expect(result.outcome).toBe('push')
+    expect(result.delta).toBe(0)
+  })
+
+  test('player wins when dealer busts', () => {
+    const result = resolveHand([card('K'), card('8')], [card('K'), card('7'), card('9')], 50, rules)
+    expect(result.outcome).toBe('win')
+    expect(result.delta).toBe(50)
+  })
 })
 
 describe('needsReshuffle', () => {

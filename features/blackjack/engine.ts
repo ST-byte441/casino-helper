@@ -82,6 +82,8 @@ export function canResplitAces(hand: Card[], rules: TableRules): boolean {
   return rules.resplitAces && canSplit(hand) && hand[0].value === 'A'
 }
 
+// Both 'late' and 'early' are treated identically here (allowed on first 2 cards).
+// The distinction (early = before dealer peek) is enforced by the UI phase, not this function.
 export function canSurrender(hand: Card[], rules: TableRules): boolean {
   if (rules.surrender === 'none') return false
   return hand.length === 2
@@ -111,6 +113,7 @@ export function resolveHand(
 
   if (isBlackjack(playerHand) && !isBlackjack(dealerHand)) {
     const multiplier = rules.payoutMode === '3:2' ? 1.5 : 1.2
+    // Math.floor: all supported chip denominations (15/25/50) produce whole-number payouts.
     return { outcome: 'blackjack', delta: Math.floor(bet * multiplier) }
   }
 
