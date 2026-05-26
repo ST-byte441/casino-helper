@@ -1,4 +1,4 @@
-import { Card, Suit, Value, TableRules, Outcome } from '../../lib/types'
+import { Card, Value, TableRules, Outcome } from '../../lib/types'
 import { SUITS, VALUES } from '../../lib/constants'
 
 export function createDeck(deckCount: number): Card[] {
@@ -51,6 +51,7 @@ export function scoreHand(hand: Card[]): number {
   return total
 }
 
+// "Soft" means at least one Ace is counted as 11 (standard blackjack definition used for strategy lookups).
 export function isSoft(hand: Card[]): boolean {
   const hasAce = hand.some(c => c.value === 'A')
   if (!hasAce) return false
