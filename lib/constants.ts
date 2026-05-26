@@ -15,4 +15,4 @@ export const DEFAULT_TABLE_RULES: TableRules = {
   deckCount: 6,
 }
 
-export const RED_SUITS = ['♥', '♦'] as const
+export const RED_SUITS: readonly string[] = ['♥', '♦']

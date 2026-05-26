@@ -26,7 +26,7 @@ export const useProfileStore = create<ProfileStore>()(
           balance: startingChips,
           createdAt: Date.now(),
         }
-        set(state => ({ profiles: [...state.profiles, profile] }))
+        set(state => ({ profiles: [...state.profiles, profile], activeProfileId: profile.id }))
       },
 
       setActiveProfile: (id) => set({ activeProfileId: id }),

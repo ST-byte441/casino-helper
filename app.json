@@ -1,8 +1,9 @@
 {
   "expo": {
-    "name": "UntitledMobile",
-    "slug": "untitled-mobile",
+    "name": "Casino Helper",
+    "slug": "casino-helper",
     "version": "1.0.0",
+    "runtimeVersion": "1.0.0",
     "scheme": "untitledmobile",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -11,6 +12,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.stbyte441.casinohelper",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -25,7 +27,14 @@
     },
     "plugins": [
       "expo-router",
-      "expo-status-bar"
-    ]
+      "expo-status-bar",
+      "expo-updates"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "79f48262-8643-40b5-824f-817d00206453"
+      }
+    }
   }
 }

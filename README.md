@@ -1,0 +1,84 @@
+# Casino Table Games — Mobile Practice App
+
+A React Native mobile app for practicing and learning common casino table games. Each game includes an optional **basic strategy assist** that highlights the statistically optimal action so you can study while you play.
+
+## Download (Android)
+
+Get the latest APK from the [Releases page](../../releases/latest).
+
+> Tap the `.apk` file on your Android device. If prompted, allow installation from unknown sources in your device settings.
+
+## Features
+
+- **Multiple player profiles** — create profiles with a real bankroll or infinite chips for pure practice
+- **Configurable Vegas table rules** — payout (3:2 / 6:5), dealer soft 17 (H17/S17), double after split, re-split aces, surrender mode, and deck count
+- **Basic strategy assist** — toggle a gold highlight on the optimal action button at any time
+- **Chip denominations** — $15 / $25 / $50 (standard Vegas table minimums)
+
+## Games
+
+| Game | Status |
+|---|---|
+| Blackjack | Playable |
+| Roulette | Coming soon |
+| Poker | Coming soon |
+
+## Tech Stack
+
+| Layer | Library |
+|---|---|
+| Framework | Expo (Managed, SDK 56) |
+| Language | TypeScript |
+| Navigation | Expo Router |
+| State | Zustand + AsyncStorage |
+| Testing | Jest + React Native Testing Library |
+
+## Getting Started
+
+```bash
+npm install
+npx expo start
+npx expo start --tunnel (for WSL users)
+```
+
+Scan the QR code with the **Expo Go** app (iOS/Android) or press `i`/`a` to open in a simulator.
+
+## Running Tests
+
+```bash
+npx jest          # full suite
+npx jest <path>   # single file
+npx tsc --noEmit  # type check only
+```
+
+74 tests cover the game engine, strategy lookup, and profile store.
+
+## Project Structure
+
+```
+app/
+  (tabs)/         # Tab bar screens
+    index.tsx     # Game lobby
+    profile.tsx   # Profile switcher
+  blackjack/
+    index.tsx     # Blackjack table screen
+features/
+  blackjack/
+    engine.ts     # Pure TS: deck, scoring, rule checks, hand resolution
+    strategy.ts   # Pure TS: basic strategy lookup table
+    store.ts      # Session Zustand store
+    components/   # UI components (Card, Hand, ActionButtons, BetControls, TableSetup)
+  profile/
+    store.ts      # Persisted Zustand store (AsyncStorage)
+    components/   # ProfileCard, ProfileList, CreateProfileModal
+lib/
+  types.ts        # Shared types
+  constants.ts    # Suits, values, chip denominations, default table rules
+__tests__/        # Mirrors the feature folder structure
+```
+
+## Adding a New Game
+
+1. Create `features/<game>/` with `engine.ts`, `strategy.ts`, `store.ts`, and `components/`
+2. Add a route at `app/<game>/index.tsx`
+3. Add a tile in `app/(tabs)/index.tsx`

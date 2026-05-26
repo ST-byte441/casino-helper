@@ -33,3 +33,11 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# claude
+.claude/
+CLAUDE.md
+docs/superpowers/
+
+# test coverage
+coverage/

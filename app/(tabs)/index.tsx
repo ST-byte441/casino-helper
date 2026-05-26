@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, SafeAreaView } from 'react-native'
+import { View, Text, TouchableOpacity, FlatList, StyleSheet } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useProfileStore } from '../../features/profile/store'
 
@@ -20,12 +21,11 @@ export default function LobbyScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.profileName}>{active?.name ?? 'No profile'}</Text>
-        <Text style={styles.balance}>{balance}</Text>
+        {active && <Text style={styles.balance}>{balance}</Text>}
       </View>
       <FlatList
         data={GAMES}
         keyExtractor={g => g.id}
-        numColumns={2}
         contentContainerStyle={styles.grid}
         renderItem={({ item }) => (
           <TouchableOpacity
@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
   profileName: { color: '#fff', fontSize: 16, fontWeight: '600' },
   balance: { color: '#FFD700', fontSize: 16, fontWeight: '700' },
   grid: { padding: 12 },
-  gameCard: { flex: 1, margin: 8, aspectRatio: 1, backgroundColor: '#1e1e2e',
+  gameCard: { marginHorizontal: 12, marginVertical: 6, height: 80, backgroundColor: '#1e1e2e',
     borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
   disabled: { opacity: 0.4 },
   gameLabel: { color: '#fff', fontSize: 18, fontWeight: '700' },

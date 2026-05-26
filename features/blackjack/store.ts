@@ -68,7 +68,7 @@ function runDealer(deck: Card[], dealerHand: Card[], tableRules: TableRules): { 
   while (shouldDealerHit(hand, tableRules)) {
     let card: Card
     ;[card, d] = dealCard(d)
-    hand = [...hand, card]
+    hand = [...hand, { ...card, faceDown: false }]
   }
   return { deck: d, dealerHand: hand }
 }
