@@ -1,7 +1,7 @@
-import { Suit, Value, TableRules } from './types'
+import { TableRules } from './types'
 
-export const SUITS: Suit[] = ['♠', '♥', '♦', '♣']
-export const VALUES: Value[] = ['A','2','3','4','5','6','7','8','9','10','J','Q','K']
+export const SUITS = ['♠', '♥', '♦', '♣'] as const
+export const VALUES = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'] as const
 
 export const CHIP_DENOMINATIONS = [15, 25, 50] as const
 export const TABLE_MINIMUM = 15
@@ -15,4 +15,4 @@ export const DEFAULT_TABLE_RULES: TableRules = {
   deckCount: 6,
 }
 
-export const RED_SUITS: Suit[] = ['♥', '♦']
+export const RED_SUITS = ['♥', '♦'] as const
