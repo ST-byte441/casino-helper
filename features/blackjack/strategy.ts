@@ -39,12 +39,16 @@ function getSplitAction(hand: Card[], dk: DealerKey, rules: TableRules): Action 
 }
 
 // Soft totals (hand with Ace counted as 11)
-function getSoftAction(score: number, dk: DealerKey): Action {
-  // score is 13–18 (A-2 through A-7); 19+ always stand
-  if (score >= 19) return 'stand'
+function getSoftAction(score: number, dk: DealerKey, rules: TableRules): Action {
+  if (score >= 20) return 'stand'
+  if (score === 19) return dk === 6 ? 'double' : 'stand'  // A-8: double vs 6
   if (score === 18) {
-    if (dk >= 2 && dk <= 6) return 'double'
+    // H17: double vs 2-6; S17: double vs 3-6 (stand vs 2)
+    const doubleMin = rules.dealerSoft17 === 'H17' ? 2 : 3
+    if (dk >= doubleMin && dk <= 6) return 'double'
     if (dk === 7 || dk === 8) return 'stand'
+    // S17: dk===2 falls here — stand instead of hit
+    if (rules.dealerSoft17 === 'S17' && dk === 2) return 'stand'
     return 'hit'
   }
   if (score === 17) return dk >= 3 && dk <= 6 ? 'double' : 'hit'
@@ -73,12 +77,18 @@ export function getOptimalAction(
   const score = scoreHand(playerHand)
   const soft = isSoft(playerHand)
 
+  // Always-split pairs take priority over surrender
+  if (canSplit(playerHand)) {
+    const v = playerHand[0].value
+    if (v === 'A' || v === '8') return 'split'
+  }
+
   const surrender = getSurrenderAction(score, dk, rules)
   if (surrender) return surrender
 
   const split = getSplitAction(playerHand, dk, rules)
   if (split) return split
 
-  if (soft) return getSoftAction(score, dk)
+  if (soft) return getSoftAction(score, dk, rules)
   return getHardAction(score, dk)
 }
