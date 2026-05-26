@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { Card, Action, Outcome, Phase, TableRules } from '../../lib/types'
 import { DEFAULT_TABLE_RULES } from '../../lib/constants'
-import { createDeck, dealCard, needsReshuffle, resolveHand, shouldDealerHit } from './engine'
+import { canSplit, canSurrender, createDeck, dealCard, needsReshuffle, resolveHand, scoreHand, shouldDealerHit } from './engine'
 import { getOptimalAction } from './strategy'
 import { useProfileStore } from '../profile/store'
 
@@ -94,6 +94,8 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
   clearBet: () => set({ bet: 0 }),
 
   deal: () => {
+    const { bet } = get()
+    if (bet <= 0) return
     let { deck, tableRules } = get()
     if (needsReshuffle(deck, tableRules.deckCount)) deck = createDeck(tableRules.deckCount)
 
@@ -109,6 +111,12 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
     const suggestedAction = computeSuggestion(playerHands, 0, dealerHand, assistEnabled, tableRules)
 
     set({ deck, playerHands, dealerHand, activeHandIndex: 0, phase: 'playing', suggestedAction })
+
+    // Check for natural blackjack — resolve immediately
+    const playerScore = scoreHand(playerHands[0])
+    if (playerScore === 21 && playerHands[0].length === 2) {
+      get().stand()
+    }
   },
 
   hit: () => {
@@ -116,8 +124,15 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
     let card: Card
     ;[card, deck] = dealCard(deck)
     const newHands = playerHands.map((h, i) => i === activeHandIndex ? [...h, card] : h)
-    const suggestedAction = computeSuggestion(newHands, activeHandIndex, dealerHand, assistEnabled, tableRules)
+    const newScore = scoreHand(newHands[activeHandIndex])
+    const suggestedAction = newScore <= 21
+      ? computeSuggestion(newHands, activeHandIndex, dealerHand, assistEnabled, tableRules)
+      : null
     set({ deck, playerHands: newHands, suggestedAction })
+    // If busted, advance to next hand or run dealer (same logic as stand)
+    if (newScore > 21) {
+      get().stand()
+    }
   },
 
   stand: () => {
@@ -133,13 +148,12 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
     let { deck, dealerHand, bet, tableRules } = get()
     const { deck: newDeck, dealerHand: newDealerHand } = runDealer(deck, dealerHand, tableRules)
 
-    let totalDelta = 0
-    let lastOutcome: Outcome = 'lose'
-    for (const hand of playerHands) {
-      const { outcome, delta } = resolveHand(hand, newDealerHand, bet, tableRules)
-      totalDelta += delta
-      lastOutcome = outcome
-    }
+    const outcomes: Array<{ outcome: Outcome; delta: number }> = playerHands.map(h =>
+      resolveHand(h, newDealerHand, bet, tableRules)
+    )
+    const totalDelta = outcomes.reduce((sum, r) => sum + r.delta, 0)
+    const priority: Outcome[] = ['blackjack', 'win', 'push', 'lose', 'bust']
+    const lastOutcome = priority.find(p => outcomes.some(r => r.outcome === p)) ?? 'lose'
 
     useProfileStore.getState().updateBalance(totalDelta)
     set({ deck: newDeck, dealerHand: newDealerHand, phase: 'result', lastOutcome, lastDelta: totalDelta })
@@ -156,8 +170,11 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
   },
 
   split: () => {
-    let { deck, playerHands, activeHandIndex } = get()
+    const { phase, playerHands, activeHandIndex } = get()
+    if (phase !== 'playing') return
     const hand = playerHands[activeHandIndex]
+    if (!canSplit(hand)) return
+    let { deck } = get()
     let c1: Card, c2: Card
     ;[c1, deck] = dealCard(deck)
     ;[c2, deck] = dealCard(deck)
@@ -175,6 +192,10 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
   },
 
   surrender: () => {
+    const { phase, playerHands, activeHandIndex, tableRules } = get()
+    if (phase !== 'playing') return
+    const hand = playerHands[activeHandIndex]
+    if (!canSurrender(hand, tableRules)) return
     const { bet } = get()
     const delta = -Math.floor(bet / 2)
     useProfileStore.getState().updateBalance(delta)

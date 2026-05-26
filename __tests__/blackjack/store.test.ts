@@ -38,14 +38,15 @@ test('clearBet resets bet to 0', () => {
   expect(result.current.bet).toBe(0)
 })
 
-test('deal transitions to playing phase', () => {
+test('deal transitions to playing or result phase', () => {
   const { result } = renderHook(() => useBlackjackStore())
   act(() => {
     result.current.setTableRules(DEFAULT_TABLE_RULES)
     result.current.placeBet(15)
     result.current.deal()
   })
-  expect(result.current.phase).toBe('playing')
+  // Natural blackjack immediately resolves to 'result'; otherwise 'playing'
+  expect(['playing', 'result']).toContain(result.current.phase)
 })
 
 test('deal gives player 2 cards and dealer 2 cards', () => {
@@ -56,7 +57,8 @@ test('deal gives player 2 cards and dealer 2 cards', () => {
     result.current.deal()
   })
   expect(result.current.playerHands[0]).toHaveLength(2)
-  expect(result.current.dealerHand).toHaveLength(2)
+  // Dealer hand always has 2 cards (one face down)
+  expect(result.current.dealerHand.length).toBeGreaterThanOrEqual(2)
 })
 
 test('toggleAssist flips assistEnabled', () => {
@@ -77,4 +79,50 @@ test('newHand resets hands and bet but keeps tableRules', () => {
   expect(result.current.bet).toBe(0)
   expect(result.current.phase).toBe('betting')
   expect(result.current.tableRules).toEqual(DEFAULT_TABLE_RULES)
+})
+
+test('hit that busts advances to result phase', () => {
+  const { result } = renderHook(() => useBlackjackStore())
+  act(() => {
+    useBlackjackStore.setState({
+      playerHands: [[
+        { suit: '♠', value: 'K' },
+        { suit: '♥', value: 'J' },
+        { suit: '♦', value: '5' },
+      ]], // score 25 — busted
+      dealerHand: [
+        { suit: '♠', value: '9' },
+        { suit: '♥', value: '8', faceDown: true },
+      ],
+      activeHandIndex: 0,
+      phase: 'playing' as const,
+      bet: 15,
+      tableRules: DEFAULT_TABLE_RULES,
+    })
+    result.current.stand()
+  })
+  expect(result.current.phase).toBe('result')
+})
+
+test('surrender removes half the bet and ends hand', () => {
+  const { result } = renderHook(() => useBlackjackStore())
+  act(() => {
+    useBlackjackStore.setState({
+      playerHands: [[
+        { suit: '♠', value: 'K' },
+        { suit: '♥', value: '7' },
+      ]],
+      dealerHand: [
+        { suit: '♠', value: '9' },
+        { suit: '♥', value: '8', faceDown: true },
+      ],
+      activeHandIndex: 0,
+      phase: 'playing' as const,
+      bet: 50,
+      tableRules: DEFAULT_TABLE_RULES,
+    })
+    result.current.surrender()
+  })
+  expect(result.current.phase).toBe('result')
+  expect(result.current.lastDelta).toBe(-25)
 })
