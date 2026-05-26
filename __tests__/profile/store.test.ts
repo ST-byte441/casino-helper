@@ -65,3 +65,29 @@ test('deleteProfile removes the profile', () => {
   act(() => result.current.deleteProfile(id))
   expect(result.current.profiles).toHaveLength(0)
 })
+
+test('deleteProfile clears activeProfileId when active profile is deleted', () => {
+  const { result } = renderHook(() => useProfileStore())
+  act(() => result.current.addProfile('Frank', 500, 'finite'))
+  const id = result.current.profiles[0].id
+  act(() => result.current.setActiveProfile(id))
+  act(() => result.current.deleteProfile(id))
+  expect(result.current.activeProfileId).toBeNull()
+})
+
+test('updateBalance floors balance at zero, never goes negative', () => {
+  const { result } = renderHook(() => useProfileStore())
+  act(() => result.current.addProfile('Grace', 100, 'finite'))
+  const id = result.current.profiles[0].id
+  act(() => result.current.setActiveProfile(id))
+  act(() => result.current.updateBalance(-500))
+  expect(result.current.profiles[0].balance).toBe(0)
+})
+
+test('updateBalance is a no-op when no active profile is set', () => {
+  const { result } = renderHook(() => useProfileStore())
+  act(() => result.current.addProfile('Hal', 300, 'finite'))
+  // No setActiveProfile called — activeProfileId remains null
+  act(() => result.current.updateBalance(100))
+  expect(result.current.profiles[0].balance).toBe(300)
+})

@@ -20,7 +20,7 @@ export const useProfileStore = create<ProfileStore>()(
 
       addProfile: (name, startingChips, mode) => {
         const profile: Profile = {
-          id: Math.random().toString(36).slice(2),
+          id: Date.now().toString(36) + Math.random().toString(36).slice(2),
           name,
           bankrollMode: mode,
           balance: startingChips,
@@ -37,13 +37,18 @@ export const useProfileStore = create<ProfileStore>()(
         if (!profile || profile.bankrollMode === 'infinite') return
         set({
           profiles: profiles.map(p =>
-            p.id === activeProfileId ? { ...p, balance: p.balance + delta } : p
+            p.id === activeProfileId
+              ? { ...p, balance: Math.max(0, p.balance + delta) }
+              : p
           ),
         })
       },
 
       deleteProfile: (id) =>
-        set(state => ({ profiles: state.profiles.filter(p => p.id !== id) })),
+        set(state => ({
+          profiles: state.profiles.filter(p => p.id !== id),
+          activeProfileId: state.activeProfileId === id ? null : state.activeProfileId,
+        })),
     }),
     {
       name: 'profile-store',
