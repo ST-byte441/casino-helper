@@ -108,6 +108,7 @@ test('hit that busts advances to result phase', () => {
       tableRules: DEFAULT_TABLE_RULES,
     })
     result.current.stand()
+    jest.runAllTimers()
   })
   expect(result.current.phase).toBe('result')
 })

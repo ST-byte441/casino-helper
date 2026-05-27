@@ -159,19 +159,29 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
       set({ activeHandIndex: next, suggestedAction })
       return
     }
-    // All hands done — run dealer
+    // All hands done — run dealer (pre-compute full hand, reveal cards one at a time)
     let { deck, dealerHand, bet, tableRules } = get()
-    const { deck: newDeck, dealerHand: newDealerHand } = runDealer(deck, dealerHand, tableRules)
+    const { deck: newDeck, dealerHand: fullDealerHand } = runDealer(deck, dealerHand, tableRules)
 
     const outcomes: Array<{ outcome: Outcome; delta: number }> = playerHands.map(h =>
-      resolveHand(h, newDealerHand, bet, tableRules)
+      resolveHand(h, fullDealerHand, bet, tableRules)
     )
     const totalDelta = outcomes.reduce((sum, r) => sum + r.delta, 0)
     const priority: Outcome[] = ['blackjack', 'win', 'push', 'lose', 'bust']
     const lastOutcome = priority.find(p => outcomes.some(r => r.outcome === p)) ?? 'lose'
 
-    useProfileStore.getState().updateBalance(totalDelta)
-    set({ deck: newDeck, dealerHand: newDealerHand, phase: 'result', lastOutcome, lastDelta: totalDelta })
+    cancelPendingSteps()
+    set({ deck: newDeck, phase: 'dealing' })
+
+    const D = DEAL_DELAY
+    for (let i = 2; i <= fullDealerHand.length; i++) {
+      const cards = fullDealerHand.slice(0, i)
+      scheduleStep(() => set({ dealerHand: cards }), D * (i - 1))
+    }
+    scheduleStep(() => {
+      useProfileStore.getState().updateBalance(totalDelta)
+      set({ phase: 'result', lastOutcome, lastDelta: totalDelta })
+    }, D * fullDealerHand.length)
   },
 
   doubleDown: () => {
