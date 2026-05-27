@@ -14,7 +14,7 @@ export default function RootLayout() {
 
   return (
     <>
-      <Stack>
+      <Stack screenOptions={{ contentStyle: { backgroundColor: '#13131f' } }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="blackjack/index" options={{ headerShown: false }} />
       </Stack>
