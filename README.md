@@ -11,7 +11,7 @@ Get the latest APK from the [Releases page](../../releases/latest).
 ## Features
 
 - **Multiple player profiles** — create profiles with a real bankroll or infinite chips for pure practice
-- **Configurable Vegas table rules** — payout (3:2 / 6:5), dealer soft 17 (H17/S17), double after split, re-split aces, surrender mode, and deck count
+- **Configurable Vegas table rules** — payout (3:2 / 6:5), dealer soft 17 (H17/S17), double after split, re-split aces, surrender mode, deck count, and continuous shuffle (CSM)
 - **Basic strategy assist** — toggle a gold highlight on the optimal action button at any time
 - **Chip denominations** — $15 / $25 / $50 (standard Vegas table minimums)
 - **In-app update notifications** — prompted to download a newer version on launch if one is available
