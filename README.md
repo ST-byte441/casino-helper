@@ -14,6 +14,7 @@ Get the latest APK from the [Releases page](../../releases/latest).
 - **Configurable Vegas table rules** — payout (3:2 / 6:5), dealer soft 17 (H17/S17), double after split, re-split aces, surrender mode, and deck count
 - **Basic strategy assist** — toggle a gold highlight on the optimal action button at any time
 - **Chip denominations** — $15 / $25 / $50 (standard Vegas table minimums)
+- **In-app update notifications** — prompted to download a newer version on launch if one is available
 
 ## Games
 
@@ -51,7 +52,7 @@ npx jest <path>   # single file
 npx tsc --noEmit  # type check only
 ```
 
-74 tests cover the game engine, strategy lookup, and profile store.
+84 tests cover the game engine, strategy lookup, profile store, and update utility.
 
 ## Project Structure
 
@@ -74,6 +75,9 @@ features/
 lib/
   types.ts        # Shared types
   constants.ts    # Suits, values, chip denominations, default table rules
+  updates.ts      # GitHub release version check utility
+components/
+  UpdateModal.tsx # In-app update prompt modal
 __tests__/        # Mirrors the feature folder structure
 ```
 
@@ -82,3 +86,27 @@ __tests__/        # Mirrors the feature folder structure
 1. Create `features/<game>/` with `engine.ts`, `strategy.ts`, `store.ts`, and `components/`
 2. Add a route at `app/<game>/index.tsx`
 3. Add a tile in `app/(tabs)/index.tsx`
+
+## Publishing a Release
+
+Releases are built via [EAS Build](https://docs.expo.dev/build/introduction/) and attached to GitHub Releases as a downloadable APK.
+
+**First-time setup:** `npm install -g eas-cli && eas login`
+
+### Steps
+
+1. Bump `"version"` in `app.json` (e.g. `1.0.0` → `1.0.1`)
+2. Commit the version bump
+3. Build the APK:
+   ```bash
+   eas build --platform android --profile preview
+   ```
+4. Download the `.apk` from the link EAS prints when the build finishes (~10–20 min)
+5. Create a GitHub release and attach the APK:
+   ```bash
+   gh release create v1.0.1 ./casino-helper-*.apk \
+     --title "Casino Helper v1.0.1" \
+     --notes "Describe what changed"
+   ```
+
+Each release gets its own version tag. The Releases page always shows the latest at the top.
