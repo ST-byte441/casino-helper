@@ -103,6 +103,8 @@ eas update --channel preview --message "describe what changed"
 
 Users get the update silently on their next app launch. Takes ~1 minute.
 
+> **Note:** The update is only delivered to APKs whose `runtimeVersion` matches the value in `app.json` at build time. If you bumped `runtimeVersion`, users need a new APK — use the Full APK rebuild flow below.
+
 ### Native changes (new permissions, new native packages) — Full APK rebuild
 
 Required when bumping `runtimeVersion` in `app.json`.
@@ -116,8 +118,8 @@ Required when bumping `runtimeVersion` in `app.json`.
 4. Download the `.apk` from the link EAS prints when the build finishes (~10–20 min)
 5. Create a GitHub release and attach the APK:
    ```bash
-   gh release create v1.0.2 ./casino-helper-*.apk \
-     --title "Casino Helper v1.0.2" \
+   gh release create v<version> ./casino-helper-*.apk \
+     --title "Casino Helper v<version>" \
      --notes "Describe what changed"
    ```
 
