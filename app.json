@@ -2,8 +2,13 @@
   "expo": {
     "name": "Casino Helper",
     "slug": "casino-helper",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "runtimeVersion": "1.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/79f48262-8643-40b5-824f-817d00206453",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
     "scheme": "untitledmobile",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
