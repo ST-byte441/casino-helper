@@ -2,6 +2,7 @@ import { checkForUpdate, isNewerVersion } from '../../lib/updates'
 
 // Mock expo-constants so we control the "current" version in tests
 jest.mock('expo-constants', () => ({
+  __esModule: true,
   default: { expoConfig: { version: '1.0.0' } },
 }))
 

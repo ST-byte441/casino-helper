@@ -24,9 +24,7 @@ export async function checkForUpdate(): Promise<UpdateInfo | null> {
     const data = await res.json()
     if (!data.tag_name) return null
     const latestVersion = (data.tag_name as string).replace(/^v/, '')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const config = Constants.expoConfig ?? (Constants as any).default?.expoConfig
-    const currentVersion = config?.version ?? '0.0.0'
+    const currentVersion = Constants.expoConfig?.version ?? '0.0.0'
     return {
       hasUpdate: isNewerVersion(latestVersion, currentVersion),
       latestVersion,
