@@ -23,4 +23,5 @@ export type TableRules = {
   resplitAces: boolean
   surrender: SurrenderMode
   deckCount: DeckCount
+  continuousShuffle: boolean
 }

@@ -35,7 +35,7 @@ export default function BlackjackScreen() {
 
   const rulePill = [
     rules.dealerSoft17,
-    `${rules.deckCount}D`,
+    rules.continuousShuffle ? 'CSM' : `${rules.deckCount}D`,
     rules.payoutMode,
     rules.surrender === 'none' ? 'No Sur' : rules.surrender === 'late' ? 'LS' : 'ES',
   ].join(' · ')

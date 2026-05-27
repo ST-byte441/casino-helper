@@ -13,6 +13,7 @@ export const DEFAULT_TABLE_RULES: TableRules = {
   resplitAces: false,
   surrender: 'late',
   deckCount: 6,
+  continuousShuffle: false,
 }
 
 export const RED_SUITS: readonly string[] = ['♥', '♦']

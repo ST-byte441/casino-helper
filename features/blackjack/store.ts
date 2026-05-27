@@ -97,7 +97,7 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
     const { bet } = get()
     if (bet <= 0) return
     let { deck, tableRules } = get()
-    if (needsReshuffle(deck, tableRules.deckCount)) deck = createDeck(tableRules.deckCount)
+    if (tableRules.continuousShuffle || needsReshuffle(deck, tableRules.deckCount)) deck = createDeck(tableRules.deckCount)
 
     let c1: Card, c2: Card, c3: Card, c4: Card
     ;[c1, deck] = dealCard(deck)

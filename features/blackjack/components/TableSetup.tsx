@@ -77,6 +77,11 @@ export function TableSetup({ onStart }: Props) {
           options={[{ label: '1', value: 1 }, { label: '2', value: 2 }, { label: '6', value: 6 }, { label: '8', value: 8 }]}
           value={rules.deckCount} onChange={v => set('deckCount', v)}
         />
+        <RuleRow<boolean>
+          label="Continuous Shuffle" note="Cards reshuffled each hand — eliminates card counting"
+          options={[{ label: 'On', value: true }, { label: 'Off', value: false }]}
+          value={rules.continuousShuffle} onChange={v => set('continuousShuffle', v)}
+        />
       </ScrollView>
       <TouchableOpacity style={styles.playBtn} onPress={() => onStart(rules)}>
         <Text style={styles.playBtnText}>Play</Text>
