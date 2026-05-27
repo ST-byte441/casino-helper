@@ -1,4 +1,14 @@
 import { create } from 'zustand'
+
+const DEAL_DELAY = 350
+let pendingStepIds: ReturnType<typeof setTimeout>[] = []
+function scheduleStep(fn: () => void, ms: number) {
+  pendingStepIds.push(setTimeout(fn, ms))
+}
+function cancelPendingSteps() {
+  pendingStepIds.forEach(clearTimeout)
+  pendingStepIds = []
+}
 import { Card, Action, Outcome, Phase, TableRules } from '../../lib/types'
 import { DEFAULT_TABLE_RULES } from '../../lib/constants'
 import { canSplit, canSurrender, createDeck, dealCard, needsReshuffle, resolveHand, scoreHand, shouldDealerHit } from './engine'
@@ -105,18 +115,23 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
     ;[c3, deck] = dealCard(deck)
     ;[c4, deck] = dealCard(deck)
 
-    const playerHands = [[c1, c3]]
-    const dealerHand = [c2, { ...c4, faceDown: true }]
-    const { assistEnabled } = get()
-    const suggestedAction = computeSuggestion(playerHands, 0, dealerHand, assistEnabled, tableRules)
+    cancelPendingSteps()
+    set({ deck, playerHands: [[]], dealerHand: [], activeHandIndex: 0, phase: 'dealing', suggestedAction: null })
 
-    set({ deck, playerHands, dealerHand, activeHandIndex: 0, phase: 'playing', suggestedAction })
-
-    // Check for natural blackjack — resolve immediately
-    const playerScore = scoreHand(playerHands[0])
-    if (playerScore === 21 && playerHands[0].length === 2) {
-      get().stand()
-    }
+    const D = DEAL_DELAY
+    scheduleStep(() => set({ playerHands: [[c1]] }), D)
+    scheduleStep(() => set({ dealerHand: [c2] }), D * 2)
+    scheduleStep(() => set({ playerHands: [[c1, c3]] }), D * 3)
+    scheduleStep(() => {
+      const { assistEnabled } = get()
+      const playerHands = [[c1, c3]]
+      const dealerHand = [c2, { ...c4, faceDown: true }]
+      const suggestedAction = computeSuggestion(playerHands, 0, dealerHand, assistEnabled, tableRules)
+      set({ dealerHand, phase: 'playing', suggestedAction })
+      if (scoreHand(playerHands[0]) === 21 && playerHands[0].length === 2) {
+        get().stand()
+      }
+    }, D * 4)
   },
 
   hit: () => {
@@ -178,17 +193,26 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
     let c1: Card, c2: Card
     ;[c1, deck] = dealCard(deck)
     ;[c2, deck] = dealCard(deck)
-    const hand1 = [hand[0], c1]
-    const hand2 = [hand[1], c2]
-    const newHands = [
+
+    const baseHands = [
       ...playerHands.slice(0, activeHandIndex),
-      hand1,
-      hand2,
+      [hand[0]],
+      [hand[1]],
       ...playerHands.slice(activeHandIndex + 1),
     ]
-    const { assistEnabled, dealerHand, tableRules } = get()
-    const suggestedAction = computeSuggestion(newHands, activeHandIndex, dealerHand, assistEnabled, tableRules)
-    set({ deck, playerHands: newHands, suggestedAction })
+    cancelPendingSteps()
+    set({ deck, playerHands: baseHands, phase: 'dealing' })
+
+    const D = DEAL_DELAY
+    scheduleStep(() => {
+      set(s => ({ playerHands: s.playerHands.map((h, i) => i === activeHandIndex ? [hand[0], c1] : h) }))
+    }, D)
+    scheduleStep(() => {
+      const { assistEnabled, dealerHand, tableRules } = get()
+      const newHands = get().playerHands.map((h, i) => i === activeHandIndex + 1 ? [hand[1], c2] : h)
+      const suggestedAction = computeSuggestion(newHands, activeHandIndex, dealerHand, assistEnabled, tableRules)
+      set({ playerHands: newHands, suggestedAction, phase: 'playing' })
+    }, D * 2)
   },
 
   surrender: () => {
@@ -203,6 +227,7 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
   },
 
   newHand: () => {
+    cancelPendingSteps()
     const { tableRules, deck } = get()
     set({ ...initialState, tableRules, deck })
   },

@@ -15,7 +15,12 @@ import { useBlackjackStore } from '../../features/blackjack/store'
 import { DEFAULT_TABLE_RULES } from '../../lib/constants'
 
 beforeEach(() => {
+  jest.useFakeTimers()
   useBlackjackStore.setState(useBlackjackStore.getState().getInitialState())
+})
+
+afterEach(() => {
+  jest.useRealTimers()
 })
 
 test('initial phase is betting', () => {
@@ -44,6 +49,7 @@ test('deal transitions to playing or result phase', () => {
     result.current.setTableRules(DEFAULT_TABLE_RULES)
     result.current.placeBet(15)
     result.current.deal()
+    jest.runAllTimers()
   })
   // Natural blackjack immediately resolves to 'result'; otherwise 'playing'
   expect(['playing', 'result']).toContain(result.current.phase)
@@ -55,6 +61,7 @@ test('deal gives player 2 cards and dealer 2 cards', () => {
     result.current.setTableRules(DEFAULT_TABLE_RULES)
     result.current.placeBet(15)
     result.current.deal()
+    jest.runAllTimers()
   })
   expect(result.current.playerHands[0]).toHaveLength(2)
   // Dealer hand always has 2 cards (one face down)
@@ -74,6 +81,7 @@ test('newHand resets hands and bet but keeps tableRules', () => {
     result.current.setTableRules(DEFAULT_TABLE_RULES)
     result.current.placeBet(25)
     result.current.deal()
+    jest.runAllTimers()
     result.current.newHand()
   })
   expect(result.current.bet).toBe(0)

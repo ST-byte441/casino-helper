@@ -9,7 +9,7 @@ export type Card = {
 
 export type Action = 'hit' | 'stand' | 'double' | 'split' | 'surrender'
 export type Outcome = 'blackjack' | 'win' | 'lose' | 'push' | 'bust'
-export type Phase = 'betting' | 'playing' | 'dealer' | 'result'
+export type Phase = 'betting' | 'dealing' | 'playing' | 'dealer' | 'result'
 
 export type PayoutMode = '3:2' | '6:5'
 export type SoftSeven = 'S17' | 'H17'

@@ -1,19 +1,31 @@
-import { View, Text, StyleSheet } from 'react-native'
+import { useEffect, useRef } from 'react'
+import { Animated, Text, StyleSheet } from 'react-native'
 import { Card as CardType } from '../../../lib/types'
 import { RED_SUITS } from '../../../lib/constants'
 
 type Props = { card: CardType }
 
 export function Card({ card }: Props) {
+  const opacity = useRef(new Animated.Value(0)).current
+
+  useEffect(() => {
+    Animated.timing(opacity, { toValue: 1, duration: 150, useNativeDriver: true }).start()
+  }, [])
+
   if (card.faceDown) {
-    return <View style={[styles.card, styles.faceDown]}><Text style={styles.back}>🂠</Text></View>
+    return (
+      <Animated.View style={[styles.card, styles.faceDown, { opacity }]}>
+        <Text style={styles.back}>🂠</Text>
+      </Animated.View>
+    )
   }
+
   const isRed = RED_SUITS.includes(card.suit)
   return (
-    <View style={styles.card}>
+    <Animated.View style={[styles.card, { opacity }]}>
       <Text style={[styles.value, isRed && styles.red]}>{card.value}</Text>
       <Text style={[styles.suit, isRed && styles.red]}>{card.suit}</Text>
-    </View>
+    </Animated.View>
   )
 }
 
