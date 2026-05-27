@@ -87,7 +87,9 @@ test('updateBalance floors balance at zero, never goes negative', () => {
 test('updateBalance is a no-op when no active profile is set', () => {
   const { result } = renderHook(() => useProfileStore())
   act(() => result.current.addProfile('Hal', 300, 'finite'))
-  // No setActiveProfile called — activeProfileId remains null
+  // addProfile now auto-selects the profile, so explicitly clear the active
+  // profile by setting it to an ID that matches no profile.
+  act(() => result.current.setActiveProfile('__none__'))
   act(() => result.current.updateBalance(100))
   expect(result.current.profiles[0].balance).toBe(300)
 })
