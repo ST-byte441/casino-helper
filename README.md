@@ -89,13 +89,25 @@ __tests__/        # Mirrors the feature folder structure
 
 ## Publishing a Release
 
-Releases are built via [EAS Build](https://docs.expo.dev/build/introduction/) and attached to GitHub Releases as a downloadable APK.
+Releases come in two forms depending on what changed.
 
 **First-time setup:** `npm install -g eas-cli && eas login`
 
-### Steps
+### JS/Asset changes (most updates) — EAS Update
 
-1. Bump `"version"` in `app.json` (e.g. `1.0.0` → `1.0.1`)
+No new APK needed. Run:
+
+```bash
+eas update --channel preview --message "describe what changed"
+```
+
+Users get the update silently on their next app launch. Takes ~1 minute.
+
+### Native changes (new permissions, new native packages) — Full APK rebuild
+
+Required when bumping `runtimeVersion` in `app.json`.
+
+1. Bump `"version"` and `"runtimeVersion"` in `app.json`
 2. Commit the version bump
 3. Build the APK:
    ```bash
@@ -104,8 +116,8 @@ Releases are built via [EAS Build](https://docs.expo.dev/build/introduction/) an
 4. Download the `.apk` from the link EAS prints when the build finishes (~10–20 min)
 5. Create a GitHub release and attach the APK:
    ```bash
-   gh release create v1.0.1 ./casino-helper-*.apk \
-     --title "Casino Helper v1.0.1" \
+   gh release create v1.0.2 ./casino-helper-*.apk \
+     --title "Casino Helper v1.0.2" \
      --notes "Describe what changed"
    ```
 
