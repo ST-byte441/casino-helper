@@ -5,11 +5,12 @@ type Props = {
   latestVersion: string
   releaseUrl: string
   onDismiss: () => void
+  visible?: boolean
 }
 
-export default function UpdateModal({ currentVersion, latestVersion, releaseUrl, onDismiss }: Props) {
+export default function UpdateModal({ currentVersion, latestVersion, releaseUrl, onDismiss, visible }: Props) {
   return (
-    <Modal transparent animationType="fade" visible onRequestClose={onDismiss}>
+    <Modal transparent animationType="fade" visible={visible ?? true} onRequestClose={onDismiss}>
       <View style={styles.overlay}>
         <View style={styles.card}>
           <Text style={styles.title}>Update Available</Text>
@@ -20,7 +21,7 @@ export default function UpdateModal({ currentVersion, latestVersion, releaseUrl,
             <Text style={styles.versionLabel}>Current: <Text style={styles.versionValue}>v{currentVersion}</Text></Text>
             <Text style={styles.versionLabel}>Latest: <Text style={[styles.versionValue, styles.latest]}>v{latestVersion}</Text></Text>
           </View>
-          <TouchableOpacity style={styles.downloadBtn} onPress={() => Linking.openURL(releaseUrl)}>
+          <TouchableOpacity style={styles.downloadBtn} onPress={() => { Linking.openURL(releaseUrl).catch(() => {}) }}>
             <Text style={styles.downloadText}>Download</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.dismissBtn} onPress={onDismiss}>
