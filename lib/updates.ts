@@ -4,6 +4,7 @@ const RELEASES_API = 'https://api.github.com/repos/ST-byte441/casinoHelper/relea
 
 export type UpdateInfo = {
   hasUpdate: boolean
+  currentVersion: string
   latestVersion: string
   releaseUrl: string
 }
@@ -23,10 +24,12 @@ export async function checkForUpdate(): Promise<UpdateInfo | null> {
     if (!res.ok) return null
     const data = await res.json()
     if (!data.tag_name) return null
+    if (!data.html_url) return null
     const latestVersion = (data.tag_name as string).replace(/^v/, '')
     const currentVersion = Constants.expoConfig?.version ?? '0.0.0'
     return {
       hasUpdate: isNewerVersion(latestVersion, currentVersion),
+      currentVersion,
       latestVersion,
       releaseUrl: data.html_url as string,
     }

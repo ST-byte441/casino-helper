@@ -48,6 +48,7 @@ describe('checkForUpdate', () => {
     const result = await checkForUpdate()
     expect(result).toEqual({
       hasUpdate: true,
+      currentVersion: '1.0.0',
       latestVersion: '1.0.1',
       releaseUrl: 'https://github.com/ST-byte441/casinoHelper/releases/tag/v1.0.1',
     })
@@ -61,6 +62,7 @@ describe('checkForUpdate', () => {
     const result = await checkForUpdate()
     expect(result).toEqual({
       hasUpdate: false,
+      currentVersion: '1.0.0',
       latestVersion: '1.0.0',
       releaseUrl: 'https://github.com/ST-byte441/casinoHelper/releases/tag/v1.0.0',
     })

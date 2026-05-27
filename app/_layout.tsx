@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Stack } from 'expo-router'
-import Constants from 'expo-constants'
 import { checkForUpdate, UpdateInfo } from '../lib/updates'
 import UpdateModal from '../components/UpdateModal'
 
@@ -13,8 +12,6 @@ export default function RootLayout() {
     })
   }, [])
 
-  const currentVersion = Constants.expoConfig?.version ?? '0.0.0'
-
   return (
     <>
       <Stack>
@@ -23,7 +20,7 @@ export default function RootLayout() {
       </Stack>
       {updateInfo && (
         <UpdateModal
-          currentVersion={currentVersion}
+          currentVersion={updateInfo.currentVersion}
           latestVersion={updateInfo.latestVersion}
           releaseUrl={updateInfo.releaseUrl}
           onDismiss={() => setUpdateInfo(null)}
