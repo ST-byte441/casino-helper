@@ -62,7 +62,12 @@ export default function BlackjackScreen() {
       <View style={styles.table}>
         <Hand hand={store.dealerHand} label="Dealer" hideScore={store.phase === 'playing'} />
         {store.playerHands.map((hand, i) => (
-          <Hand key={i} hand={hand} label={store.playerHands.length > 1 ? `Hand ${i + 1}` : 'You'} />
+          <Hand
+            key={i}
+            hand={hand}
+            label={store.playerHands.length > 1 ? `Hand ${i + 1}` : 'You'}
+            active={store.playerHands.length > 1 && i === store.activeHandIndex}
+          />
         ))}
       </View>
 
