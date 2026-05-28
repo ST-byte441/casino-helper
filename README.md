@@ -53,7 +53,7 @@ npx jest <path>   # single file
 npx tsc --noEmit  # type check only
 ```
 
-84 tests cover the game engine, strategy lookup, profile store, and update utility.
+115 tests cover the game engine, strategy lookup, profile store, and update utility.
 
 ## Project Structure
 
@@ -73,6 +73,8 @@ features/
     strategy.ts   # Pure TS: basic strategy lookup table
     store.ts      # Session Zustand store
     components/   # UI components (Card, Hand, ActionButtons, BetControls, TableSetup)
+  craps/
+    engine.ts     # Pure TS: dice, phase helpers, bet validity, odds helpers
   profile/
     store.ts      # Persisted Zustand store (AsyncStorage)
     components/   # ProfileCard, ProfileList, CreateProfileModal
