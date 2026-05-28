@@ -143,3 +143,106 @@ describe('getMaxOdds', () => {
     expect(getMaxOdds(10, 4, '10x')).toBe(100)
   })
 })
+
+import { calculatePayout } from '../../features/craps/engine'
+
+const makeBet = (type: ActiveBet['type'], overrides: Partial<ActiveBet> = {}): ActiveBet =>
+  ({ id: '1', type, amount: 10, working: true, ...overrides })
+
+describe('calculatePayout — single-roll bets', () => {
+  const rules: CrapsTableRules = { variant: 'craps', oddsMultiple: '3-4-5x', fieldPays3on12: false }
+  const rules3on12: CrapsTableRules = { ...rules, fieldPays3on12: true }
+  const easyRules: CrapsTableRules = { ...rules, variant: 'easy' }
+
+  test('field wins 1:1 on 3,4,9,10,11', () => {
+    for (const sum of [3, 4, 9, 10, 11]) {
+      const dice: [number, number] = sum <= 6 ? [1, sum - 1] : [sum - 6, 6]
+      expect(calculatePayout(makeBet('field'), dice, null, rules)).toBe(10)
+    }
+  })
+  test('field wins 2:1 on 2', () => {
+    expect(calculatePayout(makeBet('field'), [1, 1], null, rules)).toBe(20)
+  })
+  test('field wins 2:1 on 12 by default', () => {
+    expect(calculatePayout(makeBet('field'), [6, 6], null, rules)).toBe(20)
+  })
+  test('field wins 3:1 on 12 when fieldPays3on12', () => {
+    expect(calculatePayout(makeBet('field'), [6, 6], null, rules3on12)).toBe(30)
+  })
+  test('field loses on 5,6,7,8', () => {
+    expect(calculatePayout(makeBet('field'), [3, 2], null, rules)).toBe(-10)
+    expect(calculatePayout(makeBet('field'), [3, 3], null, rules)).toBe(-10)
+    expect(calculatePayout(makeBet('field'), [3, 4], null, rules)).toBe(-10)
+    expect(calculatePayout(makeBet('field'), [4, 4], null, rules)).toBe(-10)
+  })
+
+  test('low-field wins 2:1 on 2,3,4', () => {
+    expect(calculatePayout(makeBet('low-field'), [1, 1], null, easyRules)).toBe(20)
+    expect(calculatePayout(makeBet('low-field'), [1, 2], null, easyRules)).toBe(20)
+    expect(calculatePayout(makeBet('low-field'), [2, 2], null, easyRules)).toBe(20)
+  })
+  test('low-field loses on other rolls', () => {
+    expect(calculatePayout(makeBet('low-field'), [3, 4], null, easyRules)).toBe(-10)
+  })
+  test('high-field wins 3:1 on 10,11,12', () => {
+    expect(calculatePayout(makeBet('high-field'), [5, 5], null, easyRules)).toBe(30)
+    expect(calculatePayout(makeBet('high-field'), [5, 6], null, easyRules)).toBe(30)
+    expect(calculatePayout(makeBet('high-field'), [6, 6], null, easyRules)).toBe(30)
+  })
+
+  test('any-7 pays 4:1 on 7', () => {
+    expect(calculatePayout(makeBet('any-7'), [3, 4], null, rules)).toBe(40)
+  })
+  test('any-7 loses on non-7', () => {
+    expect(calculatePayout(makeBet('any-7'), [3, 3], null, rules)).toBe(-10)
+  })
+  test('any-craps pays 7:1 on 2,3,12', () => {
+    expect(calculatePayout(makeBet('any-craps'), [1, 1], null, rules)).toBe(70)
+    expect(calculatePayout(makeBet('any-craps'), [1, 2], null, rules)).toBe(70)
+    expect(calculatePayout(makeBet('any-craps'), [6, 6], null, rules)).toBe(70)
+  })
+  test('craps-2 pays 30:1 on 2 only', () => {
+    expect(calculatePayout(makeBet('craps-2'), [1, 1], null, rules)).toBe(300)
+    expect(calculatePayout(makeBet('craps-2'), [1, 2], null, rules)).toBe(-10)
+  })
+  test('craps-3 pays 15:1 on 3 only', () => {
+    expect(calculatePayout(makeBet('craps-3'), [1, 2], null, rules)).toBe(150)
+  })
+  test('yo-11 pays 15:1 on 11 only', () => {
+    expect(calculatePayout(makeBet('yo-11'), [5, 6], null, rules)).toBe(150)
+    expect(calculatePayout(makeBet('yo-11'), [6, 6], null, rules)).toBe(-10)
+  })
+  test('craps-12 pays 30:1 on 12 only', () => {
+    expect(calculatePayout(makeBet('craps-12'), [6, 6], null, rules)).toBe(300)
+  })
+  test('hi-lo pays 15:1 on 2 or 12', () => {
+    expect(calculatePayout(makeBet('hi-lo'), [1, 1], null, rules)).toBe(150)
+    expect(calculatePayout(makeBet('hi-lo'), [6, 6], null, rules)).toBe(150)
+    expect(calculatePayout(makeBet('hi-lo'), [3, 4], null, rules)).toBe(-10)
+  })
+  test('ce: 7:1 on 2,3,12 and 3:1 on 11', () => {
+    expect(calculatePayout(makeBet('ce'), [1, 1], null, rules)).toBe(70)
+    expect(calculatePayout(makeBet('ce'), [5, 6], null, rules)).toBe(30)
+    expect(calculatePayout(makeBet('ce'), [3, 4], null, rules)).toBe(-10)
+  })
+  test('hop-hard pays 30:1 on exact combo', () => {
+    expect(calculatePayout(makeBet('hop-hard', { hopDice: [3, 3] }), [3, 3], null, rules)).toBe(300)
+    expect(calculatePayout(makeBet('hop-hard', { hopDice: [3, 3] }), [2, 4], null, rules)).toBe(-10)
+  })
+  test('hop-easy pays 15:1 on exact combo (either order)', () => {
+    expect(calculatePayout(makeBet('hop-easy', { hopDice: [2, 5] }), [2, 5], null, rules)).toBe(150)
+    expect(calculatePayout(makeBet('hop-easy', { hopDice: [2, 5] }), [5, 2], null, rules)).toBe(150)
+    expect(calculatePayout(makeBet('hop-easy', { hopDice: [2, 5] }), [3, 4], null, rules)).toBe(-10)
+  })
+  test('horn (4-unit $40 total): 2 wins at 27:4 = pays $270 net on winning number', () => {
+    // $40 horn bet on [1,1] (sum=2): $10 on 2 wins at 30:1 = +$300 gross, minus $30 for other 3 units → net +$270
+    expect(calculatePayout(makeBet('horn', { amount: 40 }), [1, 1], null, rules)).toBe(270)
+  })
+  test('horn (4-unit $40): 3 wins at 3:1 = pays $120 net', () => {
+    // $10 on 3 wins at 15:1 = +$150 gross, minus $30 for others → net +$120
+    expect(calculatePayout(makeBet('horn', { amount: 40 }), [1, 2], null, rules)).toBe(120)
+  })
+  test('horn loses on any other number', () => {
+    expect(calculatePayout(makeBet('horn', { amount: 40 }), [3, 4], null, rules)).toBe(-40)
+  })
+})

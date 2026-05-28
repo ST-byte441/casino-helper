@@ -1,4 +1,4 @@
-import { ActiveBet, BetType, CrapsPhase, CrapsVariant, OddsMultiple } from '../../lib/types'
+import { ActiveBet, BetType, CrapsPhase, CrapsTableRules, CrapsVariant, OddsMultiple } from '../../lib/types'
 
 export function rollDice(): [number, number] {
   return [Math.ceil(Math.random() * 6), Math.ceil(Math.random() * 6)]
@@ -54,4 +54,69 @@ export function getMaxOdds(passAmount: number, point: number, oddsMultiple: Odds
   if (point === 4 || point === 10) return passAmount * 3
   if (point === 5 || point === 9) return passAmount * 4
   return passAmount * 5 // 6 or 8
+}
+
+export function calculatePayout(
+  bet: ActiveBet,
+  dice: [number, number],
+  point: number | null,
+  rules: CrapsTableRules
+): number {
+  const sum = sumDice(dice)
+  const { amount } = bet
+
+  switch (bet.type) {
+    case 'field': {
+      if ([3, 4, 9, 10, 11].includes(sum)) return amount
+      if (sum === 2) return amount * 2
+      if (sum === 12) return rules.fieldPays3on12 ? amount * 3 : amount * 2
+      return -amount
+    }
+    case 'low-field':
+      return [2, 3, 4].includes(sum) ? amount * 2 : -amount
+    case 'high-field':
+      return [10, 11, 12].includes(sum) ? amount * 3 : -amount
+    case 'any-7':
+      return sum === 7 ? amount * 4 : -amount
+    case 'any-craps':
+      return [2, 3, 12].includes(sum) ? amount * 7 : -amount
+    case 'craps-2':
+      return sum === 2 ? amount * 30 : -amount
+    case 'craps-3':
+      return sum === 3 ? amount * 15 : -amount
+    case 'yo-11':
+      return sum === 11 ? amount * 15 : -amount
+    case 'craps-12':
+      return sum === 12 ? amount * 30 : -amount
+    case 'hi-lo':
+      return (sum === 2 || sum === 12) ? amount * 15 : -amount
+    case 'ce':
+      if ([2, 3, 12].includes(sum)) return amount * 7
+      if (sum === 11) return amount * 3
+      return -amount
+    case 'hop-hard': {
+      const [h1, h2] = bet.hopDice!
+      return (dice[0] === h1 && dice[1] === h2) ? amount * 30 : -amount
+    }
+    case 'hop-easy': {
+      const [h1, h2] = bet.hopDice!
+      const hit = (dice[0] === h1 && dice[1] === h2) || (dice[0] === h2 && dice[1] === h1)
+      return hit ? amount * 15 : -amount
+    }
+    case 'horn': {
+      const unit = amount / 4
+      if (sum === 2 || sum === 12) return unit * 30 - unit * 3
+      if (sum === 3 || sum === 11) return unit * 15 - unit * 3
+      return -amount
+    }
+    case 'world': {
+      const unit = amount / 5
+      if (sum === 2 || sum === 12) return unit * 30 - unit * 4
+      if (sum === 3 || sum === 11) return unit * 15 - unit * 4
+      if (sum === 7) return 0
+      return -amount
+    }
+    default:
+      return 0
+  }
 }
