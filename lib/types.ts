@@ -25,3 +25,50 @@ export type TableRules = {
   deckCount: DeckCount
   continuousShuffle: boolean
 }
+
+export type CrapsVariant = 'craps' | 'crapless' | 'easy'
+export type CrapsPhase = 'setup' | 'come-out' | 'point'
+export type OddsMultiple = '1x' | '2x' | '3-4-5x' | '5x' | '10x'
+
+export type CrapsTableRules = {
+  variant: CrapsVariant
+  oddsMultiple: OddsMultiple
+  fieldPays3on12: boolean
+}
+
+export type BetType =
+  | 'pass' | 'dont-pass'
+  | 'come' | 'dont-come'
+  | 'place' | 'buy' | 'lay'
+  | 'big6' | 'big8'
+  | 'field' | 'low-field' | 'high-field'
+  | 'hardway'
+  | 'any-7' | 'any-craps' | 'craps-2' | 'craps-3' | 'yo-11' | 'craps-12'
+  | 'hi-lo' | 'ce' | 'horn' | 'world'
+  | 'hop-hard' | 'hop-easy'
+
+export type ActiveBet = {
+  id: string
+  type: BetType
+  amount: number
+  number?: number
+  comePoint?: number
+  odds?: number
+  hopDice?: [number, number]
+  working: boolean
+}
+
+export type BetOutcome = {
+  betId: string
+  result: 'win' | 'lose' | 'push' | 'continue'
+  delta: number
+}
+
+export type RollResolution = {
+  dice: [number, number]
+  outcomes: BetOutcome[]
+  phaseChange?: 'natural' | 'craps' | 'point-set' | 'point-made' | 'seven-out'
+  nextPoint: number | null
+}
+
+export type BetQuality = 'optimal' | 'acceptable' | 'poor' | 'avoid'
