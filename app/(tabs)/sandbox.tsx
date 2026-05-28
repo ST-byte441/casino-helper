@@ -161,7 +161,7 @@ export default function SandboxScreen() {
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setRulesOpen(false)}>
           <TouchableOpacity style={styles.modalSheet} activeOpacity={1}>
             <Text style={styles.modalTitle}>Table Rules</Text>
-            <ScrollView>
+            <ScrollView contentContainerStyle={{ paddingBottom: 8 }}>
               <RuleRow<PayoutMode>
                 label="Blackjack Pays"
                 options={[{ label: '3:2', value: '3:2' }, { label: '6:5', value: '6:5' }]}
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     padding: 16, borderBottomWidth: 1, borderColor: '#2a2a3e' },
   title: { color: '#fff', fontSize: 20, fontWeight: '700' },
-  gearIcon: { fontSize: 22 },
+  gearIcon: { fontSize: 22, padding: 8 },
   scroll: { padding: 16 },
   section: { marginBottom: 24 },
   sectionLabel: { color: '#aaa', fontSize: 12, fontWeight: '600', letterSpacing: 1,
