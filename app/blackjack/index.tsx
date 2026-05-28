@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { useState, useRef, useEffect } from 'react'
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useBlackjackStore } from '../../features/blackjack/store'
@@ -9,7 +9,7 @@ import { Hand } from '../../features/blackjack/components/Hand'
 import { ActionButtons } from '../../features/blackjack/components/ActionButtons'
 import { BetControls } from '../../features/blackjack/components/BetControls'
 import { TableRules } from '../../lib/types'
-import { canDouble, canSplit, canSurrender } from '../../features/blackjack/engine'
+import { canDouble, canSplit, canSurrender, scoreHand } from '../../features/blackjack/engine'
 
 export default function BlackjackScreen() {
   const router = useRouter()
@@ -22,6 +22,13 @@ export default function BlackjackScreen() {
   const balance = activeProfile
     ? isInfinite ? Infinity : activeProfile.balance
     : 0
+
+  const scrollRef = useRef<ScrollView>(null)
+  const handOffsets = useRef<number[]>([])
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ y: handOffsets.current[store.activeHandIndex] ?? 0, animated: true })
+  }, [store.activeHandIndex])
 
   function handleStart(rules: TableRules) {
     store.setTableRules(rules)
@@ -44,6 +51,11 @@ export default function BlackjackScreen() {
   const isResult = store.phase === 'result'
   const isBetting = store.phase === 'betting'
 
+  function getHandStatus(i: number): 'bust' | 'stood' | undefined {
+    if (i >= store.activeHandIndex) return undefined
+    return scoreHand(store.playerHands[i]) > 21 ? 'bust' : 'stood'
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -58,18 +70,27 @@ export default function BlackjackScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Table */}
-      <View style={styles.table}>
+      {/* Dealer — always visible */}
+      <View style={styles.dealer}>
         <Hand hand={store.dealerHand} label="Dealer" hideScore={store.phase === 'playing'} />
-        {store.playerHands.map((hand, i) => (
-          <Hand
-            key={i}
-            hand={hand}
-            label={store.playerHands.length > 1 ? `Hand ${i + 1}` : 'You'}
-            active={store.playerHands.length > 1 && i === store.activeHandIndex}
-          />
-        ))}
       </View>
+
+      {/* Player hands — scrollable */}
+      <ScrollView ref={scrollRef} style={styles.playerScroll} contentContainerStyle={styles.playerContent}>
+        {store.playerHands.map((hand, i) => (
+          <View
+            key={i}
+            onLayout={e => { handOffsets.current[i] = e.nativeEvent.layout.y }}
+          >
+            <Hand
+              hand={hand}
+              label={store.playerHands.length > 1 ? `Hand ${i + 1}` : 'You'}
+              active={store.playerHands.length > 1 && i === store.activeHandIndex}
+              status={getHandStatus(i)}
+            />
+          </View>
+        ))}
+      </ScrollView>
 
       {/* Result banner */}
       {isResult && (
@@ -134,7 +155,9 @@ const styles = StyleSheet.create({
   back: { color: '#fff', fontSize: 15 },
   pill: { color: '#FFD700', fontSize: 12, fontWeight: '600' },
   assist: { color: '#FFD700', fontSize: 15 },
-  table: { flex: 1, justifyContent: 'space-around', paddingVertical: 16 },
+  dealer: { paddingVertical: 8, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  playerScroll: { flex: 1 },
+  playerContent: { paddingVertical: 8 },
   result: { backgroundColor: 'rgba(0,0,0,0.75)', padding: 20, margin: 12, borderRadius: 12, alignItems: 'center' },
   resultText: { color: '#FFD700', fontSize: 22, fontWeight: '700', marginBottom: 12 },
   nextBtn: { backgroundColor: '#FFD700', paddingVertical: 10, paddingHorizontal: 32, borderRadius: 8 },
