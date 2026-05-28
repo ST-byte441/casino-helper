@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native'
+import { useRef, useState } from 'react'
+import { View, Text, TouchableOpacity, ScrollView, Modal, StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Value, Card as CardType, TableRules } from '../../lib/types'
+import { Value, Card as CardType, TableRules, PayoutMode, SoftSeven, SurrenderMode, DeckCount } from '../../lib/types'
 import { DEFAULT_TABLE_RULES } from '../../lib/constants'
 import { getOptimalAction } from '../../features/blackjack/strategy'
 import { Card } from '../../features/blackjack/components/Card'
@@ -9,15 +9,60 @@ import { RankPicker } from '../../features/blackjack/components/RankPicker'
 import { scoreHand } from '../../features/blackjack/engine'
 
 type PickerTarget = 'dealer' | 'player' | null
+type PlayerCard = { id: number; value: Value }
+
+type SegmentedProps<T extends string | number | boolean> = {
+  label: string
+  options: { label: string; value: T }[]
+  value: T
+  onChange: (v: T) => void
+}
+
+function RuleRow<T extends string | number | boolean>({ label, options, value, onChange }: SegmentedProps<T>) {
+  return (
+    <View style={ruleStyles.row}>
+      <Text style={ruleStyles.label}>{label}</Text>
+      <View style={ruleStyles.segments}>
+        {options.map(opt => (
+          <TouchableOpacity
+            key={String(opt.value)}
+            style={[ruleStyles.segment, value === opt.value && ruleStyles.segmentActive]}
+            onPress={() => onChange(opt.value)}
+          >
+            <Text style={[ruleStyles.segmentText, value === opt.value && ruleStyles.segmentTextActive]}>
+              {opt.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  )
+}
+
+const ruleStyles = StyleSheet.create({
+  row: { marginBottom: 16 },
+  label: { color: '#fff', fontSize: 14, fontWeight: '600', marginBottom: 8 },
+  segments: { flexDirection: 'row', gap: 8 },
+  segment: { flex: 1, paddingVertical: 8, borderRadius: 8, backgroundColor: '#2a2a3e', alignItems: 'center' },
+  segmentActive: { backgroundColor: '#FFD700' },
+  segmentText: { color: '#aaa', fontWeight: '600', fontSize: 13 },
+  segmentTextActive: { color: '#000' },
+})
+
+const ACTION_LABEL: Record<string, string> = {
+  hit: 'HIT', stand: 'STAND', double: 'DOUBLE DOWN', split: 'SPLIT', surrender: 'SURRENDER',
+}
 
 export default function SandboxScreen() {
+  const nextId = useRef(0)
   const [dealerRank, setDealerRank] = useState<Value | null>(null)
-  const [playerRanks, setPlayerRanks] = useState<Value[]>([])
-  const [tableRules] = useState<TableRules>(DEFAULT_TABLE_RULES)
+  const [playerCards, setPlayerCards] = useState<PlayerCard[]>([])
+  const [tableRules, setTableRules] = useState<TableRules>(DEFAULT_TABLE_RULES)
   const [pickerTarget, setPickerTarget] = useState<PickerTarget>(null)
+  const [rulesOpen, setRulesOpen] = useState(false)
 
   const dealerCard: CardType | null = dealerRank ? { suit: '♠', value: dealerRank } : null
-  const playerHand: CardType[] = playerRanks.map(v => ({ suit: '♠', value: v }))
+  const playerHand: CardType[] = playerCards.map(c => ({ suit: '♠', value: c.value }))
 
   const optimalAction =
     dealerCard && playerHand.length >= 2
@@ -25,29 +70,33 @@ export default function SandboxScreen() {
       : null
 
   function handlePickerSelect(value: Value) {
-    if (pickerTarget === 'dealer') setDealerRank(value)
-    else if (pickerTarget === 'player') setPlayerRanks(r => [...r, value])
+    if (pickerTarget === 'dealer') {
+      setDealerRank(value)
+    } else if (pickerTarget === 'player') {
+      setPlayerCards(cs => [...cs, { id: nextId.current++, value }])
+    }
     setPickerTarget(null)
   }
 
-  function removePlayerCard(index: number) {
-    setPlayerRanks(r => r.filter((_, i) => i !== index))
+  function removePlayerCard(id: number) {
+    setPlayerCards(cs => cs.filter(c => c.id !== id))
   }
 
   function clearAll() {
     setDealerRank(null)
-    setPlayerRanks([])
+    setPlayerCards([])
   }
 
-  const ACTION_LABEL: Record<string, string> = {
-    hit: 'HIT', stand: 'STAND', double: 'DOUBLE DOWN', split: 'SPLIT', surrender: 'SURRENDER',
-  }
+  const set = <K extends keyof TableRules>(key: K, val: TableRules[K]) =>
+    setTableRules(r => ({ ...r, [key]: val }))
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Strategy Sandbox</Text>
-        <Text style={styles.gearPlaceholder}>{/* gear added in Task 4 */}</Text>
+        <TouchableOpacity onPress={() => setRulesOpen(true)}>
+          <Text style={styles.gearIcon}>⚙️</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -79,9 +128,9 @@ export default function SandboxScreen() {
             YOUR HAND{playerHand.length >= 2 ? `  ·  ${scoreHand(playerHand)}` : ''}
           </Text>
           <View style={styles.playerCards}>
-            {playerRanks.map((rank, i) => (
-              <TouchableOpacity key={i} style={styles.removableCard} onPress={() => removePlayerCard(i)}>
-                <Card card={{ suit: '♠', value: rank }} />
+            {playerCards.map(pc => (
+              <TouchableOpacity key={pc.id} style={styles.removableCard} onPress={() => removePlayerCard(pc.id)}>
+                <Card card={{ suit: '♠', value: pc.value }} />
                 <View style={styles.removeBadge}>
                   <Text style={styles.removeBadgeText}>×</Text>
                 </View>
@@ -91,7 +140,7 @@ export default function SandboxScreen() {
               <Text style={styles.addCardText}>+</Text>
             </TouchableOpacity>
           </View>
-          {playerRanks.length > 0 && (
+          {playerCards.length > 0 && (
             <TouchableOpacity style={styles.clearBtn} onPress={clearAll}>
               <Text style={styles.clearBtnText}>Clear All</Text>
             </TouchableOpacity>
@@ -99,12 +148,62 @@ export default function SandboxScreen() {
         </View>
       </ScrollView>
 
+      {/* Rank picker modal */}
       {pickerTarget !== null && (
         <RankPicker
           onSelect={handlePickerSelect}
           onClose={() => setPickerTarget(null)}
         />
       )}
+
+      {/* Rules modal */}
+      <Modal visible={rulesOpen} transparent animationType="slide" onRequestClose={() => setRulesOpen(false)}>
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setRulesOpen(false)}>
+          <TouchableOpacity style={styles.modalSheet} activeOpacity={1}>
+            <Text style={styles.modalTitle}>Table Rules</Text>
+            <ScrollView>
+              <RuleRow<PayoutMode>
+                label="Blackjack Pays"
+                options={[{ label: '3:2', value: '3:2' }, { label: '6:5', value: '6:5' }]}
+                value={tableRules.payoutMode} onChange={v => set('payoutMode', v)}
+              />
+              <RuleRow<SoftSeven>
+                label="Dealer Soft 17"
+                options={[{ label: 'Hit (H17)', value: 'H17' }, { label: 'Stand (S17)', value: 'S17' }]}
+                value={tableRules.dealerSoft17} onChange={v => set('dealerSoft17', v)}
+              />
+              <RuleRow<boolean>
+                label="Double After Split"
+                options={[{ label: 'On', value: true }, { label: 'Off', value: false }]}
+                value={tableRules.doubleAfterSplit} onChange={v => set('doubleAfterSplit', v)}
+              />
+              <RuleRow<boolean>
+                label="Re-split Aces"
+                options={[{ label: 'On', value: true }, { label: 'Off', value: false }]}
+                value={tableRules.resplitAces} onChange={v => set('resplitAces', v)}
+              />
+              <RuleRow<SurrenderMode>
+                label="Surrender"
+                options={[{ label: 'None', value: 'none' }, { label: 'Late', value: 'late' }, { label: 'Early', value: 'early' }]}
+                value={tableRules.surrender} onChange={v => set('surrender', v)}
+              />
+              <RuleRow<DeckCount>
+                label="Number of Decks"
+                options={[{ label: '1', value: 1 }, { label: '2', value: 2 }, { label: '6', value: 6 }, { label: '8', value: 8 }]}
+                value={tableRules.deckCount} onChange={v => set('deckCount', v)}
+              />
+              <RuleRow<boolean>
+                label="Continuous Shuffle"
+                options={[{ label: 'On', value: true }, { label: 'Off', value: false }]}
+                value={tableRules.continuousShuffle} onChange={v => set('continuousShuffle', v)}
+              />
+            </ScrollView>
+            <TouchableOpacity style={styles.doneBtn} onPress={() => setRulesOpen(false)}>
+              <Text style={styles.doneBtnText}>Done</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   )
 }
@@ -114,7 +213,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     padding: 16, borderBottomWidth: 1, borderColor: '#2a2a3e' },
   title: { color: '#fff', fontSize: 20, fontWeight: '700' },
-  gearPlaceholder: {},
+  gearIcon: { fontSize: 22 },
   scroll: { padding: 16 },
   section: { marginBottom: 24 },
   sectionLabel: { color: '#aaa', fontSize: 12, fontWeight: '600', letterSpacing: 1,
@@ -137,4 +236,10 @@ const styles = StyleSheet.create({
   addCardText: { color: '#FFD700', fontSize: 28, fontWeight: '300' },
   clearBtn: { marginTop: 12, alignSelf: 'flex-end' },
   clearBtnText: { color: '#888', fontSize: 13 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
+  modalSheet: { backgroundColor: '#1e1e2e', borderTopLeftRadius: 16, borderTopRightRadius: 16,
+    padding: 20, maxHeight: '85%' },
+  modalTitle: { color: '#fff', fontSize: 18, fontWeight: '700', marginBottom: 20 },
+  doneBtn: { backgroundColor: '#FFD700', borderRadius: 10, padding: 14, alignItems: 'center', marginTop: 8 },
+  doneBtnText: { fontWeight: '700', fontSize: 16 },
 })
