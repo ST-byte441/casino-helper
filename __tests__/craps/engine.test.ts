@@ -246,3 +246,162 @@ describe('calculatePayout — single-roll bets', () => {
     expect(calculatePayout(makeBet('horn', { amount: 40 }), [3, 4], null, rules)).toBe(-40)
   })
 })
+
+import { resolveRoll } from '../../features/craps/engine'
+
+describe('resolveRoll — come-out phase (standard)', () => {
+  const rules: CrapsTableRules = { variant: 'craps', oddsMultiple: '3-4-5x', fieldPays3on12: false }
+  const pass: ActiveBet = { id: 'p1', type: 'pass', amount: 10, working: true }
+
+  test('7 on come-out: natural, pass wins', () => {
+    const res = resolveRoll([3, 4], 'come-out', null, [pass], rules)
+    expect(res.phaseChange).toBe('natural')
+    expect(res.outcomes[0].result).toBe('win')
+    expect(res.outcomes[0].delta).toBe(10)
+    expect(res.nextPoint).toBeNull()
+  })
+
+  test('11 on come-out: natural, pass wins (standard)', () => {
+    const res = resolveRoll([5, 6], 'come-out', null, [pass], rules)
+    expect(res.phaseChange).toBe('natural')
+    expect(res.outcomes[0].result).toBe('win')
+  })
+
+  test('2 on come-out: craps, pass loses (standard)', () => {
+    const res = resolveRoll([1, 1], 'come-out', null, [pass], rules)
+    expect(res.phaseChange).toBe('craps')
+    expect(res.outcomes[0].result).toBe('lose')
+  })
+
+  test('dont-pass pushes on 12 come-out (standard)', () => {
+    const dp: ActiveBet = { id: 'dp1', type: 'dont-pass', amount: 10, working: true }
+    const res = resolveRoll([6, 6], 'come-out', null, [dp], rules)
+    expect(res.outcomes[0].result).toBe('push')
+  })
+
+  test('6 on come-out: point set', () => {
+    const res = resolveRoll([2, 4], 'come-out', null, [pass], rules)
+    expect(res.phaseChange).toBe('point-set')
+    expect(res.nextPoint).toBe(6)
+    expect(res.outcomes[0].result).toBe('continue')
+  })
+})
+
+describe('resolveRoll — come-out phase (crapless)', () => {
+  const rules: CrapsTableRules = { variant: 'crapless', oddsMultiple: '3-4-5x', fieldPays3on12: false }
+  const pass: ActiveBet = { id: 'p1', type: 'pass', amount: 10, working: true }
+
+  test('11 on come-out sets point=11 in crapless', () => {
+    const res = resolveRoll([5, 6], 'come-out', null, [pass], rules)
+    expect(res.phaseChange).toBe('point-set')
+    expect(res.nextPoint).toBe(11)
+  })
+
+  test('2 on come-out sets point=2 in crapless', () => {
+    const res = resolveRoll([1, 1], 'come-out', null, [pass], rules)
+    expect(res.phaseChange).toBe('point-set')
+    expect(res.nextPoint).toBe(2)
+  })
+})
+
+describe('resolveRoll — point phase', () => {
+  const rules: CrapsTableRules = { variant: 'craps', oddsMultiple: '3-4-5x', fieldPays3on12: false }
+
+  test('rolling the point: pass wins, dont-pass loses, point-made', () => {
+    const pass: ActiveBet = { id: 'p1', type: 'pass', amount: 10, working: true }
+    const dp: ActiveBet = { id: 'dp1', type: 'dont-pass', amount: 10, working: true }
+    const res = resolveRoll([3, 3], 'point', 6, [pass, dp], rules)
+    expect(res.phaseChange).toBe('point-made')
+    expect(res.outcomes.find(o => o.betId === 'p1')!.result).toBe('win')
+    expect(res.outcomes.find(o => o.betId === 'dp1')!.result).toBe('lose')
+    expect(res.nextPoint).toBeNull()
+  })
+
+  test('rolling 7: seven-out, pass loses, dont-pass wins, place loses', () => {
+    const pass: ActiveBet = { id: 'p1', type: 'pass', amount: 10, working: true }
+    const place: ActiveBet = { id: 'pl1', type: 'place', amount: 12, number: 6, working: true }
+    const placOff: ActiveBet = { id: 'pl2', type: 'place', amount: 12, number: 8, working: false }
+    const res = resolveRoll([3, 4], 'point', 6, [pass, place, placOff], rules)
+    expect(res.phaseChange).toBe('seven-out')
+    expect(res.outcomes.find(o => o.betId === 'p1')!.result).toBe('lose')
+    expect(res.outcomes.find(o => o.betId === 'pl1')!.result).toBe('lose')
+    expect(res.outcomes.find(o => o.betId === 'pl2')!.result).toBe('continue')
+  })
+
+  test('place 6 wins when 6 rolls in point phase', () => {
+    const place: ActiveBet = { id: 'pl1', type: 'place', amount: 12, number: 6, working: true }
+    const res = resolveRoll([3, 3], 'point', 9, [place], rules)
+    expect(res.outcomes[0].result).toBe('win')
+    expect(res.outcomes[0].delta).toBe(14) // 7:6 on $12
+  })
+
+  test('buy 5 wins when 5 rolls (3:2 minus 5% vig)', () => {
+    const buy: ActiveBet = { id: 'b1', type: 'buy', amount: 20, number: 5, working: true }
+    const res = resolveRoll([2, 3], 'point', 9, [buy], rules)
+    expect(res.outcomes[0].result).toBe('win')
+    // 3:2 on $20 = $30 gross minus 5% vig on $20 = $1 → net $29
+    expect(res.outcomes[0].delta).toBe(29)
+  })
+
+  test('lay 4 wins when 7 rolls (1:2 minus 5% vig)', () => {
+    const lay: ActiveBet = { id: 'l1', type: 'lay', amount: 40, number: 4, working: true }
+    const res = resolveRoll([3, 4], 'point', 9, [lay], rules)
+    expect(res.outcomes[0].result).toBe('win')
+    // 1:2 on $40 = $20 gross minus 5% vig on $40 = $2 → net $18
+    expect(res.outcomes[0].delta).toBe(18)
+  })
+
+  test('hardway 6 wins on hard roll', () => {
+    const hw: ActiveBet = { id: 'hw1', type: 'hardway', amount: 10, number: 6, working: true }
+    const res = resolveRoll([3, 3], 'point', 9, [hw], rules)
+    expect(res.outcomes[0].result).toBe('win')
+    expect(res.outcomes[0].delta).toBe(90) // 9:1
+  })
+
+  test('hardway 6 loses on easy 6', () => {
+    const hw: ActiveBet = { id: 'hw1', type: 'hardway', amount: 10, number: 6, working: true }
+    const res = resolveRoll([2, 4], 'point', 9, [hw], rules)
+    expect(res.outcomes[0].result).toBe('lose')
+  })
+
+  test('hardway 6 loses on 7', () => {
+    const hw: ActiveBet = { id: 'hw1', type: 'hardway', amount: 10, number: 6, working: true }
+    const res = resolveRoll([3, 4], 'point', 9, [hw], rules)
+    expect(res.outcomes[0].result).toBe('lose')
+  })
+
+  test('pass line odds pay 6:5 when point is 6', () => {
+    const pass: ActiveBet = { id: 'p1', type: 'pass', amount: 10, odds: 25, working: true }
+    const res = resolveRoll([3, 3], 'point', 6, [pass], rules)
+    expect(res.outcomes[0].result).toBe('win')
+    // flat $10 wins $10; odds $25 on 6 at 6:5 = $30
+    expect(res.outcomes[0].delta).toBe(40)
+  })
+
+  test('come bet placed on 5: come-point set to 5', () => {
+    const come: ActiveBet = { id: 'c1', type: 'come', amount: 10, working: true }
+    const res = resolveRoll([2, 3], 'point', 6, [come], rules)
+    // 5 neither wins nor loses a fresh come bet — sets comePoint
+    expect(res.outcomes[0].result).toBe('continue')
+  })
+
+  test('come bet with comePoint=5 wins when 5 rolls', () => {
+    const come: ActiveBet = { id: 'c1', type: 'come', amount: 10, comePoint: 5, working: true }
+    const res = resolveRoll([2, 3], 'point', 6, [come], rules)
+    expect(res.outcomes[0].result).toBe('win')
+    expect(res.outcomes[0].delta).toBe(10)
+  })
+
+  test('come bet with comePoint=5 loses on 7', () => {
+    const come: ActiveBet = { id: 'c1', type: 'come', amount: 10, comePoint: 5, working: true }
+    const res = resolveRoll([3, 4], 'point', 6, [come], rules)
+    expect(res.outcomes[0].result).toBe('lose')
+  })
+
+  test('big6 pays 1:1 when 6 rolls', () => {
+    const big6: ActiveBet = { id: 'b6', type: 'big6', amount: 10, working: true }
+    const res = resolveRoll([3, 3], 'point', 9, [big6], rules)
+    expect(res.outcomes[0].result).toBe('win')
+    expect(res.outcomes[0].delta).toBe(10)
+  })
+})
