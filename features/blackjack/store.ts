@@ -69,7 +69,12 @@ function computeSuggestion(
   const hand = playerHands[activeHandIndex]
   const upcard = dealerHand[0]
   if (!hand || hand.length < 2 || !upcard) return null
-  return getOptimalAction(hand, upcard, tableRules)
+  const action = getOptimalAction(hand, upcard, tableRules)
+  if (action === 'double') {
+    if (hand.length > 2) return 'hit'
+    if (playerHands.length > 1 && !tableRules.doubleAfterSplit) return 'hit'
+  }
+  return action
 }
 
 function runDealer(deck: Card[], dealerHand: Card[], tableRules: TableRules): { deck: Card[]; dealerHand: Card[] } {
