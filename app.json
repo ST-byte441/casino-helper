@@ -11,7 +11,7 @@
     },
     "scheme": "untitledmobile",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/chipLogo.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true
@@ -21,7 +21,7 @@
       "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
+        "foregroundImage": "./assets/chipLogo.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
