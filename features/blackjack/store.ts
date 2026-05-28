@@ -90,7 +90,7 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
 
   setTableRules: (rules) => {
     const deck = createDeck(rules.deckCount)
-    set({ tableRules: rules, deck })
+    set({ ...initialState, tableRules: rules, deck })
   },
 
   toggleAssist: () => {
