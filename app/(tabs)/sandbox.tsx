@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { View, Text, TouchableOpacity, ScrollView, Modal, StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Value, Card as CardType, TableRules, PayoutMode, SoftSeven, SurrenderMode, DeckCount } from '../../lib/types'
+import { Value, Card as CardType, TableRules, SoftSeven, SurrenderMode } from '../../lib/types'
 import { DEFAULT_TABLE_RULES } from '../../lib/constants'
 import { getOptimalAction } from '../../features/blackjack/strategy'
 import { Card } from '../../features/blackjack/components/Card'
@@ -64,10 +64,12 @@ export default function SandboxScreen() {
   const dealerCard: CardType | null = dealerRank ? { suit: '♠', value: dealerRank } : null
   const playerHand: CardType[] = playerCards.map(c => ({ suit: '♠', value: c.value }))
 
-  const optimalAction =
+  const rawAction =
     dealerCard && playerHand.length >= 2
       ? getOptimalAction(playerHand, dealerCard, tableRules)
       : null
+  // double is only legal on the initial 2-card hand; fall back to hit for 3+ cards
+  const optimalAction = rawAction === 'double' && playerHand.length > 2 ? 'hit' : rawAction
 
   function handlePickerSelect(value: Value) {
     if (pickerTarget === 'dealer') {
@@ -161,43 +163,18 @@ export default function SandboxScreen() {
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setRulesOpen(false)}>
           <TouchableOpacity style={styles.modalSheet} activeOpacity={1}>
             <Text style={styles.modalTitle}>Table Rules</Text>
-            <ScrollView contentContainerStyle={{ paddingBottom: 8 }}>
-              <RuleRow<PayoutMode>
-                label="Blackjack Pays"
-                options={[{ label: '3:2', value: '3:2' }, { label: '6:5', value: '6:5' }]}
-                value={tableRules.payoutMode} onChange={v => set('payoutMode', v)}
-              />
+            <View>
               <RuleRow<SoftSeven>
                 label="Dealer Soft 17"
                 options={[{ label: 'Hit (H17)', value: 'H17' }, { label: 'Stand (S17)', value: 'S17' }]}
                 value={tableRules.dealerSoft17} onChange={v => set('dealerSoft17', v)}
-              />
-              <RuleRow<boolean>
-                label="Double After Split"
-                options={[{ label: 'On', value: true }, { label: 'Off', value: false }]}
-                value={tableRules.doubleAfterSplit} onChange={v => set('doubleAfterSplit', v)}
-              />
-              <RuleRow<boolean>
-                label="Re-split Aces"
-                options={[{ label: 'On', value: true }, { label: 'Off', value: false }]}
-                value={tableRules.resplitAces} onChange={v => set('resplitAces', v)}
               />
               <RuleRow<SurrenderMode>
                 label="Surrender"
                 options={[{ label: 'None', value: 'none' }, { label: 'Late', value: 'late' }, { label: 'Early', value: 'early' }]}
                 value={tableRules.surrender} onChange={v => set('surrender', v)}
               />
-              <RuleRow<DeckCount>
-                label="Number of Decks"
-                options={[{ label: '1', value: 1 }, { label: '2', value: 2 }, { label: '6', value: 6 }, { label: '8', value: 8 }]}
-                value={tableRules.deckCount} onChange={v => set('deckCount', v)}
-              />
-              <RuleRow<boolean>
-                label="Continuous Shuffle"
-                options={[{ label: 'On', value: true }, { label: 'Off', value: false }]}
-                value={tableRules.continuousShuffle} onChange={v => set('continuousShuffle', v)}
-              />
-            </ScrollView>
+            </View>
             <TouchableOpacity style={styles.doneBtn} onPress={() => setRulesOpen(false)}>
               <Text style={styles.doneBtnText}>Done</Text>
             </TouchableOpacity>
