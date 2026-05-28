@@ -60,10 +60,12 @@ npx tsc --noEmit  # type check only
 app/
   (tabs)/         # Tab bar screens
     index.tsx     # Game lobby
-    sandbox.tsx   # Sandbox tools
+    sandbox.tsx   # Sandbox game picker
     profile.tsx   # Profile switcher
   blackjack/
     index.tsx     # Blackjack table screen
+  sandbox/
+    blackjack.tsx # Blackjack strategy sandbox
 features/
   blackjack/
     engine.ts     # Pure TS: deck, scoring, rule checks, hand resolution
