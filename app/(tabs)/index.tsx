@@ -5,6 +5,7 @@ import { useProfileStore } from '../../features/profile/store'
 
 const GAMES = [
   { id: 'blackjack', label: 'Blackjack', available: true, route: '/blackjack' },
+  { id: 'craps', label: 'Craps', available: true, route: '/craps' },
   { id: 'roulette', label: 'Roulette', available: false },
   { id: 'poker', label: 'Three Card Poker', available: false },
 ]
