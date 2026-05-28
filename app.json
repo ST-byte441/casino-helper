@@ -18,6 +18,7 @@
     },
     "android": {
       "package": "com.stbyte441.casinohelper",
+      "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
