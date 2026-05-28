@@ -65,6 +65,8 @@ app/
     profile.tsx   # Profile switcher
   blackjack/
     index.tsx     # Blackjack table screen
+  craps/
+    index.tsx     # Craps table screen
   sandbox/
     blackjack.tsx # Blackjack strategy sandbox
 features/
@@ -77,6 +79,7 @@ features/
     engine.ts     # Pure TS: dice, phase helpers, bet validity, odds helpers, payout calc, roll resolution
     strategy.ts   # Pure TS: getBetQuality — rates any bet type as optimal/acceptable/poor/avoid
     store.ts      # Session Zustand store (phase, dice, point, bets, roll, assist toggle)
+    components/   # UI components (TableSetup, DiceDisplay, BetCategoryPanel, BetRow, OddsRow, HopBetGrid, RollButton, RollResultBanner)
   profile/
     store.ts      # Persisted Zustand store (AsyncStorage)
     components/   # ProfileCard, ProfileList, CreateProfileModal
