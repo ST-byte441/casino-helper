@@ -76,6 +76,7 @@ features/
   craps/
     engine.ts     # Pure TS: dice, phase helpers, bet validity, odds helpers, payout calc, roll resolution
     strategy.ts   # Pure TS: getBetQuality — rates any bet type as optimal/acceptable/poor/avoid
+    store.ts      # Session Zustand store (phase, dice, point, bets, roll, assist toggle)
   profile/
     store.ts      # Persisted Zustand store (AsyncStorage)
     components/   # ProfileCard, ProfileList, CreateProfileModal
