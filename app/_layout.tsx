@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { View } from 'react-native'
 import { Stack } from 'expo-router'
 import { checkForUpdate, UpdateInfo } from '../lib/updates'
 import UpdateModal from '../components/UpdateModal'
@@ -13,7 +14,7 @@ export default function RootLayout() {
   }, [])
 
   return (
-    <>
+    <View style={{ flex: 1, backgroundColor: '#13131f' }}>
       <Stack screenOptions={{ contentStyle: { backgroundColor: '#13131f' } }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="blackjack/index" options={{ headerShown: false }} />
@@ -27,6 +28,6 @@ export default function RootLayout() {
           onDismiss={() => setUpdateInfo(null)}
         />
       )}
-    </>
+    </View>
   )
 }
