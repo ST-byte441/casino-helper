@@ -15,7 +15,7 @@ export default function RootLayout() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#13131f' }}>
-      <Stack screenOptions={{ contentStyle: { backgroundColor: '#13131f' } }}>
+      <Stack screenOptions={{ contentStyle: { backgroundColor: '#13131f' }, animation: 'none' }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="blackjack/index" options={{ headerShown: false }} />
         <Stack.Screen name="sandbox/blackjack" options={{ headerShown: false }} />
