@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Modal, View, Text, TextInput, TouchableOpacity, Switch, StyleSheet } from 'react-native'
+import { Modal, View, Text, TextInput, TouchableOpacity, Switch, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
 import { useProfileStore } from '../store'
 
 type Props = { visible: boolean; onClose: () => void }
@@ -19,7 +19,7 @@ export function CreateProfileModal({ visible, onClose }: Props) {
 
   return (
     <Modal visible={visible} transparent animationType="slide">
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={styles.sheet}>
           <Text style={styles.title}>New Profile</Text>
           <TextInput style={styles.input} placeholder="Name" placeholderTextColor="#666"
@@ -37,7 +37,7 @@ export function CreateProfileModal({ visible, onClose }: Props) {
           </TouchableOpacity>
           <TouchableOpacity onPress={onClose}><Text style={styles.cancel}>Cancel</Text></TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   )
 }
