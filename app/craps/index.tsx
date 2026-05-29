@@ -76,6 +76,17 @@ export default function CrapsScreen() {
     return outcome?.result === 'win' ? outcome.delta : undefined
   }
 
+  // True when the place bet amount produces a whole-dollar payout for that number's true pay rate
+  function isCleanPlace(amount: number, n: number): boolean {
+    if (amount === 0) return false
+    if (n === 6 || n === 8) return amount % 6 === 0   // 7:6
+    if (n === 5 || n === 9) return amount % 5 === 0   // 7:5
+    if (n === 4 || n === 10) return amount % 5 === 0  // 9:5
+    if (n === 2 || n === 12) return amount % 2 === 0  // 11:2 (crapless)
+    if (n === 3 || n === 11) return amount % 4 === 0  // 11:4 (crapless)
+    return true
+  }
+
   // True when the odds amount produces a whole-dollar payout at the point's true-odds rate
   function isCleanOdds(oddsAmt: number, pt: number): boolean {
     if (oddsAmt === 0) return false
@@ -186,12 +197,14 @@ export default function CrapsScreen() {
                 key={n}
                 label={`Place ${n}`}
                 amount={betAmount('place', n)}
-                increment={suggestedBetIncrement('place', n)}
+                increment={1}
+                increments={[1, 5, 10]}
                 showWorking={phase === 'come-out' && !!placeBet}
                 working={placeBet?.working}
                 quality={assistEnabled ? getBetQuality('place', false, false, n) : null}
+                cleanPayout={assistEnabled && isCleanPlace(betAmount('place', n), n)}
                 winDelta={lastWinDelta('place', n)}
-                onAdd={() => store.placeBet('place', suggestedBetIncrement('place', n), n)}
+                onAdd={(amt) => store.placeBet('place', amt ?? 1, n)}
                 onRemove={() => removeBet('place', n)}
                 onToggleWorking={() => placeBet && store.toggleWorking(placeBet.id)}
               />

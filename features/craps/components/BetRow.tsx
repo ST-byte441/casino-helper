@@ -12,6 +12,7 @@ type Props = {
   showWorking?: boolean
   working?: boolean
   quality?: BetQuality | null
+  cleanPayout?: boolean
   winDelta?: number
   onAdd(amount?: number): void
   onRemove(): void
@@ -25,8 +26,8 @@ const QUALITY_COLORS: Record<BetQuality, string> = {
   avoid: '#e74c3c',
 }
 
-export function BetRow({ label, amount, increment, increments, disabled, showWorking, working, quality, winDelta, onAdd, onRemove, onToggleWorking }: Props) {
-  const borderColor = quality ? QUALITY_COLORS[quality] : 'transparent'
+export function BetRow({ label, amount, increment, increments, disabled, showWorking, working, quality, cleanPayout, winDelta, onAdd, onRemove, onToggleWorking }: Props) {
+  const borderColor = cleanPayout ? '#2ecc71' : quality ? QUALITY_COLORS[quality] : 'transparent'
   const addAmounts = increments ?? [increment]
   return (
     <View style={[styles.row, { borderLeftColor: borderColor }]}>
