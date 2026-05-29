@@ -1,5 +1,6 @@
 import {
   baccaratValue, scoreHand, buildDeck, dealHands, isNatural, isPair,
+  shouldPlayerDraw, shouldBankerDraw,
 } from '../../features/baccarat/engine'
 import { Card } from '../../lib/types'
 
@@ -52,4 +53,52 @@ describe('isPair', () => {
   test('true when first two cards share value', () => expect(isPair([c('7', '♠'), c('7', '♥')])).toBe(true))
   test('false when values differ', () => expect(isPair([c('7'), c('8')])).toBe(false))
   test('K and K = true', () => expect(isPair([c('K', '♠'), c('K', '♥')])).toBe(true))
+})
+
+describe('shouldPlayerDraw', () => {
+  test('draws on 0–5', () => {
+    for (let i = 0; i <= 5; i++) expect(shouldPlayerDraw(i)).toBe(true)
+  })
+  test('stands on 6–9', () => {
+    for (let i = 6; i <= 9; i++) expect(shouldPlayerDraw(i)).toBe(false)
+  })
+})
+
+describe('shouldBankerDraw — player did not draw', () => {
+  test('draws on 0–5', () => {
+    for (let i = 0; i <= 5; i++) expect(shouldBankerDraw(i, false)).toBe(true)
+  })
+  test('stands on 6–7', () => {
+    expect(shouldBankerDraw(6, false)).toBe(false)
+    expect(shouldBankerDraw(7, false)).toBe(false)
+  })
+})
+
+describe('shouldBankerDraw — player drew third card', () => {
+  test('banker 0-2: always draws regardless of player third card', () => {
+    for (let b = 0; b <= 2; b++) {
+      for (let p = 0; p <= 9; p++) expect(shouldBankerDraw(b, true, p)).toBe(true)
+    }
+  })
+  test('banker 3: draws on 0-7 and 9, stands on 8', () => {
+    for (let p = 0; p <= 7; p++) expect(shouldBankerDraw(3, true, p)).toBe(true)
+    expect(shouldBankerDraw(3, true, 8)).toBe(false)
+    expect(shouldBankerDraw(3, true, 9)).toBe(true)
+  })
+  test('banker 4: draws on 2-7, stands on 0,1,8,9', () => {
+    for (let p = 2; p <= 7; p++) expect(shouldBankerDraw(4, true, p)).toBe(true)
+    for (const p of [0, 1, 8, 9]) expect(shouldBankerDraw(4, true, p)).toBe(false)
+  })
+  test('banker 5: draws on 4-7, stands on 0-3 and 8-9', () => {
+    for (let p = 4; p <= 7; p++) expect(shouldBankerDraw(5, true, p)).toBe(true)
+    for (const p of [0, 1, 2, 3, 8, 9]) expect(shouldBankerDraw(5, true, p)).toBe(false)
+  })
+  test('banker 6: draws on 6-7, stands on all others', () => {
+    expect(shouldBankerDraw(6, true, 6)).toBe(true)
+    expect(shouldBankerDraw(6, true, 7)).toBe(true)
+    for (const p of [0, 1, 2, 3, 4, 5, 8, 9]) expect(shouldBankerDraw(6, true, p)).toBe(false)
+  })
+  test('banker 7: always stands', () => {
+    for (let p = 0; p <= 9; p++) expect(shouldBankerDraw(7, true, p)).toBe(false)
+  })
 })

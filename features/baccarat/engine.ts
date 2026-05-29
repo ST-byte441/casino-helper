@@ -46,3 +46,24 @@ export function isNatural(hand: Card[]): boolean {
 export function isPair(hand: Card[]): boolean {
   return hand[0].value === hand[1].value
 }
+
+export function shouldPlayerDraw(playerTotal: number): boolean {
+  return playerTotal <= 5
+}
+
+export function shouldBankerDraw(
+  bankerTotal: number,
+  playerDrewThird: boolean,
+  playerThirdCard?: number
+): boolean {
+  if (bankerTotal >= 8) return false
+  if (bankerTotal === 7) return false
+  if (!playerDrewThird) return bankerTotal <= 5
+  const p = playerThirdCard!
+  if (bankerTotal <= 2) return true
+  if (bankerTotal === 3) return p !== 8
+  if (bankerTotal === 4) return p >= 2 && p <= 7
+  if (bankerTotal === 5) return p >= 4 && p <= 7
+  if (bankerTotal === 6) return p === 6 || p === 7
+  return false
+}
