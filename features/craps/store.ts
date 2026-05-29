@@ -106,6 +106,9 @@ export const useCrapsStore = create<CrapsState & CrapsActions>((set, get) => ({
       useProfileStore.getState().updateBalance(totalDelta)
     }
 
+    // Multi-roll bets stay on the table after winning — only removed on a loss
+    const persistOnWin: ActiveBet['type'][] = ['place', 'buy', 'lay', 'big6', 'big8', 'hardway']
+
     let updatedBets = bets.map(bet => {
       const outcome = resolution.outcomes.find(o => o.betId === bet.id)
       if (!outcome) return bet
@@ -115,7 +118,9 @@ export const useCrapsStore = create<CrapsState & CrapsActions>((set, get) => ({
     }).filter(bet => {
       const outcome = resolution.outcomes.find(o => o.betId === bet.id)
       if (!outcome) return true
-      return outcome.result === 'continue'
+      if (outcome.result === 'continue') return true
+      if (outcome.result === 'win' && persistOnWin.includes(bet.type)) return true
+      return false
     })
 
     let nextPhase: CrapsPhase = phase

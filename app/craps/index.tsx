@@ -61,6 +61,15 @@ export default function CrapsScreen() {
     store.placeBet(type, amount ?? suggestedBetIncrement(type, num), num)
   }
 
+  // Returns the delta from the last roll for a specific bet (used for place bet win indicators)
+  function lastWinDelta(type: BetType, number?: number): number | undefined {
+    if (!showBanner || !lastRoll) return undefined
+    const bet = bets.find(b => b.type === type && (number == null || b.number === number))
+    if (!bet) return undefined
+    const outcome = lastRoll.outcomes.find(o => o.betId === bet.id)
+    return outcome?.result === 'win' ? outcome.delta : undefined
+  }
+
   // True when the odds amount produces a whole-dollar payout at the point's true-odds rate
   function isCleanOdds(oddsAmt: number, pt: number): boolean {
     if (oddsAmt === 0) return false
@@ -175,6 +184,7 @@ export default function CrapsScreen() {
                 showWorking={phase === 'come-out' && !!placeBet}
                 working={placeBet?.working}
                 quality={assistEnabled ? getBetQuality('place', false, false, n) : null}
+                winDelta={lastWinDelta('place', n)}
                 onAdd={() => store.placeBet('place', suggestedBetIncrement('place', n), n)}
                 onRemove={() => removeBet('place', n)}
                 onToggleWorking={() => placeBet && store.toggleWorking(placeBet.id)}

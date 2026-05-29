@@ -12,6 +12,7 @@ type Props = {
   showWorking?: boolean
   working?: boolean
   quality?: BetQuality | null
+  winDelta?: number
   onAdd(amount?: number): void
   onRemove(): void
   onToggleWorking?(): void
@@ -24,7 +25,7 @@ const QUALITY_COLORS: Record<BetQuality, string> = {
   avoid: '#e74c3c',
 }
 
-export function BetRow({ label, amount, increment, increments, disabled, showWorking, working, quality, onAdd, onRemove, onToggleWorking }: Props) {
+export function BetRow({ label, amount, increment, increments, disabled, showWorking, working, quality, winDelta, onAdd, onRemove, onToggleWorking }: Props) {
   const borderColor = quality ? QUALITY_COLORS[quality] : 'transparent'
   const addAmounts = increments ?? [increment]
   return (
@@ -32,6 +33,9 @@ export function BetRow({ label, amount, increment, increments, disabled, showWor
       <Text style={[styles.label, disabled && styles.dimmed, amount > 0 && styles.labelActive]}>{label}</Text>
       <View style={styles.right}>
         {amount > 0 && <Text style={styles.amount}>${amount}</Text>}
+        {winDelta != null && winDelta > 0 && (
+          <Text style={styles.winBadge}>+${winDelta}</Text>
+        )}
         {showWorking && working != null && onToggleWorking && (
           <WorkingToggle working={working} onToggle={onToggleWorking} />
         )}
@@ -55,6 +59,7 @@ const styles = StyleSheet.create({
   dimmed: { color: '#555' },
   right: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   amount: { color: '#FFD700', fontSize: 14, minWidth: 40, textAlign: 'right' },
+  winBadge: { color: '#2ecc71', fontSize: 12, fontWeight: '700' },
   btn: { backgroundColor: '#2a2a3e', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6 },
   btnDisabled: { opacity: 0.3 },
   btnText: { color: '#fff', fontSize: 13, fontWeight: '600' },
