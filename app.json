@@ -2,8 +2,8 @@
   "expo": {
     "name": "Casino Helper",
     "slug": "casino-helper",
-    "version": "1.1.0",
-    "runtimeVersion": "1.1.0",
+    "version": "1.2.0",
+    "runtimeVersion": "1.2.0",
     "updates": {
       "url": "https://u.expo.dev/79f48262-8643-40b5-824f-817d00206453",
       "checkAutomatically": "ON_LOAD",
