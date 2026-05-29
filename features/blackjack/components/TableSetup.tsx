@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native'
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { TableRules, PayoutMode, SoftSeven, SurrenderMode, DeckCount } from '../../../lib/types'
 import { DEFAULT_TABLE_RULES } from '../../../lib/constants'
@@ -40,13 +40,26 @@ function RuleRow<T extends string | number | boolean>({ label, note, options, va
 
 export function TableSetup({ onStart, initialRules }: Props) {
   const [rules, setRules] = useState<TableRules>(initialRules ?? DEFAULT_TABLE_RULES)
+  const [showScrollHint, setShowScrollHint] = useState(true)
   const set = <K extends keyof TableRules>(key: K, val: TableRules[K]) =>
     setRules(r => ({ ...r, [key]: val }))
+
+  function handleScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
+    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent
+    setShowScrollHint(contentOffset.y + layoutMeasurement.height < contentSize.height - 24)
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Table Rules</Text>
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <View style={styles.scrollWrapper}>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator
+        indicatorStyle="white"
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
         <RuleRow<PayoutMode>
           label="Blackjack Pays" note="6:5 adds +1.39% house edge"
           options={[{ label: '3:2', value: '3:2' }, { label: '6:5', value: '6:5' }]}
@@ -83,6 +96,13 @@ export function TableSetup({ onStart, initialRules }: Props) {
           value={rules.continuousShuffle} onChange={v => set('continuousShuffle', v)}
         />
       </ScrollView>
+      {showScrollHint && (
+        <View style={styles.scrollHint} pointerEvents="none">
+          <Text style={styles.scrollHintArrow}>↓</Text>
+          <Text style={styles.scrollHintLabel}>scroll for more</Text>
+        </View>
+      )}
+      </View>
       <TouchableOpacity style={styles.playBtn} onPress={() => onStart(rules)}>
         <Text style={styles.playBtnText}>Play</Text>
       </TouchableOpacity>
@@ -93,7 +113,11 @@ export function TableSetup({ onStart, initialRules }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#13131f' },
   title: { color: '#fff', fontSize: 24, fontWeight: '700', padding: 16 },
+  scrollWrapper: { flex: 1 },
   scroll: { paddingHorizontal: 16, paddingBottom: 16 },
+  scrollHint: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingVertical: 12, alignItems: 'center', backgroundColor: 'rgba(19,19,31,0.85)' },
+  scrollHintArrow: { color: '#FFD700', fontSize: 16 },
+  scrollHintLabel: { color: '#aaa', fontSize: 11, marginTop: 2 },
   ruleRow: { marginBottom: 20 },
   ruleInfo: { marginBottom: 8 },
   ruleLabel: { color: '#fff', fontSize: 16, fontWeight: '600' },
