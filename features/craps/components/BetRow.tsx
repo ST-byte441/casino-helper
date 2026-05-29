@@ -7,11 +7,12 @@ type Props = {
   label: string
   amount: number
   increment: number
+  increments?: number[]
   disabled?: boolean
   showWorking?: boolean
   working?: boolean
   quality?: BetQuality | null
-  onAdd(): void
+  onAdd(amount?: number): void
   onRemove(): void
   onToggleWorking?(): void
 }
@@ -23,8 +24,9 @@ const QUALITY_COLORS: Record<BetQuality, string> = {
   avoid: '#e74c3c',
 }
 
-export function BetRow({ label, amount, increment, disabled, showWorking, working, quality, onAdd, onRemove, onToggleWorking }: Props) {
+export function BetRow({ label, amount, increment, increments, disabled, showWorking, working, quality, onAdd, onRemove, onToggleWorking }: Props) {
   const borderColor = quality ? QUALITY_COLORS[quality] : 'transparent'
+  const addAmounts = increments ?? [increment]
   return (
     <View style={[styles.row, { borderLeftColor: borderColor }]}>
       <Text style={[styles.label, disabled && styles.dimmed, amount > 0 && styles.labelActive]}>{label}</Text>
@@ -36,9 +38,11 @@ export function BetRow({ label, amount, increment, disabled, showWorking, workin
         <TouchableOpacity style={[styles.btn, disabled && styles.btnDisabled]} onPress={onRemove} disabled={disabled || amount === 0}>
           <Text style={styles.btnText}>−</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.btn, disabled && styles.btnDisabled]} onPress={onAdd} disabled={!!disabled}>
-          <Text style={styles.btnText}>+${increment}</Text>
-        </TouchableOpacity>
+        {addAmounts.map(inc => (
+          <TouchableOpacity key={inc} style={[styles.btn, disabled && styles.btnDisabled]} onPress={() => onAdd(inc)} disabled={!!disabled}>
+            <Text style={styles.btnText}>+${inc}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
     </View>
   )

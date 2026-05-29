@@ -57,8 +57,16 @@ export default function CrapsScreen() {
     return bets.filter(b => b.type === type && (number == null || b.number === number)).reduce((s, b) => s + b.amount, 0)
   }
 
-  function addBet(type: BetType, num?: number) {
-    store.placeBet(type, suggestedBetIncrement(type, num), num)
+  function addBet(type: BetType, num?: number, amount?: number) {
+    store.placeBet(type, amount ?? suggestedBetIncrement(type, num), num)
+  }
+
+  // True when the odds amount produces a whole-dollar payout at the point's true-odds rate
+  function isCleanOdds(oddsAmt: number, pt: number): boolean {
+    if (oddsAmt === 0) return false
+    if (pt === 6 || pt === 8) return oddsAmt % 5 === 0  // 6:5 — needs multiples of 5
+    if (pt === 5 || pt === 9) return oddsAmt % 2 === 0  // 3:2 — needs multiples of 2
+    return true                                          // 4/10: 2:1 — always clean
   }
 
   function removeBet(type: BetType, num?: number) {
@@ -69,10 +77,6 @@ export default function CrapsScreen() {
   const placeNumbers = variant === 'craps' ? [4, 5, 6, 8, 9, 10] : [2, 3, 4, 5, 6, 8, 9, 10, 11, 12]
   const hardwayNumbers = [4, 6, 8, 10]
 
-  // Odds increment must produce clean payouts: 6/8 → $5 (6:5), 5/9 → $2 (3:2), 4/10 → $5 (2:1)
-  const pointOddsIncrement = point
-    ? (point === 6 || point === 8 ? 5 : point === 5 || point === 9 ? 2 : 5)
-    : 5
 
   return (
     <SafeAreaView style={styles.root}>
@@ -99,17 +103,19 @@ export default function CrapsScreen() {
             <BetRow
               label="Pass Line"
               amount={betAmount('pass')}
-              increment={suggestedBetIncrement('pass')}
+              increment={1}
+              increments={[1, 5, 10]}
               disabled={!isValidBetForPhase('pass', phase)}
               quality={getQuality('pass')}
-              onAdd={() => addBet('pass')}
+              onAdd={(amt) => addBet('pass', undefined, amt)}
               onRemove={() => removeBet('pass')}
             />
             {passBet && point && (
               <OddsRow
                 odds={passBet.odds ?? 0}
                 maxOdds={getMaxOdds(passBet.amount, point, tableRules.oddsMultiple)}
-                increment={pointOddsIncrement}
+                increments={[1, 5, 10]}
+                quality={assistEnabled && isCleanOdds(passBet.odds ?? 0, point) ? 'optimal' : null}
                 onAdd={amt => store.addOdds(passBet.id, amt)}
                 onRemove={amt => store.addOdds(passBet.id, -Math.min(amt, passBet.odds ?? 0))}
               />
@@ -132,7 +138,8 @@ export default function CrapsScreen() {
               <OddsRow
                 odds={dontPassBet.odds ?? 0}
                 maxOdds={getMaxOdds(dontPassBet.amount, point, tableRules.oddsMultiple)}
-                increment={pointOddsIncrement}
+                increments={[1, 5, 10]}
+                quality={assistEnabled && isCleanOdds(dontPassBet.odds ?? 0, point) ? 'optimal' : null}
                 onAdd={amt => store.addOdds(dontPassBet.id, amt)}
                 onRemove={amt => store.addOdds(dontPassBet.id, -Math.min(amt, dontPassBet.odds ?? 0))}
               />
