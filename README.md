@@ -30,9 +30,10 @@ Get the latest APK from the [Releases page](../../releases/latest).
 
 ### Baccarat
 
-- **Three bet types** — Player, Banker, and Tie, plus Player Pair and Banker Pair side bets
-- **Strategy assist** — colour-coded bet quality highlighting the lowest house-edge options
-- **Sandbox mode** — step through any hand by manually selecting cards to study the drawing rules
+- **Standard Baccarat** — Player, Banker (5% commission), Tie (8:1), Player Pair and Banker Pair (11:1) bets
+- **Fully automatic** — all drawing rules applied instantly after Deal; no player decisions required
+- **Strategy assist** — gold border on Banker (optimal), white on Player (acceptable), red on Tie/Pairs (avoid)
+- **Sandbox mode** — manually set all four starting cards, pick third cards step-by-step, and see the rule explanation driving each draw decision
 
 ## Games
 
