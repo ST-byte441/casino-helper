@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router'
 
 const SANDBOXES = [
   { id: 'blackjack', label: 'Blackjack', available: true, route: '/sandbox/blackjack' },
+  { id: 'baccarat', label: 'Baccarat', available: true, route: '/sandbox/baccarat' },
 ]
 
 export default function SandboxLobbyScreen() {

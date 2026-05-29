@@ -19,6 +19,8 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="blackjack/index" options={{ headerShown: false }} />
         <Stack.Screen name="sandbox/blackjack" options={{ headerShown: false }} />
+        <Stack.Screen name="baccarat/index" options={{ headerShown: false }} />
+        <Stack.Screen name="sandbox/baccarat" options={{ headerShown: false }} />
         <Stack.Screen name="craps/index" options={{ headerShown: false }} />
       </Stack>
       {updateInfo && (
