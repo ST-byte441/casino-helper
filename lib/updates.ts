@@ -1,6 +1,6 @@
 import Constants from 'expo-constants'
 
-const RELEASES_API = 'https://api.github.com/repos/ST-byte441/casinoHelper/releases/latest'
+const RELEASES_API = 'https://api.github.com/repos/ST-byte441/casino-helper/releases/latest'
 
 export type UpdateInfo = {
   hasUpdate: boolean
