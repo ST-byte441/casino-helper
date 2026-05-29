@@ -28,7 +28,7 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#13131f', padding: 16 },
-  heading: { color: '#fff', fontSize: 24, fontWeight: '700', marginBottom: 16 },
+  heading: { color: '#fff', fontSize: 20, fontWeight: '700', marginBottom: 16 },
   btn: { backgroundColor: '#FFD700', borderRadius: 8, padding: 14, alignItems: 'center', margin: 16 },
   btnText: { fontWeight: '700', fontSize: 16 },
 })
