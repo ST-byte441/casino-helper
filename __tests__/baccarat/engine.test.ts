@@ -1,6 +1,6 @@
 import {
   baccaratValue, scoreHand, buildDeck, dealHands, isNatural, isPair,
-  shouldPlayerDraw, shouldBankerDraw,
+  shouldPlayerDraw, shouldBankerDraw, resolveRound, calculateDeltas,
 } from '../../features/baccarat/engine'
 import { Card } from '../../lib/types'
 
@@ -100,5 +100,78 @@ describe('shouldBankerDraw — player drew third card', () => {
   })
   test('banker 7: always stands', () => {
     for (let p = 0; p <= 9; p++) expect(shouldBankerDraw(7, true, p)).toBe(false)
+  })
+})
+
+describe('resolveRound', () => {
+  test('player wins when player score higher', () => {
+    expect(resolveRound([c('7'), c('2')], [c('5'), c('3')])).toBe('player') // 9 vs 8
+  })
+  test('banker wins when banker score higher', () => {
+    expect(resolveRound([c('2'), c('3')], [c('7'), c('2')])).toBe('banker') // 5 vs 9
+  })
+  test('tie when scores equal', () => {
+    expect(resolveRound([c('4'), c('5')], [c('3'), c('6')])).toBe('tie') // 9 vs 9
+  })
+})
+
+describe('calculateDeltas', () => {
+  const playerHand: Card[] = [c('7', '♠'), c('2', '♠')]
+  const bankerHand: Card[] = [c('5', '♠'), c('3', '♠')]
+  const pairPlayerHand: Card[] = [c('7', '♠'), c('7', '♥')]
+  const pairBankerHand: Card[] = [c('5', '♠'), c('5', '♥')]
+
+  test('player bet wins 1:1 on player outcome', () => {
+    const d = calculateDeltas({ player: 10 }, 'player', playerHand, bankerHand)
+    expect(d.player).toBe(10)
+  })
+  test('player bet loses on banker outcome', () => {
+    const d = calculateDeltas({ player: 10 }, 'banker', playerHand, bankerHand)
+    expect(d.player).toBe(-10)
+  })
+  test('player bet pushes on tie (delta = 0)', () => {
+    const d = calculateDeltas({ player: 10 }, 'tie', playerHand, bankerHand)
+    expect(d.player).toBe(0)
+  })
+  test('banker bet pays 0.95:1 on banker outcome', () => {
+    const d = calculateDeltas({ banker: 20 }, 'banker', playerHand, bankerHand)
+    expect(d.banker).toBe(19)
+  })
+  test('banker bet loses on player outcome', () => {
+    const d = calculateDeltas({ banker: 20 }, 'player', playerHand, bankerHand)
+    expect(d.banker).toBe(-20)
+  })
+  test('banker bet pushes on tie (delta = 0)', () => {
+    const d = calculateDeltas({ banker: 20 }, 'tie', playerHand, bankerHand)
+    expect(d.banker).toBe(0)
+  })
+  test('tie bet pays 8:1 on tie', () => {
+    const d = calculateDeltas({ tie: 10 }, 'tie', playerHand, bankerHand)
+    expect(d.tie).toBe(80)
+  })
+  test('tie bet loses on player or banker outcome', () => {
+    expect(calculateDeltas({ tie: 10 }, 'player', playerHand, bankerHand).tie).toBe(-10)
+    expect(calculateDeltas({ tie: 10 }, 'banker', playerHand, bankerHand).tie).toBe(-10)
+  })
+  test('player-pair pays 11:1 when player has pair', () => {
+    const d = calculateDeltas({ 'player-pair': 5 }, 'player', pairPlayerHand, bankerHand)
+    expect(d['player-pair']).toBe(55)
+  })
+  test('player-pair loses when player has no pair', () => {
+    const d = calculateDeltas({ 'player-pair': 5 }, 'player', playerHand, bankerHand)
+    expect(d['player-pair']).toBe(-5)
+  })
+  test('banker-pair pays 11:1 when banker has pair', () => {
+    const d = calculateDeltas({ 'banker-pair': 5 }, 'banker', playerHand, pairBankerHand)
+    expect(d['banker-pair']).toBe(55)
+  })
+  test('banker-pair loses when banker has no pair', () => {
+    const d = calculateDeltas({ 'banker-pair': 5 }, 'banker', playerHand, bankerHand)
+    expect(d['banker-pair']).toBe(-5)
+  })
+  test('multiple bets resolved together', () => {
+    const d = calculateDeltas({ player: 10, tie: 5 }, 'player', playerHand, bankerHand)
+    expect(d.player).toBe(10)
+    expect(d.tie).toBe(-5)
   })
 })

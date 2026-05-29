@@ -67,3 +67,46 @@ export function shouldBankerDraw(
   if (bankerTotal === 6) return p === 6 || p === 7
   return false
 }
+
+export function resolveRound(playerHand: Card[], bankerHand: Card[]): BaccaratOutcome {
+  const p = scoreHand(playerHand)
+  const b = scoreHand(bankerHand)
+  if (p > b) return 'player'
+  if (b > p) return 'banker'
+  return 'tie'
+}
+
+export function calculateDeltas(
+  bets: Partial<Record<BaccaratBet, number>>,
+  outcome: BaccaratOutcome,
+  playerHand: Card[],
+  bankerHand: Card[]
+): Partial<Record<BaccaratBet, number>> {
+  const result: Partial<Record<BaccaratBet, number>> = {}
+
+  if (bets.player != null) {
+    if (outcome === 'tie') result.player = 0
+    else if (outcome === 'player') result.player = bets.player
+    else result.player = -bets.player
+  }
+
+  if (bets.banker != null) {
+    if (outcome === 'tie') result.banker = 0
+    else if (outcome === 'banker') result.banker = Math.floor(bets.banker * 0.95)
+    else result.banker = -bets.banker
+  }
+
+  if (bets.tie != null) {
+    result.tie = outcome === 'tie' ? bets.tie * 8 : -bets.tie
+  }
+
+  if (bets['player-pair'] != null) {
+    result['player-pair'] = isPair(playerHand) ? bets['player-pair'] * 11 : -bets['player-pair']
+  }
+
+  if (bets['banker-pair'] != null) {
+    result['banker-pair'] = isPair(bankerHand) ? bets['banker-pair'] * 11 : -bets['banker-pair']
+  }
+
+  return result
+}
