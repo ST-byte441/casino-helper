@@ -54,6 +54,14 @@ export const useCrapsStore = create<CrapsState & CrapsActions>((set, get) => ({
     const { phase, tableRules, bets } = get()
     if (!isValidBetForVariant(type, tableRules.variant)) return
     if (!isValidBetForPhase(type, phase)) return
+    // Non-numbered bets (except hops) merge into the existing bet of the same type
+    if (number == null && type !== 'hop-hard' && type !== 'hop-easy') {
+      const existing = bets.find(b => b.type === type)
+      if (existing) {
+        set({ bets: bets.map(b => b.id === existing.id ? { ...b, amount: b.amount + amount } : b) })
+        return
+      }
+    }
     const working = phase === 'point' || (type !== 'place' && type !== 'buy' && type !== 'lay')
     const bet: ActiveBet = { id: nanoid(), type, amount, number, hopDice, working }
     set({ bets: [...bets, bet] })

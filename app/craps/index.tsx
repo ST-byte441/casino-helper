@@ -69,6 +69,11 @@ export default function CrapsScreen() {
   const placeNumbers = variant === 'craps' ? [4, 5, 6, 8, 9, 10] : [2, 3, 4, 5, 6, 8, 9, 10, 11, 12]
   const hardwayNumbers = [4, 6, 8, 10]
 
+  // Odds increment must produce clean payouts: 6/8 → $5 (6:5), 5/9 → $2 (3:2), 4/10 → $5 (2:1)
+  const pointOddsIncrement = point
+    ? (point === 6 || point === 8 ? 5 : point === 5 || point === 9 ? 2 : 5)
+    : 5
+
   return (
     <SafeAreaView style={styles.root}>
       <View style={styles.header}>
@@ -104,7 +109,7 @@ export default function CrapsScreen() {
               <OddsRow
                 odds={passBet.odds ?? 0}
                 maxOdds={getMaxOdds(passBet.amount, point, tableRules.oddsMultiple)}
-                increment={suggestedBetIncrement('pass')}
+                increment={pointOddsIncrement}
                 onAdd={amt => store.addOdds(passBet.id, amt)}
                 onRemove={amt => store.addOdds(passBet.id, -Math.min(amt, passBet.odds ?? 0))}
               />
@@ -127,7 +132,7 @@ export default function CrapsScreen() {
               <OddsRow
                 odds={dontPassBet.odds ?? 0}
                 maxOdds={getMaxOdds(dontPassBet.amount, point, tableRules.oddsMultiple)}
-                increment={1}
+                increment={pointOddsIncrement}
                 onAdd={amt => store.addOdds(dontPassBet.id, amt)}
                 onRemove={amt => store.addOdds(dontPassBet.id, -Math.min(amt, dontPassBet.odds ?? 0))}
               />
