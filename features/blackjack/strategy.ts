@@ -1,5 +1,5 @@
 import { Card, Action, TableRules } from '../../lib/types'
-import { scoreHand, isSoft, canSplit } from './engine'
+import { scoreHand, isSoft, canSplit, canSurrender } from './engine'
 
 type DealerKey = 2|3|4|5|6|7|8|9|10|11  // 11 = Ace
 
@@ -84,7 +84,7 @@ export function getOptimalAction(
   }
 
   const surrender = getSurrenderAction(score, dk, rules)
-  if (surrender) return surrender
+  if (surrender && canSurrender(playerHand, rules)) return surrender
 
   const split = getSplitAction(playerHand, dk)
   if (split) return split

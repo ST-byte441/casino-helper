@@ -77,4 +77,8 @@ describe('getOptimalAction — surrender', () => {
     const noSurrender: TableRules = { ...rules, surrender: 'none' }
     expect(getOptimalAction([card('9'), card('7')], card('K'), noSurrender)).not.toBe('surrender')
   })
+  test('does not suggest surrender on a 3-card 16 (surrender no longer available)', () => {
+    // 7 + 3 + 6 = 16 vs dealer 9 — strategy says surrender but action is unavailable after hitting
+    expect(getOptimalAction([card('7'), card('3'), card('6')], card('9'), rules)).not.toBe('surrender')
+  })
 })
