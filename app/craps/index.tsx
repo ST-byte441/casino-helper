@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native'
+import React, { useState, useEffect, useRef } from 'react'
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Animated } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useCrapsStore } from '../../features/craps/store'
@@ -26,12 +26,22 @@ export default function CrapsScreen() {
   const balance = active ? (active.bankrollMode === 'infinite' ? '∞' : `$${active.balance}`) : '—'
 
   const [showBanner, setShowBanner] = useState(false)
+  const balanceFlash = useRef(new Animated.Value(0)).current
 
   useEffect(() => {
     return () => { store.resetToSetup() }
   }, [])
 
   const { phase, dice, point, bets, tableRules, assistEnabled, lastRoll, lastDelta } = store
+
+  useEffect(() => {
+    if (!lastRoll || lastDelta <= 0) return
+    Animated.sequence([
+      Animated.timing(balanceFlash, { toValue: 1, duration: 150, useNativeDriver: false }),
+      Animated.delay(400),
+      Animated.timing(balanceFlash, { toValue: 0, duration: 350, useNativeDriver: false }),
+    ]).start()
+  }, [lastRoll])
 
   if (phase === 'setup') {
     return (
@@ -65,6 +75,19 @@ export default function CrapsScreen() {
 
   function addBet(type: BetType, num?: number, amount?: number) {
     store.placeBet(type, amount ?? suggestedBetIncrement(type, num), num)
+  }
+
+  // Sums win deltas for a set of bet type+number specs across ALL matching bets in the last roll
+  function categoryWin(...specs: Array<[BetType, number?]>): number | undefined {
+    if (!showBanner || !lastRoll) return undefined
+    const total = lastRoll.outcomes.reduce((sum, o) => {
+      if (o.result !== 'win') return sum
+      const bet = bets.find(b => b.id === o.betId)
+      if (!bet) return sum
+      const matches = specs.some(([type, num]) => bet.type === type && (num == null || bet.number === num))
+      return matches ? sum + o.delta : sum
+    }, 0)
+    return total > 0 ? total : undefined
   }
 
   // Returns the delta from the last roll for a specific bet (used for place bet win indicators)
@@ -125,6 +148,7 @@ export default function CrapsScreen() {
             totalWagered={betAmount('pass') + (passBet?.odds ?? 0)}
             defaultExpanded
             quality={getQuality('pass')}
+            winDelta={categoryWin(['pass'])}
           >
             <BetRow
               label="Pass Line"
@@ -150,7 +174,7 @@ export default function CrapsScreen() {
         )}
 
         {isValidBetForVariant('dont-pass', variant) && (
-          <BetCategoryPanel title="Don't Pass" totalWagered={betAmount('dont-pass')} quality={getQuality('dont-pass')}>
+          <BetCategoryPanel title="Don't Pass" totalWagered={betAmount('dont-pass')} quality={getQuality('dont-pass')} winDelta={categoryWin(['dont-pass'])}>
             <BetRow
               label="Don't Pass"
               amount={betAmount('dont-pass')}
@@ -174,7 +198,7 @@ export default function CrapsScreen() {
         )}
 
         {isValidBetForVariant('come', variant) && (
-          <BetCategoryPanel title="Come" totalWagered={betAmount('come')} quality={getQuality('come')}>
+          <BetCategoryPanel title="Come" totalWagered={betAmount('come')} quality={getQuality('come')} winDelta={categoryWin(['come'])}>
             <BetRow
               label="Come"
               amount={betAmount('come')}
@@ -189,6 +213,7 @@ export default function CrapsScreen() {
         <BetCategoryPanel
           title="Place Bets"
           totalWagered={placeNumbers.reduce((s, n) => s + betAmount('place', n), 0)}
+          winDelta={categoryWin(...placeNumbers.map(n => ['place', n] as [BetType, number]))}
         >
           {placeNumbers.map(n => {
             const placeBet = bets.find(b => b.type === 'place' && b.number === n)
@@ -212,7 +237,7 @@ export default function CrapsScreen() {
           })}
         </BetCategoryPanel>
 
-        <BetCategoryPanel title="Field" totalWagered={betAmount('field')} quality={getQuality('field')}>
+        <BetCategoryPanel title="Field" totalWagered={betAmount('field')} quality={getQuality('field')} winDelta={categoryWin(['field'], ['low-field'], ['high-field'])}>
           <BetRow
             label={`Field (2=2:1, 12=${tableRules.fieldPays3on12 ? '3' : '2'}:1)`}
             amount={betAmount('field')}
@@ -229,7 +254,7 @@ export default function CrapsScreen() {
           )}
         </BetCategoryPanel>
 
-        <BetCategoryPanel title="Hardways" totalWagered={hardwayNumbers.reduce((s, n) => s + betAmount('hardway', n), 0)}>
+        <BetCategoryPanel title="Hardways" totalWagered={hardwayNumbers.reduce((s, n) => s + betAmount('hardway', n), 0)} winDelta={categoryWin(...hardwayNumbers.map(n => ['hardway', n] as [BetType, number]))}>
           {hardwayNumbers.map(n => (
             <BetRow
               key={n}
@@ -246,6 +271,7 @@ export default function CrapsScreen() {
         <BetCategoryPanel
           title="Proposition Bets"
           totalWagered={(['any-7','any-craps','craps-2','craps-3','yo-11','craps-12','hi-lo','ce','horn','world'] as BetType[]).reduce((s, t) => s + betAmount(t), 0)}
+          winDelta={categoryWin(...(['any-7','any-craps','craps-2','craps-3','yo-11','craps-12','hi-lo','ce','horn','world','hop-hard','hop-easy'] as BetType[]).map(t => [t] as [BetType]))}
         >
           {([
             ['any-7', 'Any 7 (4:1)'],
@@ -276,7 +302,7 @@ export default function CrapsScreen() {
         </BetCategoryPanel>
 
         {isValidBetForVariant('buy', variant) && (
-          <BetCategoryPanel title="Buy / Lay" totalWagered={placeNumbers.reduce((s, n) => s + betAmount('buy', n) + betAmount('lay', n), 0)}>
+          <BetCategoryPanel title="Buy / Lay" totalWagered={placeNumbers.reduce((s, n) => s + betAmount('buy', n) + betAmount('lay', n), 0)} winDelta={categoryWin(...placeNumbers.flatMap(n => [['buy', n], ['lay', n]] as [BetType, number][]))}>
             {placeNumbers.map(n => (
               <React.Fragment key={n}>
                 <BetRow label={`Buy ${n}`} amount={betAmount('buy', n)} increment={suggestedBetIncrement('buy', n)} quality={assistEnabled ? getBetQuality('buy', false, false) : null} onAdd={() => store.placeBet('buy', suggestedBetIncrement('buy', n), n)} onRemove={() => removeBet('buy', n)} />
@@ -289,7 +315,7 @@ export default function CrapsScreen() {
         )}
 
         {isValidBetForVariant('big6', variant) && (
-          <BetCategoryPanel title="Big 6 / Big 8" totalWagered={betAmount('big6') + betAmount('big8')}>
+          <BetCategoryPanel title="Big 6 / Big 8" totalWagered={betAmount('big6') + betAmount('big8')} winDelta={categoryWin(['big6'], ['big8'])}>
             <BetRow label="Big 6 (1:1)" amount={betAmount('big6')} increment={1} quality={assistEnabled ? getBetQuality('big6', false, false) : null} onAdd={() => addBet('big6')} onRemove={() => removeBet('big6')} />
             <BetRow label="Big 8 (1:1)" amount={betAmount('big8')} increment={1} quality={assistEnabled ? getBetQuality('big8', false, false) : null} onAdd={() => addBet('big8')} onRemove={() => removeBet('big8')} />
           </BetCategoryPanel>
@@ -299,7 +325,9 @@ export default function CrapsScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        <Text style={styles.balanceText}>Balance: {balance}</Text>
+        <Animated.Text style={[styles.balanceText, { color: balanceFlash.interpolate({ inputRange: [0, 1], outputRange: ['#aaa', '#2ecc71'] }) }]}>
+          Balance: {balance}
+        </Animated.Text>
         <RollButton onRoll={handleRoll} disabled={bets.length === 0} />
       </View>
 
@@ -323,5 +351,5 @@ const styles = StyleSheet.create({
   assistOn: { color: '#FFD700' },
   scroll: { flex: 1 },
   footer: { borderTopWidth: 1, borderColor: '#2a2a3e', paddingBottom: 4 },
-  balanceText: { color: '#aaa', fontSize: 13, textAlign: 'center', paddingTop: 8 },
+  balanceText: { fontSize: 13, textAlign: 'center', paddingTop: 8, fontWeight: '700' },
 })

@@ -7,6 +7,7 @@ type Props = {
   totalWagered: number
   defaultExpanded?: boolean
   quality?: BetQuality | null
+  winDelta?: number
   children: React.ReactNode
 }
 
@@ -17,7 +18,7 @@ const QUALITY_COLORS: Record<BetQuality, string> = {
   avoid: '#e74c3c',
 }
 
-export function BetCategoryPanel({ title, totalWagered, defaultExpanded, quality, children }: Props) {
+export function BetCategoryPanel({ title, totalWagered, defaultExpanded, quality, winDelta, children }: Props) {
   const [expanded, setExpanded] = useState(defaultExpanded ?? false)
   const borderColor = quality ? QUALITY_COLORS[quality] : 'transparent'
 
@@ -27,6 +28,7 @@ export function BetCategoryPanel({ title, totalWagered, defaultExpanded, quality
         <Text style={styles.arrow}>{expanded ? '▼' : '▶'}</Text>
         <Text style={styles.title}>{title}</Text>
         {totalWagered > 0 && <Text style={styles.total}>${totalWagered}</Text>}
+        {winDelta != null && winDelta > 0 && <Text style={styles.winDelta}>+${winDelta}</Text>}
       </TouchableOpacity>
       {expanded && <View style={styles.body}>{children}</View>}
     </View>
@@ -39,5 +41,6 @@ const styles = StyleSheet.create({
   arrow: { color: '#aaa', fontSize: 12, marginRight: 8 },
   title: { color: '#fff', fontSize: 15, fontWeight: '600', flex: 1 },
   total: { color: '#FFD700', fontSize: 14 },
+  winDelta: { color: '#2ecc71', fontSize: 13, fontWeight: '700', marginLeft: 8 },
   body: { backgroundColor: '#17172a' },
 })
