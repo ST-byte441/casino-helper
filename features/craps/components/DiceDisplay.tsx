@@ -1,25 +1,31 @@
 import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 
-const DOT_POSITIONS: Record<number, Array<[number, number]>> = {
-  1: [[1, 1]],
-  2: [[0, 0], [2, 2]],
-  3: [[0, 0], [1, 1], [2, 2]],
-  4: [[0, 0], [0, 2], [2, 0], [2, 2]],
-  5: [[0, 0], [0, 2], [1, 1], [2, 0], [2, 2]],
-  6: [[0, 0], [0, 1], [0, 2], [2, 0], [2, 1], [2, 2]],
+const DIE_SIZE = 52
+const DOT = 9
+
+// [xPct, yPct] — dot centre as fraction of die size, matching real die layouts
+const FACES: Record<number, Array<[number, number]>> = {
+  1: [[0.50, 0.50]],
+  2: [[0.75, 0.25], [0.25, 0.75]],
+  3: [[0.75, 0.25], [0.50, 0.50], [0.25, 0.75]],
+  4: [[0.25, 0.25], [0.75, 0.25], [0.25, 0.75], [0.75, 0.75]],
+  5: [[0.25, 0.25], [0.75, 0.25], [0.50, 0.50], [0.25, 0.75], [0.75, 0.75]],
+  6: [[0.25, 0.25], [0.75, 0.25], [0.25, 0.50], [0.75, 0.50], [0.25, 0.75], [0.75, 0.75]],
 }
 
 function Die({ value }: { value: number }) {
-  const dots = DOT_POSITIONS[value] ?? []
   return (
     <View style={styles.die}>
-      {Array.from({ length: 3 }, (_, row) =>
-        Array.from({ length: 3 }, (_, col) => {
-          const hasDot = dots.some(([r, c]) => r === row && c === col)
-          return <View key={`${row}-${col}`} style={[styles.cell, hasDot && styles.dot]} />
-        })
-      )}
+      {(FACES[value] ?? []).map(([xPct, yPct], i) => (
+        <View
+          key={i}
+          style={[styles.dot, {
+            left: xPct * DIE_SIZE - DOT / 2,
+            top: yPct * DIE_SIZE - DOT / 2,
+          }]}
+        />
+      ))}
     </View>
   )
 }
@@ -56,9 +62,8 @@ export function DiceDisplay({ dice, point }: Props) {
 const styles = StyleSheet.create({
   container: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12 },
   diceRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  die: { width: 48, height: 48, backgroundColor: '#fff', borderRadius: 8, padding: 4, flexWrap: 'wrap', flexDirection: 'row' },
-  cell: { width: '33.33%', aspectRatio: 1, alignItems: 'center', justifyContent: 'center' },
-  dot: { backgroundColor: '#13131f', borderRadius: 99, width: 8, height: 8, alignSelf: 'center' },
+  die: { width: DIE_SIZE, height: DIE_SIZE, backgroundColor: '#fff', borderRadius: 8, position: 'relative' },
+  dot: { position: 'absolute', width: DOT, height: DOT, borderRadius: DOT, backgroundColor: '#13131f' },
   plus: { color: '#aaa', fontSize: 18 },
   sum: { color: '#fff', fontSize: 22, fontWeight: '700', minWidth: 40 },
   placeholder: { color: '#555', fontSize: 28, letterSpacing: 8 },
