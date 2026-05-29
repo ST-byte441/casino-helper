@@ -75,6 +75,19 @@ test('toggleAssist flips assistEnabled', () => {
   expect(result.current.assistEnabled).toBe(true)
 })
 
+test('newHand keeps assistEnabled state from previous hand', () => {
+  const { result } = renderHook(() => useBlackjackStore())
+  act(() => {
+    result.current.setTableRules(DEFAULT_TABLE_RULES)
+    result.current.toggleAssist()
+    result.current.placeBet(25)
+    result.current.deal()
+    jest.runAllTimers()
+    result.current.newHand()
+  })
+  expect(result.current.assistEnabled).toBe(true)
+})
+
 test('newHand resets hands and bet but keeps tableRules', () => {
   const { result } = renderHook(() => useBlackjackStore())
   act(() => {

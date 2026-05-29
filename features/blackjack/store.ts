@@ -243,7 +243,7 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
 
   newHand: () => {
     cancelPendingSteps()
-    const { tableRules, deck } = get()
-    set({ ...initialState, tableRules, deck })
+    const { tableRules, deck, assistEnabled } = get()
+    set({ ...initialState, tableRules, deck, assistEnabled })
   },
 }))
