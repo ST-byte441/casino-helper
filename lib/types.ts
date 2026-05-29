@@ -72,3 +72,7 @@ export type RollResolution = {
 }
 
 export type BetQuality = 'optimal' | 'acceptable' | 'poor' | 'avoid'
+
+export type BaccaratBet = 'player' | 'banker' | 'tie' | 'player-pair' | 'banker-pair'
+export type BaccaratPhase = 'betting' | 'result'
+export type BaccaratOutcome = 'player' | 'banker' | 'tie'
