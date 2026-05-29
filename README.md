@@ -28,13 +28,19 @@ Get the latest APK from the [Releases page](../../releases/latest).
 - **Place bet working toggle** — flip any Place bet ON/OFF between come-out and point phases
 - **Strategy assist** — colour-coded bet quality: gold (Pass + max odds), white (acceptable), orange (poor), red (avoid)
 
+### Baccarat
+
+- **Three bet types** — Player, Banker, and Tie, plus Player Pair and Banker Pair side bets
+- **Strategy assist** — colour-coded bet quality highlighting the lowest house-edge options
+- **Sandbox mode** — step through any hand by manually selecting cards to study the drawing rules
+
 ## Games
 
 | Game | Status |
 |---|---|
 | Blackjack | Playable |
 | Craps | Playable |
-| Baccarat | In progress |
+| Baccarat | Playable |
 | Roulette | Coming soon |
 | Poker | Coming soon |
 
