@@ -19,6 +19,7 @@ type CrapsState = {
 
 type CrapsActions = {
   setTableRules(rules: CrapsTableRules): void
+  resetToSetup(): void
   roll(): void
   placeBet(type: BetType, amount: number, number?: number, hopDice?: [number, number]): void
   removeBet(id: string): void
@@ -44,6 +45,11 @@ export const useCrapsStore = create<CrapsState & CrapsActions>((set, get) => ({
 
   setTableRules(rules) {
     set({ ...initialState, tableRules: rules, phase: 'come-out' })
+  },
+
+  resetToSetup() {
+    const { tableRules, assistEnabled } = get()
+    set({ ...initialState, tableRules, assistEnabled })
   },
 
   toggleAssist() {

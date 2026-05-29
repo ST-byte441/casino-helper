@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
@@ -26,6 +26,10 @@ export default function CrapsScreen() {
   const balance = active ? (active.bankrollMode === 'infinite' ? '∞' : `$${active.balance}`) : '—'
 
   const [showBanner, setShowBanner] = useState(false)
+
+  useEffect(() => {
+    return () => { store.resetToSetup() }
+  }, [])
 
   const { phase, dice, point, bets, tableRules, assistEnabled, lastRoll, lastDelta } = store
 
