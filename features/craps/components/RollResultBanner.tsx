@@ -26,14 +26,14 @@ export function RollResultBanner({ resolution, delta, onDismiss }: Props) {
   if (!resolution?.phaseChange) return null
 
   const label = PHASE_LABELS[resolution.phaseChange] ?? ''
-  const sign = delta >= 0 ? '+' : ''
+  const sign = delta >= 0 ? '+' : '-'
 
   return (
     <View style={styles.overlay} pointerEvents="none">
       <View style={styles.card}>
         <Text style={styles.event}>{label}</Text>
         <Text style={[styles.delta, delta >= 0 ? styles.positive : styles.negative]}>
-          {sign}${delta}
+          {sign}${Math.abs(delta)}
         </Text>
       </View>
     </View>

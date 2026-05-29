@@ -27,7 +27,7 @@ export function BetRow({ label, amount, increment, disabled, showWorking, workin
   const borderColor = quality ? QUALITY_COLORS[quality] : 'transparent'
   return (
     <View style={[styles.row, { borderLeftColor: borderColor }]}>
-      <Text style={[styles.label, disabled && styles.dimmed]}>{label}</Text>
+      <Text style={[styles.label, disabled && styles.dimmed, amount > 0 && styles.labelActive]}>{label}</Text>
       <View style={styles.right}>
         {amount > 0 && <Text style={styles.amount}>${amount}</Text>}
         {showWorking && working != null && onToggleWorking && (
@@ -47,6 +47,7 @@ export function BetRow({ label, amount, increment, disabled, showWorking, workin
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 12, borderLeftWidth: 3 },
   label: { color: '#fff', fontSize: 15, flex: 1 },
+  labelActive: { color: '#FFD700', fontWeight: '600' },
   dimmed: { color: '#555' },
   right: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   amount: { color: '#FFD700', fontSize: 14, minWidth: 40, textAlign: 'right' },
