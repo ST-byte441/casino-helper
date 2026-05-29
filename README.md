@@ -34,6 +34,7 @@ Get the latest APK from the [Releases page](../../releases/latest).
 |---|---|
 | Blackjack | Playable |
 | Craps | Playable |
+| Baccarat | In progress |
 | Roulette | Coming soon |
 | Poker | Coming soon |
 
