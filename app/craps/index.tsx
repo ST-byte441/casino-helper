@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useCrapsStore } from '../../features/craps/store'
 import { useProfileStore } from '../../features/profile/store'
+import { usePreferencesStore } from '../../features/preferences/store'
 import { getBetQuality } from '../../features/craps/strategy'
 import { isValidBetForVariant, isValidBetForPhase, suggestedBetIncrement, getMaxOdds } from '../../features/craps/engine'
 import { TableSetup } from '../../features/craps/components/TableSetup'
@@ -20,6 +21,7 @@ export default function CrapsScreen() {
   const router = useRouter()
   const store = useCrapsStore()
   const { profiles, activeProfileId } = useProfileStore()
+  const { crapsRules: savedRules, saveCrapsRules } = usePreferencesStore()
   const active = profiles.find(p => p.id === activeProfileId)
   const balance = active ? (active.bankrollMode === 'infinite' ? '∞' : `$${active.balance}`) : '—'
 
@@ -30,7 +32,7 @@ export default function CrapsScreen() {
   if (phase === 'setup') {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#13131f' }}>
-        <TableSetup rules={tableRules} onConfirm={rules => store.setTableRules(rules)} />
+        <TableSetup rules={savedRules} onConfirm={rules => { saveCrapsRules(rules); store.setTableRules(rules) }} />
       </SafeAreaView>
     )
   }

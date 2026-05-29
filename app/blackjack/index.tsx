@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useBlackjackStore } from '../../features/blackjack/store'
 import { useProfileStore } from '../../features/profile/store'
+import { usePreferencesStore } from '../../features/preferences/store'
 import { TableSetup } from '../../features/blackjack/components/TableSetup'
 import { Hand } from '../../features/blackjack/components/Hand'
 import { ActionButtons } from '../../features/blackjack/components/ActionButtons'
@@ -17,6 +18,7 @@ export default function BlackjackScreen() {
 
   const store = useBlackjackStore()
   const { profiles, activeProfileId } = useProfileStore()
+  const { blackjackRules: savedRules, saveBlackjackRules } = usePreferencesStore()
   const activeProfile = profiles.find(p => p.id === activeProfileId)
   const isInfinite = activeProfile?.bankrollMode === 'infinite'
   const balance = activeProfile
@@ -31,11 +33,12 @@ export default function BlackjackScreen() {
   }, [store.activeHandIndex])
 
   function handleStart(rules: TableRules) {
+    saveBlackjackRules(rules)
     store.setTableRules(rules)
     setSetupDone(true)
   }
 
-  if (!setupDone) return <TableSetup onStart={handleStart} />
+  if (!setupDone) return <TableSetup onStart={handleStart} initialRules={savedRules} />
 
   const activeHand = store.playerHands[store.activeHandIndex] ?? []
   const rules = store.tableRules

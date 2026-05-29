@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { TableRules, PayoutMode, SoftSeven, SurrenderMode, DeckCount } from '../../../lib/types'
 import { DEFAULT_TABLE_RULES } from '../../../lib/constants'
 
-type Props = { onStart: (rules: TableRules) => void }
+type Props = { onStart: (rules: TableRules) => void; initialRules?: TableRules }
 
 type SegmentedProps<T extends string | number | boolean> = {
   label: string
@@ -38,8 +38,8 @@ function RuleRow<T extends string | number | boolean>({ label, note, options, va
   )
 }
 
-export function TableSetup({ onStart }: Props) {
-  const [rules, setRules] = useState<TableRules>(DEFAULT_TABLE_RULES)
+export function TableSetup({ onStart, initialRules }: Props) {
+  const [rules, setRules] = useState<TableRules>(initialRules ?? DEFAULT_TABLE_RULES)
   const set = <K extends keyof TableRules>(key: K, val: TableRules[K]) =>
     setRules(r => ({ ...r, [key]: val }))
 
