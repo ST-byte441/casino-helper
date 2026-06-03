@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useRef } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
@@ -7,13 +7,34 @@ import { useProfileStore } from '../../features/profile/store'
 import { HandDisplay } from '../../features/baccarat/components/HandDisplay'
 import { BetPanel } from '../../features/baccarat/components/BetPanel'
 import { ResultBanner } from '../../features/baccarat/components/ResultBanner'
+import { BaccaratBet } from '../../lib/types'
 
 export default function BaccaratScreen() {
   const router = useRouter()
   const store = useBaccaratStore()
   const { profiles, activeProfileId } = useProfileStore()
   const active = profiles.find(p => p.id === activeProfileId)
-  const balance = active ? (active.bankrollMode === 'infinite' ? '∞' : `$${active.balance}`) : '—'
+  const isInfinite = active?.bankrollMode === 'infinite'
+  const numericBalance = isInfinite ? Infinity : (active?.balance ?? 0)
+  const balance = active ? (isInfinite ? '∞' : `$${active.balance}`) : '—'
+
+  const [showFundsWarning, setFundsWarning] = useState(false)
+  const fundsTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  function triggerFundsWarning() {
+    setFundsWarning(true)
+    clearTimeout(fundsTimer.current)
+    fundsTimer.current = setTimeout(() => setFundsWarning(false), 2000)
+  }
+
+  function handlePlaceBet(bet: BaccaratBet, amount: number) {
+    const totalBets = Object.values(store.bets).reduce((s, v) => s + (v ?? 0), 0)
+    if (!isInfinite && totalBets + amount > numericBalance) {
+      triggerFundsWarning()
+      return
+    }
+    store.placeBet(bet, amount)
+  }
 
   const hasBets = Object.values(store.bets).some(v => v && v > 0)
   const isResult = store.phase === 'result'
@@ -49,13 +70,16 @@ export default function BaccaratScreen() {
           bets={store.bets}
           assistEnabled={store.assistEnabled}
           disabled={isResult}
-          onAdd={store.placeBet}
+          onAdd={handlePlaceBet}
           onClear={store.clearBets}
         />
       </View>
 
       <View style={styles.footer}>
-        <Text style={styles.balance}>Balance: {balance}</Text>
+        <View>
+          {showFundsWarning && <Text style={styles.fundsWarning}>Insufficient funds</Text>}
+          <Text style={styles.balance}>Balance: {balance}</Text>
+        </View>
         {isResult ? (
           <TouchableOpacity style={styles.dealBtn} onPress={store.newHand}>
             <Text style={styles.dealText}>Next Hand</Text>
@@ -97,6 +121,7 @@ const styles = StyleSheet.create({
   betArea: { paddingVertical: 8, borderBottomWidth: 1, borderColor: '#2a2a3e' },
   footer: { padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   balance: { color: '#aaa', fontSize: 14 },
+  fundsWarning: { color: '#e74c3c', fontSize: 12, fontWeight: '600', marginBottom: 2 },
   dealBtn: { backgroundColor: '#FFD700', borderRadius: 10, paddingHorizontal: 32, paddingVertical: 14 },
   dealDisabled: { opacity: 0.4 },
   dealText: { color: '#13131f', fontWeight: '800', fontSize: 16 },

@@ -44,6 +44,12 @@ export const useBaccaratStore = create<BaccaratState & BaccaratActions>((set, ge
 
   placeBet(bet, amount) {
     if (get().phase !== 'betting') return
+    const ps = useProfileStore.getState()
+    const profile = ps.profiles.find(p => p.id === ps.activeProfileId)
+    if (profile && profile.bankrollMode !== 'infinite') {
+      const totalBets = Object.values(get().bets).reduce((s, v) => s + (v ?? 0), 0)
+      if (totalBets + amount > profile.balance) return
+    }
     set(s => ({ bets: { ...s.bets, [bet]: (s.bets[bet] ?? 0) + amount } }))
   },
 

@@ -8,20 +8,23 @@ type Props = {
   onPlaceBet: (amount: number) => void
   onClearBet: () => void
   onDeal: () => void
+  onInsufficientFunds?: () => void
 }
 
-export function BetControls({ bet, balance, isInfinite, onPlaceBet, onClearBet, onDeal }: Props) {
+export function BetControls({ bet, balance, isInfinite, onPlaceBet, onClearBet, onDeal, onInsufficientFunds }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.chips}>
         {CHIP_DENOMINATIONS.map(denom => {
-          const disabled = !isInfinite && balance < denom
+          const canAfford = isInfinite || bet + denom <= balance
           return (
             <TouchableOpacity
               key={denom}
-              style={[styles.chip, disabled && styles.chipDisabled]}
-              disabled={disabled}
-              onPress={() => onPlaceBet(denom)}
+              style={[styles.chip, !canAfford && styles.chipDisabled]}
+              onPress={() => {
+                if (!canAfford) { onInsufficientFunds?.(); return }
+                onPlaceBet(denom)
+              }}
             >
               <Text style={styles.chipText}>${denom}</Text>
             </TouchableOpacity>

@@ -27,6 +27,14 @@ export default function BlackjackScreen() {
 
   const scrollRef = useRef<ScrollView>(null)
   const handOffsets = useRef<number[]>([])
+  const [showFundsWarning, setFundsWarning] = useState(false)
+  const fundsTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  function triggerFundsWarning() {
+    setFundsWarning(true)
+    clearTimeout(fundsTimer.current)
+    fundsTimer.current = setTimeout(() => setFundsWarning(false), 2000)
+  }
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ y: handOffsets.current[store.activeHandIndex] ?? 0, animated: true })
@@ -136,11 +144,13 @@ export default function BlackjackScreen() {
           onPlaceBet={store.placeBet}
           onClearBet={store.clearBet}
           onDeal={store.deal}
+          onInsufficientFunds={triggerFundsWarning}
         />
       )}
 
       {/* Footer */}
       <View style={styles.footer}>
+        {showFundsWarning && <Text style={styles.fundsWarning}>Insufficient funds</Text>}
         <Text style={styles.footerText}>
           Balance: {isInfinite ? '∞' : `$${activeProfile?.balance ?? 0}`}
         </Text>
@@ -167,4 +177,5 @@ const styles = StyleSheet.create({
   nextBtnText: { fontWeight: '700', fontSize: 16 },
   footer: { padding: 12, backgroundColor: '#0a4a24', alignItems: 'flex-end' },
   footerText: { color: '#aaa', fontSize: 14 },
+  fundsWarning: { color: '#e74c3c', fontSize: 12, fontWeight: '600', marginBottom: 2 },
 })

@@ -105,7 +105,14 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
     set({ assistEnabled: newAssist, suggestedAction })
   },
 
-  placeBet: (amount) => set(s => ({ bet: s.bet + amount })),
+  placeBet: (amount) => {
+    const ps = useProfileStore.getState()
+    const profile = ps.profiles.find(p => p.id === ps.activeProfileId)
+    if (profile && profile.bankrollMode !== 'infinite') {
+      if (get().bet + amount > profile.balance) return
+    }
+    set(s => ({ bet: s.bet + amount }))
+  },
   clearBet: () => set({ bet: 0 }),
 
   deal: () => {

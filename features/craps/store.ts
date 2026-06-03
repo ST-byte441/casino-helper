@@ -60,6 +60,12 @@ export const useCrapsStore = create<CrapsState & CrapsActions>((set, get) => ({
     const { phase, tableRules, bets } = get()
     if (!isValidBetForVariant(type, tableRules.variant)) return
     if (!isValidBetForPhase(type, phase)) return
+    const ps = useProfileStore.getState()
+    const profile = ps.profiles.find(p => p.id === ps.activeProfileId)
+    if (profile && profile.bankrollMode !== 'infinite') {
+      const totalBets = bets.reduce((s, b) => s + b.amount + (b.odds ?? 0), 0)
+      if (totalBets + amount > profile.balance) return
+    }
     // Merge stackable bets: same type + same number (come/dont-come excluded — they track independent stages)
     const isMergeable = type !== 'hop-hard' && type !== 'hop-easy' && type !== 'come' && type !== 'dont-come'
     if (isMergeable) {

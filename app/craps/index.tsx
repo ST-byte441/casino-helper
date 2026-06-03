@@ -23,10 +23,20 @@ export default function CrapsScreen() {
   const { profiles, activeProfileId } = useProfileStore()
   const { crapsRules: savedRules, saveCrapsRules } = usePreferencesStore()
   const active = profiles.find(p => p.id === activeProfileId)
-  const balance = active ? (active.bankrollMode === 'infinite' ? '∞' : `$${active.balance}`) : '—'
+  const isInfinite = active?.bankrollMode === 'infinite'
+  const numericBalance = isInfinite ? Infinity : (active?.balance ?? 0)
+  const balance = active ? (isInfinite ? '∞' : `$${active.balance}`) : '—'
 
   const [showBanner, setShowBanner] = useState(false)
+  const [showFundsWarning, setFundsWarning] = useState(false)
+  const fundsTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const balanceFlash = useRef(new Animated.Value(0)).current
+
+  function triggerFundsWarning() {
+    setFundsWarning(true)
+    clearTimeout(fundsTimer.current)
+    fundsTimer.current = setTimeout(() => setFundsWarning(false), 2000)
+  }
 
   useEffect(() => {
     return () => { store.resetToSetup() }
@@ -73,8 +83,17 @@ export default function CrapsScreen() {
     return bets.filter(b => b.type === type && (number == null || b.number === number)).reduce((s, b) => s + b.amount, 0)
   }
 
+  function tryPlaceBet(type: BetType, amount: number, num?: number, hopDice?: [number, number]) {
+    const totalBets = bets.reduce((s, b) => s + b.amount + (b.odds ?? 0), 0)
+    if (!isInfinite && totalBets + amount > numericBalance) {
+      triggerFundsWarning()
+      return
+    }
+    store.placeBet(type, amount, num, hopDice)
+  }
+
   function addBet(type: BetType, num?: number, amount?: number) {
-    store.placeBet(type, amount ?? suggestedBetIncrement(type, num), num)
+    tryPlaceBet(type, amount ?? suggestedBetIncrement(type, num), num)
   }
 
   // Sums win deltas for a set of bet type+number specs across ALL matching bets in the last roll
@@ -229,7 +248,7 @@ export default function CrapsScreen() {
                 quality={assistEnabled ? getBetQuality('place', false, false, n) : null}
                 cleanPayout={assistEnabled && isCleanPlace(betAmount('place', n), n)}
                 winDelta={lastWinDelta('place', n)}
-                onAdd={(amt) => store.placeBet('place', amt ?? 1, n)}
+                onAdd={(amt) => tryPlaceBet('place', amt ?? 1, n)}
                 onRemove={() => removeBet('place', n)}
                 onToggleWorking={() => placeBet && store.toggleWorking(placeBet.id)}
               />
@@ -262,7 +281,7 @@ export default function CrapsScreen() {
               amount={betAmount('hardway', n)}
               increment={1}
               quality={assistEnabled ? getBetQuality('hardway', false, false) : null}
-              onAdd={() => store.placeBet('hardway', 1, n)}
+              onAdd={() => tryPlaceBet('hardway', 1, n)}
               onRemove={() => removeBet('hardway', n)}
             />
           ))}
@@ -297,7 +316,7 @@ export default function CrapsScreen() {
           ))}
           <HopBetGrid
             increment={1}
-            onPlace={(hopDice, isHard) => store.placeBet(isHard ? 'hop-hard' : 'hop-easy', 1, undefined, hopDice)}
+            onPlace={(hopDice, isHard) => tryPlaceBet(isHard ? 'hop-hard' : 'hop-easy', 1, undefined, hopDice)}
           />
         </BetCategoryPanel>
 
@@ -305,9 +324,9 @@ export default function CrapsScreen() {
           <BetCategoryPanel title="Buy / Lay" totalWagered={placeNumbers.reduce((s, n) => s + betAmount('buy', n) + betAmount('lay', n), 0)} winDelta={categoryWin(...placeNumbers.flatMap(n => [['buy', n], ['lay', n]] as [BetType, number][]))}>
             {placeNumbers.map(n => (
               <React.Fragment key={n}>
-                <BetRow label={`Buy ${n}`} amount={betAmount('buy', n)} increment={suggestedBetIncrement('buy', n)} quality={assistEnabled ? getBetQuality('buy', false, false) : null} onAdd={() => store.placeBet('buy', suggestedBetIncrement('buy', n), n)} onRemove={() => removeBet('buy', n)} />
+                <BetRow label={`Buy ${n}`} amount={betAmount('buy', n)} increment={suggestedBetIncrement('buy', n)} quality={assistEnabled ? getBetQuality('buy', false, false) : null} onAdd={() => tryPlaceBet('buy', suggestedBetIncrement('buy', n), n)} onRemove={() => removeBet('buy', n)} />
                 {isValidBetForVariant('lay', variant) && (
-                  <BetRow label={`Lay ${n}`} amount={betAmount('lay', n)} increment={suggestedBetIncrement('lay', n)} quality={assistEnabled ? getBetQuality('lay', false, false) : null} onAdd={() => store.placeBet('lay', suggestedBetIncrement('lay', n), n)} onRemove={() => removeBet('lay', n)} />
+                  <BetRow label={`Lay ${n}`} amount={betAmount('lay', n)} increment={suggestedBetIncrement('lay', n)} quality={assistEnabled ? getBetQuality('lay', false, false) : null} onAdd={() => tryPlaceBet('lay', suggestedBetIncrement('lay', n), n)} onRemove={() => removeBet('lay', n)} />
                 )}
               </React.Fragment>
             ))}
@@ -325,6 +344,7 @@ export default function CrapsScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
+        {showFundsWarning && <Text style={styles.fundsWarning}>Insufficient funds</Text>}
         <Animated.Text style={[styles.balanceText, { color: balanceFlash.interpolate({ inputRange: [0, 1], outputRange: ['#aaa', '#2ecc71'] }) }]}>
           Balance: {balance}
         </Animated.Text>
@@ -352,4 +372,5 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   footer: { borderTopWidth: 1, borderColor: '#2a2a3e', paddingBottom: 4 },
   balanceText: { fontSize: 13, textAlign: 'center', paddingTop: 8, fontWeight: '700' },
+  fundsWarning: { color: '#e74c3c', fontSize: 12, fontWeight: '600', textAlign: 'center', paddingTop: 6 },
 })
