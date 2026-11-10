@@ -17,6 +17,7 @@ Get the latest APK from the [Releases page](../../releases/latest).
 
 - **Configurable table rules** — payout (3:2 / 6:5), dealer soft 17 (H17/S17), double after split, re-split aces, surrender mode, deck count, and continuous shuffle (CSM)
 - **Chip denominations** — $15 / $25 / $50 (standard Vegas table minimums)
+- **Vegas-style dealer play** — if you bust (or are dealt a natural), the dealer only flips the hole card instead of drawing out
 - **Basic strategy assist** — gold highlight on the statistically optimal action at any time
 - **Sandbox mode** — step through any hand scenario by manually setting your cards and the dealer's up-card to study how basic strategy applies in specific situations
 
