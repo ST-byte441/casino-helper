@@ -13,6 +13,7 @@ jest.mock('zustand/middleware', () => {
 import { act, renderHook } from '@testing-library/react-native'
 import { useBlackjackStore } from '../../features/blackjack/store'
 import { DEFAULT_TABLE_RULES } from '../../lib/constants'
+import { Card } from '../../lib/types'
 
 beforeEach(() => {
   jest.useFakeTimers()
@@ -124,6 +125,101 @@ test('hit that busts advances to result phase', () => {
     jest.runAllTimers()
   })
   expect(result.current.phase).toBe('result')
+})
+
+describe('when the dealer plays out their hand', () => {
+  const bustedHand = [
+    { suit: '♠', value: 'K' },
+    { suit: '♥', value: 'J' },
+    { suit: '♦', value: '5' },
+  ] as Card[]
+  const liveHand = [
+    { suit: '♠', value: '10' },
+    { suit: '♥', value: '9' },
+  ] as Card[]
+  // Dealer on 15 must draw under normal rules
+  const dealerOn15 = [
+    { suit: '♠', value: '9' },
+    { suit: '♥', value: '6', faceDown: true },
+  ] as Card[]
+  const fives = [
+    { suit: '♠', value: '5' },
+    { suit: '♥', value: '5' },
+    { suit: '♦', value: '5' },
+  ] as Card[]
+
+  function finishRound(playerHands: Card[][]) {
+    const { result } = renderHook(() => useBlackjackStore())
+    act(() => {
+      useBlackjackStore.setState({
+        deck: fives,
+        playerHands,
+        dealerHand: dealerOn15,
+        activeHandIndex: playerHands.length - 1,
+        phase: 'playing' as const,
+        bet: 15,
+        tableRules: DEFAULT_TABLE_RULES,
+      })
+      result.current.stand()
+      jest.runAllTimers()
+    })
+    return result
+  }
+
+  test('dealer only reveals the hole card when the single player hand busted', () => {
+    const result = finishRound([bustedHand])
+    expect(result.current.dealerHand).toEqual([
+      { suit: '♠', value: '9', faceDown: false },
+      { suit: '♥', value: '6', faceDown: false },
+    ])
+    expect(result.current.deck).toHaveLength(3)
+    expect(result.current.phase).toBe('result')
+    expect(result.current.lastOutcome).toBe('bust')
+    expect(result.current.lastDelta).toBe(-15)
+  })
+
+  test('dealer does not draw when every split hand busted', () => {
+    const result = finishRound([bustedHand, bustedHand])
+    expect(result.current.dealerHand).toHaveLength(2)
+    expect(result.current.deck).toHaveLength(3)
+    expect(result.current.lastDelta).toBe(-30)
+  })
+
+  test('dealer still draws when one split hand is live', () => {
+    const result = finishRound([bustedHand, liveHand])
+    // 15 + 5 = 20 stands; beats the live 19, so both hands lose
+    expect(result.current.dealerHand).toHaveLength(3)
+    expect(result.current.deck).toHaveLength(2)
+    expect(result.current.lastDelta).toBe(-30)
+  })
+
+  test('dealer still draws when the player stands without busting', () => {
+    const result = finishRound([liveHand])
+    expect(result.current.dealerHand).toHaveLength(3)
+    expect(result.current.deck).toHaveLength(2)
+  })
+
+  const natural = [
+    { suit: '♠', value: 'A' },
+    { suit: '♥', value: 'K' },
+  ] as Card[]
+
+  test('dealer only reveals the hole card against a player natural', () => {
+    const result = finishRound([natural])
+    expect(result.current.dealerHand).toEqual([
+      { suit: '♠', value: '9', faceDown: false },
+      { suit: '♥', value: '6', faceDown: false },
+    ])
+    expect(result.current.deck).toHaveLength(3)
+    expect(result.current.lastOutcome).toBe('blackjack')
+    expect(result.current.lastDelta).toBe(22) // floor(15 * 1.5)
+  })
+
+  test('dealer still draws against a two-card 21 made after a split', () => {
+    const result = finishRound([natural, natural])
+    expect(result.current.dealerHand).toHaveLength(3)
+    expect(result.current.deck).toHaveLength(2)
+  })
 })
 
 test('surrender removes half the bet and ends hand', () => {

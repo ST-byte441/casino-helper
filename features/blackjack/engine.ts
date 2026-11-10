@@ -96,7 +96,7 @@ export function shouldDealerHit(dealerHand: Card[], rules: TableRules): boolean 
   return false
 }
 
-function isBlackjack(hand: Card[]): boolean {
+export function isBlackjack(hand: Card[]): boolean {
   return hand.length === 2 && scoreHand(hand) === 21
 }
 

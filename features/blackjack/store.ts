@@ -11,7 +11,7 @@ function cancelPendingSteps() {
 }
 import { Card, Action, Outcome, Phase, TableRules } from '../../lib/types'
 import { DEFAULT_TABLE_RULES } from '../../lib/constants'
-import { canSplit, canSurrender, createDeck, dealCard, needsReshuffle, resolveHand, scoreHand, shouldDealerHit } from './engine'
+import { canSplit, canSurrender, createDeck, dealCard, isBlackjack, needsReshuffle, resolveHand, scoreHand, shouldDealerHit } from './engine'
 import { getOptimalAction } from './strategy'
 import { useProfileStore } from '../profile/store'
 
@@ -77,10 +77,19 @@ function computeSuggestion(
   return action
 }
 
-function runDealer(deck: Card[], dealerHand: Card[], tableRules: TableRules): { deck: Card[]; dealerHand: Card[] } {
+function runDealer(
+  deck: Card[],
+  dealerHand: Card[],
+  playerHands: Card[][],
+  tableRules: TableRules
+): { deck: Card[]; dealerHand: Card[] } {
   let d = deck
   let hand = dealerHand.map(c => ({ ...c, faceDown: false }))
-  while (shouldDealerHit(hand, tableRules)) {
+  // If the player has busted or holds a natural, the dealer just turns over the hole card
+  const allBusted = playerHands.every(h => scoreHand(h) > 21)
+  const playerNatural = playerHands.length === 1 && isBlackjack(playerHands[0])
+  const dealerPlays = !allBusted && !playerNatural
+  while (dealerPlays && shouldDealerHit(hand, tableRules)) {
     let card: Card
     ;[card, d] = dealCard(d)
     hand = [...hand, { ...card, faceDown: false }]
@@ -173,7 +182,7 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
     }
     // All hands done — run dealer (pre-compute full hand, reveal cards one at a time)
     let { deck, dealerHand, bet, tableRules } = get()
-    const { deck: newDeck, dealerHand: fullDealerHand } = runDealer(deck, dealerHand, tableRules)
+    const { deck: newDeck, dealerHand: fullDealerHand } = runDealer(deck, dealerHand, playerHands, tableRules)
 
     const outcomes: Array<{ outcome: Outcome; delta: number }> = playerHands.map(h =>
       resolveHand(h, fullDealerHand, bet, tableRules)
