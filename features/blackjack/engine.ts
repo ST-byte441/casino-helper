@@ -66,6 +66,13 @@ export function isSoft(hand: Card[]): boolean {
   return softAces > 0
 }
 
+// Display total: soft hands show both counts ("7/17"); hard hands and any 21 show one number.
+export function formatHandTotal(hand: Card[]): string {
+  const total = scoreHand(hand)
+  if (total < 21 && isSoft(hand)) return `${total - 10}/${total}`
+  return String(total)
+}
+
 export function canDouble(hand: Card[], isPostSplit: boolean, rules: TableRules): boolean {
   if (hand.length !== 2) return false
   if (isPostSplit && !rules.doubleAfterSplit) return false

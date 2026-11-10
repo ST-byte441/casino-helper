@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { Card as CardType } from '../../../lib/types'
 import { Card } from './Card'
-import { scoreHand } from '../engine'
+import { formatHandTotal, scoreHand } from '../engine'
 
 type Props = {
   hand: CardType[]
@@ -9,10 +9,12 @@ type Props = {
   hideScore?: boolean
   active?: boolean
   status?: 'bust' | 'stood'
+  /** Show soft hands as both totals, e.g. "7/17" */
+  showSoftTotal?: boolean
 }
 
-export function Hand({ hand, label, hideScore, active, status }: Props) {
-  const score = hand.some(c => c.faceDown) ? '?' : scoreHand(hand)
+export function Hand({ hand, label, hideScore, active, status, showSoftTotal }: Props) {
+  const score = hand.some(c => c.faceDown) ? '?' : showSoftTotal ? formatHandTotal(hand) : scoreHand(hand)
   return (
     <View style={[styles.container, active && styles.activeContainer]}>
       <Text style={[styles.label, active && styles.activeLabel]}>{label}</Text>
