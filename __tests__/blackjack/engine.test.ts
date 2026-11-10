@@ -3,6 +3,7 @@ import {
   dealCard,
   scoreHand,
   isSoft,
+  formatHandTotal,
   canDouble,
   canSplit,
   canResplitAces,
@@ -74,6 +75,20 @@ describe('isSoft', () => {
 
   test('returns false when no ace', () => {
     expect(isSoft([card('8'), card('7')])).toBe(false)
+  })
+})
+
+describe('formatHandTotal', () => {
+  test.each([
+    ['soft 17 shows both totals', [card('A'), card('6')], '7/17'],
+    ['pair of aces shows both totals', [card('A'), card('A')], '2/12'],
+    ['three-card soft hand shows both totals', [card('A'), card('2'), card('3')], '6/16'],
+    ['hard hand shows one total', [card('8'), card('7')], '15'],
+    ['ace forced to count as 1 shows one total', [card('A'), card('9'), card('5')], '15'],
+    ['natural shows 21', [card('A'), card('K')], '21'],
+    ['soft 21 shows 21', [card('A'), card('5'), card('5')], '21'],
+  ])('%s', (_name, hand, expected) => {
+    expect(formatHandTotal(hand)).toBe(expected)
   })
 })
 

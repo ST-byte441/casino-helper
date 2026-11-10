@@ -222,6 +222,52 @@ describe('when the dealer plays out their hand', () => {
   })
 })
 
+describe('dealer peek for a natural', () => {
+  const c = (value: Card['value']): Card => ({ suit: '♠', value })
+  const filler = Array.from({ length: 20 }, () => c('2'))
+  // Single deck so a short stacked deck doesn't trigger a reshuffle
+  const rules = { ...DEFAULT_TABLE_RULES, deckCount: 1, continuousShuffle: false }
+
+  // Deal order: player, dealer upcard, player, dealer hole card
+  function dealFrom(top: Card[]) {
+    const { result } = renderHook(() => useBlackjackStore())
+    act(() => {
+      useBlackjackStore.setState({ deck: [...top, ...filler], tableRules: rules, bet: 15 })
+      result.current.deal()
+      jest.runAllTimers()
+    })
+    return result
+  }
+
+  test('dealer natural ends the hand as a loss before the player can act', () => {
+    const result = dealFrom([c('10'), c('A'), c('9'), c('K')])
+    expect(result.current.phase).toBe('result')
+    expect(result.current.lastOutcome).toBe('lose')
+    expect(result.current.lastDelta).toBe(-15)
+    expect(result.current.dealerHand.some(card => card.faceDown)).toBe(false)
+    expect(result.current.dealerHand).toHaveLength(2)
+  })
+
+  test('dealer natural with a ten-value upcard is also caught', () => {
+    const result = dealFrom([c('10'), c('K'), c('9'), c('A')])
+    expect(result.current.phase).toBe('result')
+    expect(result.current.lastOutcome).toBe('lose')
+  })
+
+  test('dealer natural against a player natural is a push', () => {
+    const result = dealFrom([c('A'), c('A'), c('K'), c('K')])
+    expect(result.current.phase).toBe('result')
+    expect(result.current.lastOutcome).toBe('push')
+    expect(result.current.lastDelta).toBe(0)
+  })
+
+  test('play continues when the dealer has no natural', () => {
+    const result = dealFrom([c('10'), c('A'), c('9'), c('9')])
+    expect(result.current.phase).toBe('playing')
+    expect(result.current.dealerHand[1].faceDown).toBe(true)
+  })
+})
+
 test('surrender removes half the bet and ends hand', () => {
   const { result } = renderHook(() => useBlackjackStore())
   act(() => {

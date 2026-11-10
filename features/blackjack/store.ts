@@ -146,6 +146,14 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
     scheduleStep(() => {
       const { assistEnabled } = get()
       const playerHands = [[c1, c3]]
+      // Dealer peek: a dealer natural ends the hand before the player acts
+      if (isBlackjack([c2, c4])) {
+        const revealed = [c2, { ...c4, faceDown: false }]
+        const { outcome, delta } = resolveHand(playerHands[0], revealed, bet, tableRules)
+        useProfileStore.getState().updateBalance(delta)
+        set({ dealerHand: revealed, phase: 'result', lastOutcome: outcome, lastDelta: delta, suggestedAction: null })
+        return
+      }
       const dealerHand = [c2, { ...c4, faceDown: true }]
       const suggestedAction = computeSuggestion(playerHands, 0, dealerHand, assistEnabled, tableRules)
       set({ dealerHand, phase: 'playing', suggestedAction })

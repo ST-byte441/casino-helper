@@ -7,7 +7,7 @@ import { DEFAULT_TABLE_RULES } from '../../lib/constants'
 import { getOptimalAction } from '../../features/blackjack/strategy'
 import { Card } from '../../features/blackjack/components/Card'
 import { RankPicker } from '../../features/blackjack/components/RankPicker'
-import { scoreHand } from '../../features/blackjack/engine'
+import { formatHandTotal } from '../../features/blackjack/engine'
 
 type PickerTarget = 'dealer' | 'player' | null
 type PlayerCard = { id: number; value: Value }
@@ -129,7 +129,7 @@ export default function BlackjackSandboxScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>
-            YOUR HAND{playerHand.length >= 2 ? `  ·  ${scoreHand(playerHand)}` : ''}
+            YOUR HAND{playerHand.length >= 2 ? `  ·  ${formatHandTotal(playerHand)}` : ''}
           </Text>
           <View style={styles.playerCards}>
             {playerCards.map(pc => (

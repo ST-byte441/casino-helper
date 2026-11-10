@@ -98,6 +98,7 @@ export default function BlackjackScreen() {
               label={store.playerHands.length > 1 ? `Hand ${i + 1}` : 'You'}
               active={store.playerHands.length > 1 && i === store.activeHandIndex}
               status={getHandStatus(i)}
+              showSoftTotal
             />
           </View>
         ))}
