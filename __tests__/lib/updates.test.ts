@@ -43,28 +43,28 @@ describe('checkForUpdate', () => {
   test('returns hasUpdate true when remote version is newer', async () => {
     mockFetch({
       tag_name: 'v1.0.1',
-      html_url: 'https://github.com/ST-byte441/casinoHelper/releases/tag/v1.0.1',
+      html_url: 'https://github.com/ST-byte441/casino-helper/releases/tag/v1.0.1',
     })
     const result = await checkForUpdate()
     expect(result).toEqual({
       hasUpdate: true,
       currentVersion: '1.0.0',
       latestVersion: '1.0.1',
-      releaseUrl: 'https://github.com/ST-byte441/casinoHelper/releases/tag/v1.0.1',
+      releaseUrl: 'https://github.com/ST-byte441/casino-helper/releases/tag/v1.0.1',
     })
   })
 
   test('returns hasUpdate false when already on latest', async () => {
     mockFetch({
       tag_name: 'v1.0.0',
-      html_url: 'https://github.com/ST-byte441/casinoHelper/releases/tag/v1.0.0',
+      html_url: 'https://github.com/ST-byte441/casino-helper/releases/tag/v1.0.0',
     })
     const result = await checkForUpdate()
     expect(result).toEqual({
       hasUpdate: false,
       currentVersion: '1.0.0',
       latestVersion: '1.0.0',
-      releaseUrl: 'https://github.com/ST-byte441/casinoHelper/releases/tag/v1.0.0',
+      releaseUrl: 'https://github.com/ST-byte441/casino-helper/releases/tag/v1.0.0',
     })
   })
 
