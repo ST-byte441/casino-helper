@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { TableRules, CrapsTableRules } from '../../lib/types'
+import { TableRules, CrapsTableRules, BaccaratRevealMode } from '../../lib/types'
 import { DEFAULT_TABLE_RULES } from '../../lib/constants'
 
 const DEFAULT_CRAPS_RULES: CrapsTableRules = {
@@ -13,8 +13,10 @@ const DEFAULT_CRAPS_RULES: CrapsTableRules = {
 type PreferencesState = {
   blackjackRules: TableRules
   crapsRules: CrapsTableRules
+  baccaratRevealMode: BaccaratRevealMode
   saveBlackjackRules(rules: TableRules): void
   saveCrapsRules(rules: CrapsTableRules): void
+  setBaccaratRevealMode(mode: BaccaratRevealMode): void
 }
 
 export const usePreferencesStore = create<PreferencesState>()(
@@ -22,8 +24,10 @@ export const usePreferencesStore = create<PreferencesState>()(
     (set) => ({
       blackjackRules: DEFAULT_TABLE_RULES,
       crapsRules: DEFAULT_CRAPS_RULES,
+      baccaratRevealMode: 'squeeze',
       saveBlackjackRules: (rules) => set({ blackjackRules: rules }),
       saveCrapsRules: (rules) => set({ crapsRules: rules }),
+      setBaccaratRevealMode: (mode) => set({ baccaratRevealMode: mode }),
     }),
     {
       name: 'preferences-store',
