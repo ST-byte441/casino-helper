@@ -88,7 +88,7 @@ export default function BaccaratScreen() {
           <TouchableOpacity
             style={[styles.dealBtn, !hasBets && styles.dealDisabled]}
             disabled={!hasBets}
-            onPress={store.deal}
+            onPress={() => store.deal('flip')}
           >
             <Text style={styles.dealText}>DEAL</Text>
           </TouchableOpacity>

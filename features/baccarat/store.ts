@@ -1,9 +1,12 @@
 import { create } from 'zustand'
-import { Card, BaccaratBet, BaccaratOutcome, BaccaratPhase } from '../../lib/types'
+import {
+  Card, BaccaratBet, BaccaratOutcome, BaccaratPhase, BaccaratRevealMode, RevealStep,
+} from '../../lib/types'
 import {
   buildDeck, dealHands, isNatural, scoreHand, shouldPlayerDraw, shouldBankerDraw,
   resolveRound, calculateDeltas, baccaratValue,
 } from './engine'
+import { revealOrder } from './reveal'
 import { useProfileStore } from '../profile/store'
 
 type BaccaratState = {
@@ -16,12 +19,18 @@ type BaccaratState = {
   lastDeltas: Partial<Record<BaccaratBet, number>>
   lastNetDelta: number
   assistEnabled: boolean
+  revealOrder: RevealStep[]
+  revealedCount: number
+  settled: boolean
+  handRevealMode: BaccaratRevealMode
 }
 
 type BaccaratActions = {
   placeBet(bet: BaccaratBet, amount: number): void
   clearBets(): void
-  deal(): void
+  deal(mode: BaccaratRevealMode): void
+  revealNext(): void
+  abandonHand(): void
   newHand(): void
   toggleAssist(): void
 }
@@ -36,6 +45,14 @@ const initialState: BaccaratState = {
   lastDeltas: {},
   lastNetDelta: 0,
   assistEnabled: false,
+  revealOrder: [],
+  revealedCount: 0,
+  settled: false,
+  handRevealMode: 'squeeze',
+}
+
+function applyDelta(delta: number) {
+  if (delta !== 0) useProfileStore.getState().updateBalance(delta)
 }
 
 export const useBaccaratStore = create<BaccaratState & BaccaratActions>((set, get) => ({
@@ -58,8 +75,9 @@ export const useBaccaratStore = create<BaccaratState & BaccaratActions>((set, ge
     set({ bets: {} })
   },
 
-  deal() {
-    const { deck: currentDeck, bets } = get()
+  deal(mode) {
+    const { deck: currentDeck, bets, phase } = get()
+    if (phase !== 'betting') return
     const deck = currentDeck.length < 10 ? buildDeck() : currentDeck
     let { playerHand, bankerHand, deck: remaining } = dealHands(deck)
 
@@ -83,10 +101,6 @@ export const useBaccaratStore = create<BaccaratState & BaccaratActions>((set, ge
     const deltas = calculateDeltas(bets, outcome, playerHand, bankerHand)
     const netDelta = Object.values(deltas).reduce((s, d) => s + (d ?? 0), 0)
 
-    if (netDelta !== 0) {
-      useProfileStore.getState().updateBalance(netDelta)
-    }
-
     set({
       playerHand,
       bankerHand,
@@ -94,8 +108,33 @@ export const useBaccaratStore = create<BaccaratState & BaccaratActions>((set, ge
       lastOutcome: outcome,
       lastDeltas: deltas,
       lastNetDelta: netDelta,
-      phase: 'result',
+      revealOrder: revealOrder(playerHand, bankerHand),
+      revealedCount: 0,
+      settled: false,
+      handRevealMode: mode,
+      phase: 'revealing',
     })
+  },
+
+  revealNext() {
+    const { phase, revealedCount, revealOrder: order, settled, lastNetDelta } = get()
+    if (phase !== 'revealing') return
+    const next = revealedCount + 1
+    if (next < order.length) {
+      set({ revealedCount: next })
+      return
+    }
+    if (!settled) applyDelta(lastNetDelta)
+    set({ revealedCount: order.length, settled: true, phase: 'result' })
+  },
+
+  abandonHand() {
+    const { phase, settled, lastNetDelta } = get()
+    if (phase === 'revealing' && !settled) {
+      set({ settled: true })
+      applyDelta(lastNetDelta)
+    }
+    get().newHand()
   },
 
   newHand() {

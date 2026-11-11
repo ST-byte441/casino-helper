@@ -74,7 +74,7 @@ export type RollResolution = {
 export type BetQuality = 'optimal' | 'acceptable' | 'poor' | 'avoid'
 
 export type BaccaratBet = 'player' | 'banker' | 'tie' | 'player-pair' | 'banker-pair'
-export type BaccaratPhase = 'betting' | 'result'
+export type BaccaratPhase = 'betting' | 'revealing' | 'result'
 export type BaccaratOutcome = 'player' | 'banker' | 'tie'
 export type BaccaratSide = 'player' | 'banker'
 export type RevealStep = { side: BaccaratSide; index: number }
