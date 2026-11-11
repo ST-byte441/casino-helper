@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { View } from 'react-native'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { Stack } from 'expo-router'
 import { checkForUpdate, UpdateInfo } from '../lib/updates'
 import UpdateModal from '../components/UpdateModal'
@@ -14,7 +14,7 @@ export default function RootLayout() {
   }, [])
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#13131f' }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#13131f' }}>
       <Stack screenOptions={{ contentStyle: { backgroundColor: '#13131f' }, animation: 'none' }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="blackjack/index" options={{ headerShown: false }} />
@@ -31,6 +31,6 @@ export default function RootLayout() {
           onDismiss={() => setUpdateInfo(null)}
         />
       )}
-    </View>
+    </GestureHandlerRootView>
   )
 }
