@@ -63,6 +63,7 @@ export default function BaccaratScreen() {
     : undefined
   const outcome = store.lastOutcome
   const isSqueezing = isRevealing && store.handRevealMode === 'squeeze'
+  const squeezeOn = baccaratRevealMode === 'squeeze'
 
   return (
     <SafeAreaView style={styles.root}>
@@ -71,22 +72,15 @@ export default function BaccaratScreen() {
           <Text style={styles.back}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.title}>BACCARAT</Text>
-        <View style={styles.headerRight}>
-          <TouchableOpacity
-            disabled={isRevealing}
-            style={isRevealing && styles.toggleDisabled}
-            onPress={() => setBaccaratRevealMode(baccaratRevealMode === 'squeeze' ? 'flip' : 'squeeze')}
-          >
-            <Text style={[styles.assist, baccaratRevealMode === 'squeeze' && styles.assistOn]}>
-              {baccaratRevealMode === 'squeeze' ? 'Squeeze' : 'Flip'}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={store.toggleAssist}>
-            <Text style={[styles.assist, store.assistEnabled && styles.assistOn]}>
-              Assist {store.assistEnabled ? '●' : '○'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          disabled={isRevealing}
+          style={isRevealing && styles.toggleDisabled}
+          onPress={() => setBaccaratRevealMode(squeezeOn ? 'flip' : 'squeeze')}
+        >
+          <Text style={[styles.toggle, squeezeOn && styles.toggleOn]}>
+            Squeeze {squeezeOn ? '●' : '○'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -140,7 +134,7 @@ export default function BaccaratScreen() {
         <View style={styles.betArea}>
           <BetPanel
             bets={store.bets}
-            assistEnabled={store.assistEnabled}
+            assistEnabled={false}
             disabled={false}
             onAdd={handlePlaceBet}
             onClear={store.clearBets}
@@ -176,11 +170,10 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#13131f' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     padding: 14, borderBottomWidth: 1, borderColor: '#2a2a3e' },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   back: { color: '#aaa', fontSize: 15 },
   title: { color: '#FFD700', fontWeight: '700', fontSize: 15 },
-  assist: { color: '#aaa', fontSize: 13 },
-  assistOn: { color: '#FFD700' },
+  toggle: { color: '#aaa', fontSize: 13 },
+  toggleOn: { color: '#FFD700' },
   toggleDisabled: { opacity: 0.4 },
   table: { flex: 1, borderBottomWidth: 1, borderColor: '#2a2a3e' },
   tableContent: { flexGrow: 1, justifyContent: 'center', paddingVertical: 16 },

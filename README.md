@@ -1,6 +1,6 @@
 # Casino Table Games — Mobile Practice App
 
-A React Native mobile app for practicing and learning common casino table games. Each game includes an optional **basic strategy assist** that highlights the statistically optimal action so you can study while you play.
+A React Native mobile app for practicing and learning common casino table games. Blackjack and Craps include an optional **basic strategy assist** that highlights the statistically optimal action so you can study while you play.
 
 ## Download (Android)
 
@@ -34,8 +34,7 @@ Get the latest APK from the [Releases page](../../releases/latest).
 
 - **Standard Baccarat** — Player, Banker (5% commission), Tie (8:1), Player Pair and Banker Pair (11:1) bets
 - **Fully automatic rules** — all drawing rules applied after Deal; no player decisions required
-- **Card squeeze** — reveal every card in real dealing order (P1, B1, P2, B2, then third cards) by dragging up to peel it back, or switch the header toggle to **Flip** for a quick automatic reveal. The result waits until you tap **Next Hand**
-- **Strategy assist** — gold border on Banker (optimal), white on Player (acceptable), red on Tie/Pairs (avoid)
+- **Card squeeze** — reveal every card in real dealing order (P1, B1, P2, B2, then third cards) by dragging up to peel it back, or turn the header **Squeeze ●/○** toggle off for a quick automatic flip. The result waits until you tap **Next Hand**
 - **Sandbox mode** — manually set all four starting cards, pick third cards step-by-step, and see the rule explanation driving each draw decision
 
 ## Games

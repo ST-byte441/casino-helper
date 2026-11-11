@@ -40,3 +40,31 @@ test('table still bounces in flip mode', () => {
   const { getByTestId } = render(<BaccaratScreen />)
   expect(getByTestId('baccarat-table').props.bounces).toBe(true)
 })
+
+describe('header squeeze toggle', () => {
+  const { usePreferencesStore } = require('../../features/preferences/store')
+  const { fireEvent } = require('@testing-library/react-native')
+
+  beforeEach(() => useBaccaratStore.getState().newHand())
+
+  test('reads "Squeeze ●" when on and "Squeeze ○" when off', () => {
+    usePreferencesStore.getState().setBaccaratRevealMode('squeeze')
+    const { getByText, rerender } = render(<BaccaratScreen />)
+    expect(getByText('Squeeze ●')).toBeTruthy()
+    usePreferencesStore.getState().setBaccaratRevealMode('flip')
+    rerender(<BaccaratScreen />)
+    expect(getByText('Squeeze ○')).toBeTruthy()
+  })
+
+  test('tapping it switches between squeeze and flip', () => {
+    usePreferencesStore.getState().setBaccaratRevealMode('squeeze')
+    const { getByText } = render(<BaccaratScreen />)
+    fireEvent.press(getByText('Squeeze ●'))
+    expect(usePreferencesStore.getState().baccaratRevealMode).toBe('flip')
+  })
+
+  test('no Assist button in baccarat', () => {
+    const { queryByText } = render(<BaccaratScreen />)
+    expect(queryByText(/Assist/)).toBeNull()
+  })
+})
