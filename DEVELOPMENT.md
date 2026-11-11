@@ -18,7 +18,7 @@ npx jest <path>   # single file
 npx tsc --noEmit  # type check only
 ```
 
-172 tests cover the game engine, strategy lookup, profile store, and update utility.
+239 tests cover the game engine, strategy lookup, profile store, and update utility.
 
 ## Project Structure
 
@@ -32,6 +32,8 @@ app/
     index.tsx     # Blackjack table screen
   craps/
     index.tsx     # Craps table screen
+  baccarat/
+    index.tsx     # Baccarat table screen
   sandbox/
     blackjack.tsx # Blackjack strategy sandbox
 features/
@@ -45,9 +47,16 @@ features/
     strategy.ts   # Pure TS: getBetQuality — rates any bet type as optimal/acceptable/poor/avoid
     store.ts      # Session Zustand store (phase, dice, point, bets, roll, assist toggle)
     components/   # UI components (TableSetup, DiceDisplay, BetCategoryPanel, BetRow, OddsRow, HopBetGrid, RollButton, RollResultBanner)
+  baccarat/
+    engine.ts     # Pure TS: deck, scoring, natural/third-card rules, hand resolution
+    strategy.ts   # Pure TS: bet quality ratings (player/banker/tie/side bets)
+    store.ts      # Session Zustand store (shoe, hands, bets, result, assist toggle)
+    components/   # UI components (BetPanel, HandDisplay, ResultBanner)
   profile/
     store.ts      # Persisted Zustand store (AsyncStorage)
     components/   # ProfileCard, ProfileList, CreateProfileModal
+  preferences/
+    store.ts      # Persisted Zustand store (AsyncStorage) for table rules per game
 lib/
   types.ts        # Shared types
   constants.ts    # Suits, values, chip denominations, default table rules
@@ -74,10 +83,12 @@ Releases come in two forms depending on what changed.
 No new APK needed. Run:
 
 ```bash
-eas update --channel preview --message "describe what changed"
+eas update --channel preview --environment preview --message "describe what changed"
 ```
 
 Users get the update silently on their next app launch. Takes ~1 minute.
+
+> **`--channel` vs `--environment`:** `--channel preview` controls *which installed apps receive* the update (our APKs are built with `"channel": "preview"` in `eas.json`). `--environment preview` controls *which EAS environment variables get baked into the JS bundle*. Any `EXPO_PUBLIC_*` variables stored on EAS for that environment are inlined into the bundle when you publish. Recent eas-cli versions require `--environment` when running with `--non-interactive`. Interactively, the CLI prompts you to pick one instead. This makes sure the wrong environment's values never get bundled by accident. The project currently has no EAS environment variables (check with `eas env:list --environment preview`), so the flag has no effect yet. It will start to matter once variables such as API URLs or keys are added.
 
 > **Note:** The update is only delivered to APKs whose `runtimeVersion` matches the value in `app.json` at build time. If you bumped `runtimeVersion`, users need a new APK — use the Full APK rebuild flow below.
 
