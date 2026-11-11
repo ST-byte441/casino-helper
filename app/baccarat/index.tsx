@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { ScrollView } from 'react-native-gesture-handler'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useBaccaratStore } from '../../features/baccarat/store'
@@ -25,6 +26,7 @@ export default function BaccaratScreen() {
 
   const [showFundsWarning, setFundsWarning] = useState(false)
   const fundsTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const tableRef = useRef<ScrollView>(null)
 
   // Leaving the table settles an unfinished hand and starts the next visit fresh.
   useEffect(() => () => {
@@ -60,6 +62,7 @@ export default function BaccaratScreen() {
     ? (step.side === 'player' ? store.playerHand : store.bankerHand)[step.index]
     : undefined
   const outcome = store.lastOutcome
+  const isSqueezing = isRevealing && store.handRevealMode === 'squeeze'
 
   return (
     <SafeAreaView style={styles.root}>
@@ -86,7 +89,15 @@ export default function BaccaratScreen() {
         </View>
       </View>
 
-      <ScrollView style={styles.table} contentContainerStyle={styles.tableContent}>
+      <ScrollView
+        testID="baccarat-table"
+        style={styles.table}
+        contentContainerStyle={styles.tableContent}
+        ref={tableRef}
+        // The squeeze card's pan blocks this scroll (see SqueezeCard scrollRef), so a drag on
+        // the card peels it while the rest of the table still scrolls on short screens.
+        bounces={!isSqueezing}
+      >
         {isBetting ? (
           <Text style={styles.waiting}>Place your bets</Text>
         ) : (
@@ -110,6 +121,7 @@ export default function BaccaratScreen() {
                 card={currentCard}
                 mode={store.handRevealMode}
                 onRevealed={store.revealNext}
+                scrollRef={tableRef}
               />
             )}
             {isResult && outcome && (

@@ -12,6 +12,8 @@ type Props = {
   card: Card
   mode: BaccaratRevealMode
   onRevealed(): void
+  /** Ref to an enclosing gesture-handler ScrollView that the squeeze drag must win over. */
+  scrollRef?: React.RefObject<any>
 }
 
 const W = 130
@@ -81,7 +83,7 @@ function CardBack() {
   )
 }
 
-export function SqueezeCard({ card, mode, onRevealed }: Props) {
+export function SqueezeCard({ card, mode, onRevealed, scrollRef }: Props) {
   const progress = useSharedValue(0) // squeeze: 0 = face-down, 1 = fully peeled
   const flip = useSharedValue(0) // flip: 0 = back, 1 = face
   const [done, setDone] = useState(false)
@@ -120,6 +122,7 @@ export function SqueezeCard({ card, mode, onRevealed }: Props) {
         progress.value = withSpring(0)
       }
     })
+  if (scrollRef) pan.blocksExternalGesture(scrollRef)
 
   const backStyle = useAnimatedStyle(() => ({ height: (1 - progress.value) * H }))
   const curlStyle = useAnimatedStyle(() => {
