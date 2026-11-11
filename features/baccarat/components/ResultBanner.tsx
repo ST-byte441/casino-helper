@@ -1,45 +1,38 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { BaccaratOutcome } from '../../../lib/types'
 
 type Props = {
   outcome: BaccaratOutcome
+  playerScore: number
+  bankerScore: number
   netDelta: number
-  onDismiss(): void
 }
 
-const OUTCOME_LABELS: Record<BaccaratOutcome, string> = {
-  player: 'Player Wins',
-  banker: 'Banker Wins',
-  tie: 'Tie',
+function headline(outcome: BaccaratOutcome, p: number, b: number): string {
+  if (outcome === 'player') return `Player Wins ${p} to ${b}`
+  if (outcome === 'banker') return `Banker Wins ${b} to ${p}`
+  return `Tie ${p} to ${b}`
 }
 
-export function ResultBanner({ outcome, netDelta, onDismiss }: Props) {
-  useEffect(() => {
-    const t = setTimeout(onDismiss, 2000)
-    return () => clearTimeout(t)
-  }, [outcome])
-
+export function ResultBanner({ outcome, playerScore, bankerScore, netDelta }: Props) {
   const sign = netDelta >= 0 ? '+' : '-'
-
   return (
-    <View style={styles.overlay} pointerEvents="none">
-      <View style={styles.card}>
-        <Text style={styles.label}>{OUTCOME_LABELS[outcome]}</Text>
-        <Text style={[styles.delta, netDelta >= 0 ? styles.positive : styles.negative]}>
-          {sign}${Math.abs(netDelta)}
-        </Text>
-      </View>
+    <View style={styles.card}>
+      <Text style={styles.label}>{headline(outcome, playerScore, bankerScore)}</Text>
+      <Text style={[styles.delta, netDelta >= 0 ? styles.positive : styles.negative]}>
+        {sign}${Math.abs(netDelta)}
+      </Text>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  overlay: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
-  card: { backgroundColor: 'rgba(30,30,46,0.95)', borderRadius: 14, padding: 28,
-    alignItems: 'center', borderWidth: 1, borderColor: '#2a2a3e' },
-  label: { color: '#fff', fontSize: 24, fontWeight: '700', marginBottom: 8 },
-  delta: { fontSize: 22, fontWeight: '700' },
+  card: { backgroundColor: 'rgba(30,30,46,0.95)', borderRadius: 12, paddingVertical: 12,
+    paddingHorizontal: 20, marginHorizontal: 24, marginVertical: 8, alignItems: 'center',
+    borderWidth: 1, borderColor: '#FFD700' },
+  label: { color: '#fff', fontSize: 20, fontWeight: '700', marginBottom: 4 },
+  delta: { fontSize: 18, fontWeight: '700' },
   positive: { color: '#2ecc71' },
   negative: { color: '#e74c3c' },
 })

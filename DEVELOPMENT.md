@@ -50,13 +50,14 @@ features/
   baccarat/
     engine.ts     # Pure TS: deck, scoring, natural/third-card rules, hand resolution
     strategy.ts   # Pure TS: bet quality ratings (player/banker/tie/side bets)
-    store.ts      # Session Zustand store (shoe, hands, bets, result, assist toggle)
-    components/   # UI components (BetPanel, HandDisplay, ResultBanner)
+    reveal.ts     # Pure TS: card reveal order (P1,B1,P2,B2,P3,B3) and per-hand face-up/shown counts
+    store.ts      # Session Zustand store (shoe, hands, bets, betting→revealing→result phases, deferred settlement, assist toggle)
+    components/   # UI components (BetPanel, HandDisplay, ResultBanner, SqueezeCard)
   profile/
     store.ts      # Persisted Zustand store (AsyncStorage)
     components/   # ProfileCard, ProfileList, CreateProfileModal
   preferences/
-    store.ts      # Persisted Zustand store (AsyncStorage) for table rules per game
+    store.ts      # Persisted Zustand store (AsyncStorage) for table rules per game + baccarat Squeeze/Flip mode
 lib/
   types.ts        # Shared types
   constants.ts    # Suits, values, chip denominations, default table rules

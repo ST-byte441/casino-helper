@@ -33,7 +33,8 @@ Get the latest APK from the [Releases page](../../releases/latest).
 ### Baccarat
 
 - **Standard Baccarat** — Player, Banker (5% commission), Tie (8:1), Player Pair and Banker Pair (11:1) bets
-- **Fully automatic** — all drawing rules applied instantly after Deal; no player decisions required
+- **Fully automatic rules** — all drawing rules applied after Deal; no player decisions required
+- **Card squeeze** — reveal every card in real dealing order (P1, B1, P2, B2, then third cards) by dragging up to peel it back, or switch the header toggle to **Flip** for a quick automatic reveal. The result waits until you tap **Next Hand**
 - **Strategy assist** — gold border on Banker (optimal), white on Player (acceptable), red on Tie/Pairs (avoid)
 - **Sandbox mode** — manually set all four starting cards, pick third cards step-by-step, and see the rule explanation driving each draw decision
 
