@@ -8,6 +8,7 @@ import { HandDisplay } from '../../features/baccarat/components/HandDisplay'
 import { BetPanel } from '../../features/baccarat/components/BetPanel'
 import { ResultBanner } from '../../features/baccarat/components/ResultBanner'
 import { BaccaratBet } from '../../lib/types'
+import { scoreHand } from '../../features/baccarat/engine'
 
 export default function BaccaratScreen() {
   const router = useRouter()
@@ -99,7 +100,8 @@ export default function BaccaratScreen() {
         <ResultBanner
           outcome={store.lastOutcome}
           netDelta={store.lastNetDelta}
-          onDismiss={store.newHand}
+          playerScore={scoreHand(store.playerHand)}
+          bankerScore={scoreHand(store.bankerHand)}
         />
       )}
     </SafeAreaView>
