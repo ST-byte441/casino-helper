@@ -37,26 +37,51 @@ const PIPS: Record<string, [number, number][]> = {
   '9': [[0, 0], [2, 0], [0, 1 / 3], [2, 1 / 3], [1, 0.5], [0, 2 / 3], [2, 2 / 3], [0, 1], [2, 1]],
   '10': [[0, 0], [2, 0], [1, 1 / 6], [0, 1 / 3], [2, 1 / 3], [0, 2 / 3], [2, 2 / 3], [1, 5 / 6], [0, 1], [2, 1]],
 }
-const PIP_AREA = { left: 30, top: 30, width: W - 60, height: H - 60 }
+// Pip columns sit inside the corner indexes (which reach 26px in from each side).
+const PIP_AREA = { left: 40, top: 30, width: W - 80, height: H - 60 }
+const PIP = { width: 20, height: 24, fontSize: 19 }
+/** Corner index box (value over suit), fixed size so the pip layout can keep clear of it. */
+const CORNER = { inset: 6, width: 20, height: 34 }
+
+type Box = { left: number; top: number; width: number; height: number }
+
+export const CARD_SIZE = { width: W, height: H }
+
+export const CORNER_BOXES: Box[] = [
+  { left: CORNER.inset, top: CORNER.inset, width: CORNER.width, height: CORNER.height },
+  { left: W - CORNER.inset - CORNER.width, top: H - CORNER.inset - CORNER.height,
+    width: CORNER.width, height: CORNER.height },
+]
+
+/** Absolute boxes of each pip for a card value (empty for court cards). */
+export function pipBoxes(value: string): (Box & { rotated: boolean })[] {
+  return (PIPS[value] ?? []).map(([col, row]) => ({
+    left: PIP_AREA.left + col * (PIP_AREA.width / 2) - PIP.width / 2,
+    top: PIP_AREA.top + row * PIP_AREA.height - PIP.height / 2,
+    width: PIP.width,
+    height: PIP.height,
+    rotated: row > 0.5,
+  }))
+}
 
 function CardFace({ card }: { card: Card }) {
   const color = RED_SUITS.includes(card.suit) ? '#cc0000' : '#111'
-  const pips = PIPS[card.value]
+  const pips = pipBoxes(card.value)
   return (
     <View style={styles.face}>
       <View style={styles.cornerTL}>
         <Text style={[styles.cornerText, { color }]}>{card.value}</Text>
         <Text style={[styles.cornerSuit, { color }]}>{card.suit}</Text>
       </View>
-      {pips ? (
-        pips.map(([col, row], i) => (
+      {pips.length > 0 ? (
+        pips.map((pip, i) => (
           <Text
             key={i}
             style={[styles.pip, {
               color,
-              left: PIP_AREA.left + col * (PIP_AREA.width / 2) - 11,
-              top: PIP_AREA.top + row * PIP_AREA.height - 14,
-              transform: row > 0.5 ? [{ rotate: '180deg' }] : undefined,
+              left: pip.left,
+              top: pip.top,
+              transform: pip.rotated ? [{ rotate: '180deg' }] : undefined,
             }]}
           >
             {card.suit}
@@ -173,11 +198,14 @@ const styles = StyleSheet.create({
   hint: { color: '#FFD700', fontSize: 12, marginBottom: 6 },
   card: { width: W, height: H, borderRadius: 10, overflow: 'hidden', backgroundColor: '#fff' },
   face: { ...StyleSheet.absoluteFill, backgroundColor: '#fff', borderRadius: 10 },
-  cornerTL: { position: 'absolute', top: 6, left: 7, alignItems: 'center' },
-  cornerBR: { position: 'absolute', bottom: 6, right: 7, alignItems: 'center', transform: [{ rotate: '180deg' }] },
-  cornerText: { fontSize: 16, fontWeight: '800', lineHeight: 18 },
+  cornerTL: { position: 'absolute', top: CORNER.inset, left: CORNER.inset, width: CORNER.width,
+    height: CORNER.height, alignItems: 'center' },
+  cornerBR: { position: 'absolute', bottom: CORNER.inset, right: CORNER.inset, width: CORNER.width,
+    height: CORNER.height, alignItems: 'center', transform: [{ rotate: '180deg' }] },
+  cornerText: { fontSize: 15, fontWeight: '800', lineHeight: 18, letterSpacing: -1 },
   cornerSuit: { fontSize: 13, lineHeight: 15 },
-  pip: { position: 'absolute', fontSize: 22, width: 22, textAlign: 'center' },
+  pip: { position: 'absolute', fontSize: PIP.fontSize, width: PIP.width, height: PIP.height,
+    lineHeight: PIP.height, textAlign: 'center' },
   court: { position: 'absolute', top: H / 2 - 30, width: W, textAlign: 'center', fontSize: 48, fontWeight: '800' },
   backClip: { position: 'absolute', top: 0, left: 0, right: 0, overflow: 'hidden' },
   back: { width: W, height: H, backgroundColor: '#7a1f2b', borderRadius: 10, borderWidth: 3, borderColor: '#fff',
