@@ -13,8 +13,6 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, back: mockBack }),
   router: { push: mockPush, back: mockBack },
 }))
-jest.mock('expo-image-picker', () => ({ launchImageLibraryAsync: jest.fn() }))
-jest.mock('expo-file-system', () => ({ Directory: class {}, File: class {}, Paths: {} }))
 
 import React from 'react'
 import { render, fireEvent } from '@testing-library/react-native'

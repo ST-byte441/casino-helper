@@ -1,8 +1,6 @@
 'use strict'
 // Minimal stand-in for react-native-reanimated in Jest.
-// Reanimated 4.7's own mock (`react-native-reanimated/mock`) throws during init under
-// jest-expo ("`setCSSEventHandler` is not available in JSReanimated"), so tests that
-// render animated components use this instead. It covers only the APIs the app uses.
+// Reanimated 4.7's own mock (`react-native-reanimated/mock`) throws during init under jest-expo ("`setCSSEventHandler` is not available in JSReanimated"), so tests that render animated components use this instead. It covers only the APIs the app uses.
 const { View } = require('react-native')
 
 const useSharedValue = initial => {

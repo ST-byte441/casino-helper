@@ -4,8 +4,6 @@ import { Image } from 'react-native'
 import { ProfileAvatar } from '../../features/profile/components/ProfileAvatar'
 import { DEFAULT_PICTURE } from '../../features/profile/pictures'
 
-jest.mock('expo-image-picker', () => ({}))
-jest.mock('expo-file-system', () => ({ Paths: {}, Directory: jest.fn(), File: jest.fn() }))
 
 test('swaps to the default picture when an upload fails to load', () => {
   const { UNSAFE_getByType } = render(
