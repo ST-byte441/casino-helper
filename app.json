@@ -33,7 +33,14 @@
       "expo-router",
       "expo-status-bar",
       "expo-updates",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Casino Helper to use a photo as your profile picture.",
+          "cameraPermission": false
+        }
+      ]
     ],
     "extra": {
       "router": {},

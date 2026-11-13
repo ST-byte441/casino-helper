@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Profile, BankrollMode, ProfilePicture, SettledHand, SettledRoll, GameId } from './types'
 import { emptyStats, applyHands, applyCrapsRoll } from './stats'
 import { migrateProfileState } from './migrate'
+import { deleteUploadedPicture } from './pictures'
 
 type ProfileStore = {
   profiles: Profile[]
@@ -93,11 +94,14 @@ export const useProfileStore = create<ProfileStore>()(
           profiles: state.profiles.map(p => (p.id === id ? { ...p, picture } : p)),
         })),
 
-      deleteProfile: (id) =>
+      deleteProfile: (id) => {
+        const pic = get().profiles.find(p => p.id === id)?.picture
+        if (pic?.kind === 'upload') deleteUploadedPicture(pic.uri)
         set(state => ({
           profiles: state.profiles.filter(p => p.id !== id),
           activeProfileId: state.activeProfileId === id ? null : state.activeProfileId,
-        })),
+        }))
+      },
     }),
     {
       name: 'profile-store',

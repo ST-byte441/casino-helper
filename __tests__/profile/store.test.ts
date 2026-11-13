@@ -138,3 +138,28 @@ test('setPicture sets and clears', () => {
   act(() => result.current.setPicture(id, undefined))
   expect(result.current.profiles[0].picture).toBeUndefined()
 })
+
+jest.mock('../../features/profile/pictures', () => ({
+  deleteUploadedPicture: jest.fn(),
+}))
+
+test('deleteProfile removes an uploaded picture file', () => {
+  const { deleteUploadedPicture } = require('../../features/profile/pictures')
+  const { result } = renderHook(() => useProfileStore())
+  act(() => result.current.addProfile('Pic', 100, 'finite'))
+  const id = result.current.profiles[0].id
+  act(() => result.current.setPicture(id, { kind: 'upload', uri: 'file:///u.jpg' }))
+  act(() => result.current.deleteProfile(id))
+  expect(deleteUploadedPicture).toHaveBeenCalledWith('file:///u.jpg')
+})
+
+test('deleteProfile does not touch files for preset pictures', () => {
+  const { deleteUploadedPicture } = require('../../features/profile/pictures')
+  deleteUploadedPicture.mockClear()
+  const { result } = renderHook(() => useProfileStore())
+  act(() => result.current.addProfile('Pre', 100, 'finite'))
+  const id = result.current.profiles[0].id
+  act(() => result.current.setPicture(id, { kind: 'preset', id: 'x' }))
+  act(() => result.current.deleteProfile(id))
+  expect(deleteUploadedPicture).not.toHaveBeenCalled()
+})
