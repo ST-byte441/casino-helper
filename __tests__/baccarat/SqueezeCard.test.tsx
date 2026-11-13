@@ -44,31 +44,8 @@ test('flip mode: reveals automatically once, with no Flip it button', () => {
   expect(onRevealed).toHaveBeenCalledTimes(1)
 })
 
-describe('card face layout', () => {
-  const { pipBoxes, CORNER_BOXES, CARD_SIZE } = require('../../features/baccarat/components/SqueezeCard')
-  type Box = { left: number; top: number; width: number; height: number }
-  const overlaps = (a: Box, b: Box) =>
-    a.left < b.left + b.width && b.left < a.left + a.width &&
-    a.top < b.top + b.height && b.top < a.top + a.height
-
-  const VALUES = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10']
-
-  test.each(VALUES)('%s: no pip touches either corner index', value => {
-    for (const pip of pipBoxes(value) as Box[]) {
-      for (const corner of CORNER_BOXES as Box[]) expect(overlaps(pip, corner)).toBe(false)
-    }
-  })
-
-  test.each(VALUES)('%s: pips stay on the card and do not overlap each other', value => {
-    const pips = pipBoxes(value) as Box[]
-    pips.forEach((p, i) => {
-      expect(p.left).toBeGreaterThanOrEqual(0)
-      expect(p.top).toBeGreaterThanOrEqual(0)
-      expect(p.left + p.width).toBeLessThanOrEqual(CARD_SIZE.width)
-      expect(p.top + p.height).toBeLessThanOrEqual(CARD_SIZE.height)
-      pips.slice(i + 1).forEach(q => expect(overlaps(p, q)).toBe(false))
-    })
-  })
-
-  test('court cards have no pips', () => expect(pipBoxes('K')).toEqual([]))
+test('renders the card face image for the card', () => {
+  const { cardFaceImage } = require('../../features/baccarat/cardFaces')
+  const { getByTestId } = render(<SqueezeCard card={card} mode="squeeze" onRevealed={jest.fn()} />)
+  expect(getByTestId('card-face').props.source).toBe(cardFaceImage(card))
 })
