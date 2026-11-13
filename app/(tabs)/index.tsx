@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useProfileStore } from '../../features/profile/store'
 import { formatMoney } from '../../features/profile/format'
+import { ProfileAvatar } from '../../features/profile/components/ProfileAvatar'
 
 const GAMES = [
   { id: 'blackjack', label: 'Blackjack', available: true, route: '/blackjack' },
@@ -25,7 +26,16 @@ export default function LobbyScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.profileName}>{active?.name ?? 'No profile'}</Text>
+        <TouchableOpacity
+          testID="lobby-profile-button"
+          style={styles.profileButton}
+          accessibilityRole="button"
+          accessibilityLabel="Open profile"
+          onPress={() => router.navigate('/(tabs)/profile')}
+        >
+          <ProfileAvatar picture={active?.picture} size={36} />
+          <Text style={styles.profileName} numberOfLines={1}>{active?.name ?? 'No profile'}</Text>
+        </TouchableOpacity>
         {active && <Text style={[styles.balance, isNegative && styles.negative]}>{balance}</Text>}
       </View>
       <FlatList
@@ -51,7 +61,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#13131f' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     padding: 16, borderBottomWidth: 1, borderColor: '#2a2a3e' },
-  profileName: { color: '#fff', fontSize: 20, fontWeight: '600' },
+  profileButton: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1, marginRight: 12 },
+  profileName: { color: '#fff', fontSize: 20, fontWeight: '600', flexShrink: 1 },
   balance: { color: '#FFD700', fontSize: 20, fontWeight: '700' },
   negative: { color: '#ff5555' },
   grid: { padding: 12 },
