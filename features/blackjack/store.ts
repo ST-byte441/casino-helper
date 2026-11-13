@@ -2,12 +2,22 @@ import { create } from 'zustand'
 
 const DEAL_DELAY = 350
 let pendingStepIds: ReturnType<typeof setTimeout>[] = []
+// Jumps the running animation (deal, split or dealer reveal) straight to its end state.
+// Each finisher clears this before doing its work, so it can run at most once.
+let pendingFinish: (() => void) | null = null
 function scheduleStep(fn: () => void, ms: number) {
   pendingStepIds.push(setTimeout(fn, ms))
 }
 function cancelPendingSteps() {
   pendingStepIds.forEach(clearTimeout)
   pendingStepIds = []
+  pendingFinish = null
+}
+// Cancels the remaining animation steps and applies the animation's end state now
+function finishPendingSteps() {
+  const finish = pendingFinish
+  cancelPendingSteps()
+  finish?.()
 }
 import { Card, Action, Outcome, Phase, TableRules } from '../../lib/types'
 import { DEFAULT_TABLE_RULES } from '../../lib/constants'
@@ -44,6 +54,7 @@ type BlackjackActions = {
   split: () => void
   surrender: () => void
   newHand: () => void
+  abandonHand: () => void
   canAffordExtra: () => boolean
 }
 
@@ -60,11 +71,6 @@ const initialState: BlackjackState = {
   suggestedAction: null,
   lastOutcome: null,
   lastDelta: 0,
-}
-
-// Per-hand stakes; falls back to the base bet if handBets is not populated
-function stakesFor(handBets: number[], playerHands: Card[][], bet: number): number[] {
-  return playerHands.map((_, i) => handBets[i] ?? bet)
 }
 
 function computeSuggestion(
@@ -106,12 +112,53 @@ function runDealer(
   return { deck: d, dealerHand: hand }
 }
 
-export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set, get) => ({
+type Store = BlackjackState & BlackjackActions
+type SetState = (partial: Partial<Store>) => void
+
+// Dealer plays out, every hand settles on its own stake and the round is recorded once.
+// Animated: dealer cards are revealed one at a time and the result lands after the last one.
+function settleRound(get: () => Store, set: SetState, animate: boolean) {
+  const { deck, dealerHand, playerHands, handBets, tableRules } = get()
+  const { deck: newDeck, dealerHand: fullDealerHand } = runDealer(deck, dealerHand, playerHands, tableRules)
+
+  const outcomes: Array<{ outcome: Outcome; delta: number }> = playerHands.map((h, i) =>
+    resolveHand(h, fullDealerHand, handBets[i], tableRules)
+  )
+  const totalDelta = outcomes.reduce((sum, r) => sum + r.delta, 0)
+  const priority: Outcome[] = ['blackjack', 'win', 'push', 'lose', 'bust']
+  const lastOutcome = priority.find(p => outcomes.some(r => r.outcome === p)) ?? 'lose'
+
+  const finish = () => {
+    pendingFinish = null
+    useProfileStore.getState().recordHands(
+      'blackjack',
+      outcomes.map(r => ({ result: classifyBlackjack(r.outcome), delta: r.delta })),
+    )
+    set({ dealerHand: fullDealerHand, phase: 'result', lastOutcome, lastDelta: totalDelta })
+  }
+
+  cancelPendingSteps()
+  set({ deck: newDeck, phase: 'dealing' })
+  if (!animate) {
+    finish()
+    return
+  }
+  const D = DEAL_DELAY
+  for (let i = 2; i <= fullDealerHand.length; i++) {
+    const cards = fullDealerHand.slice(0, i)
+    scheduleStep(() => set({ dealerHand: cards }), D * (i - 1))
+  }
+  scheduleStep(finish, D * fullDealerHand.length)
+  pendingFinish = finish
+}
+
+export const useBlackjackStore = create<Store>((set, get) => ({
   ...initialState,
 
   getInitialState: () => initialState,
 
   setTableRules: (rules) => {
+    cancelPendingSteps()
     const deck = createDeck(rules.deckCount)
     set({ ...initialState, tableRules: rules, deck })
   },
@@ -137,10 +184,9 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
     const ps = useProfileStore.getState()
     const profile = ps.profiles.find(p => p.id === ps.activeProfileId)
     if (!profile || profile.bankrollMode === 'infinite') return true
-    const { handBets, playerHands, activeHandIndex, bet } = get()
-    const stakes = stakesFor(handBets, playerHands, bet)
-    const total = stakes.reduce((a, b) => a + b, 0)
-    return total + (stakes[activeHandIndex] ?? bet) <= profile.balance
+    const { handBets, activeHandIndex } = get()
+    const total = handBets.reduce((a, b) => a + b, 0)
+    return total + handBets[activeHandIndex] <= profile.balance
   },
 
   deal: () => {
@@ -162,24 +208,27 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
     scheduleStep(() => set({ playerHands: [[c1]] }), D)
     scheduleStep(() => set({ dealerHand: [c2] }), D * 2)
     scheduleStep(() => set({ playerHands: [[c1, c3]] }), D * 3)
-    scheduleStep(() => {
-      const { assistEnabled } = get()
+    const finishDeal = () => {
+      pendingFinish = null
+      const { assistEnabled, handBets } = get()
       const playerHands = [[c1, c3]]
       // Dealer peek: a dealer natural ends the hand before the player acts
       if (isBlackjack([c2, c4])) {
         const revealed = [c2, { ...c4, faceDown: false }]
-        const { outcome, delta } = resolveHand(playerHands[0], revealed, bet, tableRules)
+        const { outcome, delta } = resolveHand(playerHands[0], revealed, handBets[0], tableRules)
         useProfileStore.getState().recordHands('blackjack', [{ result: classifyBlackjack(outcome), delta }])
-        set({ dealerHand: revealed, phase: 'result', lastOutcome: outcome, lastDelta: delta, suggestedAction: null })
+        set({ playerHands, dealerHand: revealed, phase: 'result', lastOutcome: outcome, lastDelta: delta, suggestedAction: null })
         return
       }
       const dealerHand = [c2, { ...c4, faceDown: true }]
       const suggestedAction = computeSuggestion(playerHands, 0, dealerHand, assistEnabled, tableRules)
-      set({ dealerHand, phase: 'playing', suggestedAction })
+      set({ playerHands, dealerHand, phase: 'playing', suggestedAction })
       if (scoreHand(playerHands[0]) === 21 && playerHands[0].length === 2) {
         get().stand()
       }
-    }, D * 4)
+    }
+    scheduleStep(finishDeal, D * 4)
+    pendingFinish = finishDeal
   },
 
   hit: () => {
@@ -207,43 +256,17 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
       set({ activeHandIndex: next, suggestedAction })
       return
     }
-    // All hands done — run dealer (pre-compute full hand, reveal cards one at a time)
-    let { deck, dealerHand, bet, handBets, tableRules } = get()
-    const stakes = stakesFor(handBets, playerHands, bet)
-    const { deck: newDeck, dealerHand: fullDealerHand } = runDealer(deck, dealerHand, playerHands, tableRules)
-
-    const outcomes: Array<{ outcome: Outcome; delta: number }> = playerHands.map((h, i) =>
-      resolveHand(h, fullDealerHand, stakes[i], tableRules)
-    )
-    const totalDelta = outcomes.reduce((sum, r) => sum + r.delta, 0)
-    const priority: Outcome[] = ['blackjack', 'win', 'push', 'lose', 'bust']
-    const lastOutcome = priority.find(p => outcomes.some(r => r.outcome === p)) ?? 'lose'
-
-    cancelPendingSteps()
-    set({ deck: newDeck, phase: 'dealing' })
-
-    const D = DEAL_DELAY
-    for (let i = 2; i <= fullDealerHand.length; i++) {
-      const cards = fullDealerHand.slice(0, i)
-      scheduleStep(() => set({ dealerHand: cards }), D * (i - 1))
-    }
-    scheduleStep(() => {
-      useProfileStore.getState().recordHands(
-        'blackjack',
-        outcomes.map(r => ({ result: classifyBlackjack(r.outcome), delta: r.delta })),
-      )
-      set({ phase: 'result', lastOutcome, lastDelta: totalDelta })
-    }, D * fullDealerHand.length)
+    // All hands done — dealer plays out, cards revealed one at a time
+    settleRound(get, set, true)
   },
 
   doubleDown: () => {
     if (!get().canAffordExtra()) return
-    let { deck, playerHands, activeHandIndex, bet, handBets } = get()
-    const stakes = stakesFor(handBets, playerHands, bet)
+    let { deck, playerHands, activeHandIndex, handBets } = get()
     let card: Card
     ;[card, deck] = dealCard(deck)
     const newHands = playerHands.map((h, i) => i === activeHandIndex ? [...h, card] : h)
-    set({ deck, playerHands: newHands, handBets: stakes.map((b, i) => i === activeHandIndex ? b * 2 : b) })
+    set({ deck, playerHands: newHands, handBets: handBets.map((b, i) => i === activeHandIndex ? b * 2 : b) })
     // Force stand after doubling
     get().stand()
   },
@@ -254,8 +277,7 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
     const hand = playerHands[activeHandIndex]
     if (!canSplit(hand)) return
     if (!get().canAffordExtra()) return
-    let { deck, handBets, bet } = get()
-    const stakes = stakesFor(handBets, playerHands, bet)
+    let { deck, handBets } = get()
     let c1: Card, c2: Card
     ;[c1, deck] = dealCard(deck)
     ;[c2, deck] = dealCard(deck)
@@ -270,7 +292,7 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
     set({
       deck,
       playerHands: baseHands,
-      handBets: [...stakes.slice(0, activeHandIndex + 1), stakes[activeHandIndex], ...stakes.slice(activeHandIndex + 1)],
+      handBets: [...handBets.slice(0, activeHandIndex + 1), handBets[activeHandIndex], ...handBets.slice(activeHandIndex + 1)],
       phase: 'dealing',
     })
 
@@ -278,12 +300,16 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
     scheduleStep(() => {
       set(s => ({ playerHands: s.playerHands.map((h, i) => i === activeHandIndex ? [hand[0], c1] : h) }))
     }, D)
-    scheduleStep(() => {
+    const finishSplit = () => {
+      pendingFinish = null
       const { assistEnabled, dealerHand, tableRules } = get()
-      const newHands = get().playerHands.map((h, i) => i === activeHandIndex + 1 ? [hand[1], c2] : h)
+      const newHands = get().playerHands.map((h, i) =>
+        i === activeHandIndex ? [hand[0], c1] : i === activeHandIndex + 1 ? [hand[1], c2] : h)
       const suggestedAction = computeSuggestion(newHands, activeHandIndex, dealerHand, assistEnabled, tableRules)
       set({ playerHands: newHands, suggestedAction, phase: 'playing' })
-    }, D * 2)
+    }
+    scheduleStep(finishSplit, D * 2)
+    pendingFinish = finishSplit
   },
 
   surrender: () => {
@@ -293,8 +319,7 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
     if (playerHands.length > 1) return
     const hand = playerHands[activeHandIndex]
     if (!canSurrender(hand, tableRules)) return
-    const { bet, handBets } = get()
-    const delta = -Math.floor((handBets[activeHandIndex] ?? bet) / 2)
+    const delta = -Math.floor(get().handBets[activeHandIndex] / 2)
     useProfileStore.getState().recordHands('blackjack', [{ result: 'loss', delta }])
     set({ phase: 'result', lastOutcome: 'lose', lastDelta: delta })
   },
@@ -303,5 +328,14 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
     cancelPendingSteps()
     const { tableRules, deck, assistEnabled } = get()
     set({ ...initialState, tableRules, deck, assistEnabled })
+  },
+
+  // Leaving the table: a hand in progress stands where it is and settles now,
+  // then the next visit starts fresh. Nothing is recorded in betting or result.
+  abandonHand: () => {
+    // Finish any deal/split animation first; a player natural may chain into a dealer reveal
+    while (pendingFinish) finishPendingSteps()
+    if (get().phase === 'playing') settleRound(get, set, false)
+    get().newHand()
   },
 }))

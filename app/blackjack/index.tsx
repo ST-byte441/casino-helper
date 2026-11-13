@@ -36,6 +36,12 @@ export default function BlackjackScreen() {
     fundsTimer.current = setTimeout(() => setFundsWarning(false), 2000)
   }
 
+  // Leaving the table settles an unfinished hand and starts the next visit fresh.
+  useEffect(() => () => {
+    clearTimeout(fundsTimer.current)
+    useBlackjackStore.getState().abandonHand()
+  }, [])
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ y: handOffsets.current[store.activeHandIndex] ?? 0, animated: true })
   }, [store.activeHandIndex])
