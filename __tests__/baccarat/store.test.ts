@@ -115,3 +115,38 @@ test('result phase stays until newHand', () => {
   store().newHand()
   expect(store().phase).toBe('betting')
 })
+
+const bacStats = () => useProfileStore.getState().profiles[0].stats.baccarat
+
+test('full reveal records exactly one hand matching lastNetDelta', () => {
+  store().deal('squeeze')
+  revealAll()
+  const net = store().lastNetDelta
+  store().revealNext()
+  store().abandonHand()
+  const s = bacStats()
+  expect(s.wins + s.losses + s.pushes).toBe(1)
+  expect(s.wins).toBe(1)
+  expect(s.net).toBe(net)
+})
+
+test('abandonHand mid-reveal records once, even when called twice', () => {
+  store().deal('squeeze')
+  store().revealNext()
+  const net = store().lastNetDelta
+  store().abandonHand()
+  store().abandonHand()
+  const s = bacStats()
+  expect(s.wins + s.losses + s.pushes).toBe(1)
+  expect(s.net).toBe(net)
+})
+
+test('zero-stake hand records nothing', () => {
+  store().clearBets()
+  store().deal('squeeze')
+  revealAll()
+  store().abandonHand()
+  const s = bacStats()
+  expect(s.wins + s.losses + s.pushes).toBe(0)
+  expect(s.net).toBe(0)
+})
