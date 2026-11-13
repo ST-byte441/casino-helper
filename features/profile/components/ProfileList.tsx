@@ -9,10 +9,16 @@ type Props = {
   onDelete: (id: string) => void
 }
 
+// The active profile is always listed first; the rest keep their original order.
+function activeFirst(profiles: Profile[], activeProfileId: string | null): Profile[] {
+  const active = profiles.find(p => p.id === activeProfileId)
+  return active ? [active, ...profiles.filter(p => p !== active)] : profiles
+}
+
 export function ProfileList({ profiles, activeProfileId, onOpen, onDelete }: Props) {
   return (
     <FlatList
-      data={profiles}
+      data={activeFirst(profiles, activeProfileId)}
       keyExtractor={p => p.id}
       renderItem={({ item }) => (
         <ProfileCard
