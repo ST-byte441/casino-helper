@@ -82,6 +82,11 @@ __tests__/        # Mirrors the feature folder structure
 1. Create `features/<game>/` with `engine.ts`, `strategy.ts`, `store.ts`, and `components/`
 2. Add a route at `app/<game>/index.tsx`
 3. Add a tile in `app/(tabs)/index.tsx`
+4. Track stats for the game in the profile:
+   - Add the game to `GameId` and a new key to `ProfileStats` (`features/profile/types.ts`), and give it a zeroed record in `emptyStats()` (`features/profile/stats.ts`)
+   - Add a `GAME_TABS` entry (`features/profile/components/GameStatsTabs.tsx`) so the profile detail screen shows a tab for it
+   - Bump the persist `version` in `features/profile/store.ts` and extend `migrateProfileState` (`features/profile/migrate.ts`) so existing profiles get the new key filled with the empty record; cover it in `__tests__/profile/migrate.test.ts`
+   - Record settled results from the game store with `useProfileStore.getState().recordHands(...)` (or a game-specific recorder), exactly once per settled hand, including when the player leaves the table mid-hand
 
 ## Publishing a Release
 
