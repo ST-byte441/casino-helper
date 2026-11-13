@@ -4,7 +4,7 @@ import {
 } from '../../lib/types'
 import {
   buildDeck, dealHands, isNatural, scoreHand, shouldPlayerDraw, shouldBankerDraw,
-  resolveRound, calculateDeltas, baccaratValue,
+  resolveRound, calculateDeltas, baccaratValue, meetsTableMinimum,
 } from './engine'
 import { revealOrder } from './reveal'
 import { useProfileStore } from '../profile/store'
@@ -80,7 +80,7 @@ export const useBaccaratStore = create<BaccaratState & BaccaratActions>((set, ge
 
   deal(mode) {
     const { deck: currentDeck, bets, phase } = get()
-    if (phase !== 'betting') return
+    if (phase !== 'betting' || !meetsTableMinimum(bets)) return
     const deck = currentDeck.length < 10 ? buildDeck() : currentDeck
     let { playerHand, bankerHand, deck: remaining } = dealHands(deck)
 

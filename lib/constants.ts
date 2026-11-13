@@ -6,6 +6,10 @@ export const VALUES = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'] as 
 export const CHIP_DENOMINATIONS = [15, 25, 50] as const
 export const TABLE_MINIMUM = 15
 
+// Baccarat: Player/Banker are placed with these chips; Tie and pairs keep small fixed steps.
+export const BACCARAT_CHIPS = [15, 25, 50, 100] as const
+export const BACCARAT_MIN_MAIN_BET = 15
+
 export const DEFAULT_TABLE_RULES: TableRules = {
   payoutMode: '3:2',
   dealerSoft17: 'H17',

@@ -150,3 +150,25 @@ test('zero-stake hand records nothing', () => {
   expect(s.wins + s.losses + s.pushes).toBe(0)
   expect(s.net).toBe(0)
 })
+
+describe('table minimum', () => {
+  test('deal is refused without at least $15 on Player or Banker', () => {
+    store().newHand()
+    useBaccaratStore.setState({ deck: [...STACKED] })
+    store().placeBet('player', 10)
+    store().placeBet('tie', 5)
+    store().deal('squeeze')
+    expect(store().phase).toBe('betting')
+    store().placeBet('player', 5) // now $15 on Player
+    store().deal('squeeze')
+    expect(store().phase).toBe('revealing')
+  })
+
+  test('side bets alone cannot be dealt', () => {
+    store().newHand()
+    store().placeBet('tie', 50)
+    store().placeBet('player-pair', 20)
+    store().deal('squeeze')
+    expect(store().phase).toBe('betting')
+  })
+})

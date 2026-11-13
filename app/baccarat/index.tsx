@@ -11,9 +11,10 @@ import { HandDisplay } from '../../features/baccarat/components/HandDisplay'
 import { BetPanel } from '../../features/baccarat/components/BetPanel'
 import { ResultBanner } from '../../features/baccarat/components/ResultBanner'
 import { SqueezeCard } from '../../features/baccarat/components/SqueezeCard'
-import { scoreHand } from '../../features/baccarat/engine'
+import { scoreHand, meetsTableMinimum } from '../../features/baccarat/engine'
 import { handView } from '../../features/baccarat/reveal'
 import { BaccaratBet } from '../../lib/types'
+import { BACCARAT_CHIPS, BACCARAT_MIN_MAIN_BET } from '../../lib/constants'
 
 export default function BaccaratScreen() {
   const router = useRouter()
@@ -26,6 +27,7 @@ export default function BaccaratScreen() {
   const balance = active ? (isInfinite ? '∞' : formatMoney(active.balance)) : '—'
 
   const [showFundsWarning, setFundsWarning] = useState(false)
+  const [chip, setChip] = useState<number>(BACCARAT_CHIPS[0])
   const fundsTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const tableRef = useRef<React.ComponentRef<typeof LegacyScrollView>>(null)
 
@@ -51,7 +53,7 @@ export default function BaccaratScreen() {
   }
 
   const { phase } = store
-  const hasBets = Object.values(store.bets).some(v => v && v > 0)
+  const canDeal = meetsTableMinimum(store.bets)
   const isRevealing = phase === 'revealing'
   const isResult = phase === 'result'
   const isBetting = phase === 'betting'
@@ -137,6 +139,8 @@ export default function BaccaratScreen() {
             bets={store.bets}
             assistEnabled={false}
             disabled={false}
+            chip={chip}
+            onChipChange={setChip}
             onAdd={handlePlaceBet}
             onClear={store.clearBets}
           />
@@ -146,6 +150,9 @@ export default function BaccaratScreen() {
       <View style={styles.footer}>
         <View>
           {showFundsWarning && <Text style={styles.fundsWarning}>Insufficient funds</Text>}
+          {isBetting && !canDeal && !showFundsWarning && (
+            <Text style={styles.minHint}>Min {formatMoney(BACCARAT_MIN_MAIN_BET)} on Player or Banker</Text>
+          )}
           <Text style={[styles.balance, numericBalance < 0 && styles.negative]}>Balance: {balance}</Text>
         </View>
         {isResult && (
@@ -155,8 +162,8 @@ export default function BaccaratScreen() {
         )}
         {isBetting && (
           <TouchableOpacity
-            style={[styles.dealBtn, !hasBets && styles.dealDisabled]}
-            disabled={!hasBets}
+            style={[styles.dealBtn, !canDeal && styles.dealDisabled]}
+            disabled={!canDeal}
             onPress={() => store.deal(baccaratRevealMode)}
           >
             <Text style={styles.dealText}>DEAL</Text>
@@ -188,5 +195,6 @@ const styles = StyleSheet.create({
   fundsWarning: { color: '#e74c3c', fontSize: 12, fontWeight: '600', marginBottom: 2 },
   dealBtn: { backgroundColor: '#FFD700', borderRadius: 10, paddingHorizontal: 32, paddingVertical: 14 },
   dealDisabled: { opacity: 0.4 },
+  minHint: { color: '#aaa', fontSize: 12, marginBottom: 2 },
   dealText: { color: '#13131f', fontWeight: '800', fontSize: 16 },
 })
