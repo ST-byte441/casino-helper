@@ -25,6 +25,7 @@ type CrapsActions = {
   removeBet(id: string): void
   reduceBet(id: string, amount: number): void
   addOdds(betId: string, amount: number): void
+  canAfford(amount: number): boolean
   toggleWorking(betId: string): void
   toggleAssist(): void
 }
@@ -101,7 +102,16 @@ export const useCrapsStore = create<CrapsState & CrapsActions>((set, get) => ({
     }
   },
 
+  canAfford(amount) {
+    const ps = useProfileStore.getState()
+    const profile = ps.profiles.find(p => p.id === ps.activeProfileId)
+    if (!profile || profile.bankrollMode === 'infinite') return true
+    const atRisk = get().bets.reduce((s, b) => s + b.amount + (b.odds ?? 0), 0)
+    return atRisk + amount <= profile.balance
+  },
+
   addOdds(betId, amount) {
+    if (amount > 0 && !get().canAfford(amount)) return
     set(s => ({ bets: s.bets.map(b => b.id === betId ? { ...b, odds: (b.odds ?? 0) + amount } : b) }))
   },
 

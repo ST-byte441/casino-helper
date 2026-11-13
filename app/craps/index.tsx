@@ -184,6 +184,7 @@ export default function CrapsScreen() {
                 odds={passBet.odds ?? 0}
                 maxOdds={getMaxOdds(passBet.amount, point, tableRules.oddsMultiple)}
                 increments={[1, 5, 10]}
+                canAdd={store.canAfford}
                 quality={assistEnabled && isCleanOdds(passBet.odds ?? 0, point) ? 'optimal' : null}
                 onAdd={amt => store.addOdds(passBet.id, amt)}
                 onRemove={amt => store.addOdds(passBet.id, -Math.min(amt, passBet.odds ?? 0))}
@@ -208,6 +209,7 @@ export default function CrapsScreen() {
                 odds={dontPassBet.odds ?? 0}
                 maxOdds={getMaxOdds(dontPassBet.amount, point, tableRules.oddsMultiple)}
                 increments={[1, 5, 10]}
+                canAdd={store.canAfford}
                 quality={assistEnabled && isCleanOdds(dontPassBet.odds ?? 0, point) ? 'optimal' : null}
                 onAdd={amt => store.addOdds(dontPassBet.id, amt)}
                 onRemove={amt => store.addOdds(dontPassBet.id, -Math.min(amt, dontPassBet.odds ?? 0))}
