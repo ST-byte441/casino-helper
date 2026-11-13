@@ -125,8 +125,8 @@ export default function BlackjackScreen() {
       {isPlaying && (
         <ActionButtons
           suggestedAction={store.suggestedAction}
-          canDouble={canDouble(activeHand, store.activeHandIndex > 0, rules)}
-          canSplit={canSplit(activeHand)}
+          canDouble={canDouble(activeHand, store.activeHandIndex > 0, rules) && store.canAffordExtra()}
+          canSplit={canSplit(activeHand) && store.canAffordExtra()}
           canSurrender={canSurrender(activeHand, rules)}
           onHit={store.hit}
           onStand={store.stand}

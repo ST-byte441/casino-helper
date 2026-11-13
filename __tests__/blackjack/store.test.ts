@@ -14,6 +14,9 @@ import { act, renderHook } from '@testing-library/react-native'
 import { useBlackjackStore } from '../../features/blackjack/store'
 import { DEFAULT_TABLE_RULES } from '../../lib/constants'
 import { Card } from '../../lib/types'
+import { useProfileStore } from '../../features/profile/store'
+import { emptyStats } from '../../features/profile/stats'
+import { resolveHand } from '../../features/blackjack/engine'
 
 beforeEach(() => {
   jest.useFakeTimers()
@@ -289,4 +292,103 @@ test('surrender removes half the bet and ends hand', () => {
   })
   expect(result.current.phase).toBe('result')
   expect(result.current.lastDelta).toBe(-25)
+})
+
+describe('per-hand stakes and stat recording', () => {
+  const k = (value: Card['value'], suit: Card['suit'] = '♠'): Card => ({ value, suit })
+  function setProfile(mode: 'finite' | 'infinite', balance: number) {
+    useProfileStore.setState({
+      profiles: [{
+        id: 'p1', name: 'T', bankrollMode: mode, balance, createdAt: 0,
+        startingBalance: balance, trackingSince: 0, refills: [], stats: emptyStats(),
+      }],
+      activeProfileId: 'p1',
+    })
+  }
+  const stats = () => useProfileStore.getState().profiles[0].stats.blackjack
+  const playing = (extra: object) => useBlackjackStore.setState({
+    phase: 'playing', activeHandIndex: 0, tableRules: DEFAULT_TABLE_RULES,
+    dealerHand: [k('10'), { ...k('7'), faceDown: true }], ...extra,
+  })
+
+  test('double on one split hand only doubles that hand and settles each hand on its own stake', () => {
+    setProfile('finite', 1000)
+    const { result } = renderHook(() => useBlackjackStore())
+    act(() => {
+      playing({
+        playerHands: [[k('8'), k('8', '♥')]], handBets: [20], bet: 20,
+        deck: [k('3'), k('2'), k('10'), k('5'), k('4'), k('9'), k('6')],
+      })
+      result.current.split()
+      jest.runAllTimers()
+    })
+    expect(result.current.handBets).toEqual([20, 20])
+    act(() => {
+      result.current.doubleDown()
+    })
+    expect(result.current.handBets).toEqual([40, 20])
+    act(() => {
+      result.current.stand()
+      jest.runAllTimers()
+    })
+    const s = result.current
+    expect(s.phase).toBe('result')
+    const st = stats()
+    expect(st.wins + st.losses + st.pushes).toBe(2)
+    const expected = s.playerHands.reduce(
+      (sum, h, i) => sum + resolveHand(h, s.dealerHand, s.handBets[i], DEFAULT_TABLE_RULES).delta, 0)
+    expect(st.net).toBe(expected)
+    expect(s.lastDelta).toBe(expected)
+  })
+
+  test('canAffordExtra false when balance cannot cover another stake; double/split no-op', () => {
+    setProfile('finite', 100)
+    const { result } = renderHook(() => useBlackjackStore())
+    act(() => {
+      playing({ playerHands: [[k('8'), k('8', '♥')]], handBets: [60], bet: 60, deck: [k('2'), k('3'), k('4')] })
+    })
+    expect(result.current.canAffordExtra()).toBe(false)
+    act(() => { result.current.doubleDown() })
+    expect(result.current.playerHands).toHaveLength(1)
+    expect(result.current.playerHands[0]).toHaveLength(2)
+    expect(result.current.handBets).toEqual([60])
+    act(() => { result.current.split() })
+    expect(result.current.playerHands).toHaveLength(1)
+    expect(result.current.handBets).toEqual([60])
+  })
+
+  test('canAffordExtra true when covered, and for infinite profiles', () => {
+    setProfile('finite', 120)
+    const { result } = renderHook(() => useBlackjackStore())
+    act(() => { playing({ playerHands: [[k('8'), k('8', '♥')]], handBets: [60], bet: 60 }) })
+    expect(result.current.canAffordExtra()).toBe(true)
+    setProfile('infinite', 0)
+    expect(result.current.canAffordExtra()).toBe(true)
+  })
+
+  test('surrender records one loss of half the stake', () => {
+    setProfile('finite', 500)
+    const { result } = renderHook(() => useBlackjackStore())
+    act(() => {
+      playing({ playerHands: [[k('K'), k('7')]], handBets: [50], bet: 50 })
+      result.current.surrender()
+    })
+    expect(stats().losses).toBe(1)
+    expect(stats().net).toBe(-25)
+  })
+
+  test('dealer natural on peek records one loss', () => {
+    setProfile('finite', 500)
+    const { result } = renderHook(() => useBlackjackStore())
+    act(() => {
+      useBlackjackStore.setState({
+        deck: [k('10'), k('A'), k('9'), k('K'), ...Array(20).fill(k('2'))],
+        tableRules: { ...DEFAULT_TABLE_RULES, deckCount: 1, continuousShuffle: false }, bet: 15,
+      })
+      result.current.deal()
+      jest.runAllTimers()
+    })
+    expect(stats().losses).toBe(1)
+    expect(stats().net).toBe(-15)
+  })
 })
