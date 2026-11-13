@@ -18,7 +18,7 @@ npx jest <path>   # single file
 npx tsc --noEmit  # type check only
 ```
 
-360 tests cover the game engine, strategy lookup, profile store and stats, and update utility.
+361 tests cover the game engine, strategy lookup, profile store and stats, and update utility.
 
 ## Project Structure
 
