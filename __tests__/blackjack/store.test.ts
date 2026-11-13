@@ -122,6 +122,7 @@ test('hit that busts advances to result phase', () => {
       activeHandIndex: 0,
       phase: 'playing' as const,
       bet: 15,
+      handBets: [15],
       tableRules: DEFAULT_TABLE_RULES,
     })
     result.current.stand()
@@ -161,6 +162,7 @@ describe('when the dealer plays out their hand', () => {
         activeHandIndex: playerHands.length - 1,
         phase: 'playing' as const,
         bet: 15,
+        handBets: playerHands.map(() => 15),
         tableRules: DEFAULT_TABLE_RULES,
       })
       result.current.stand()
@@ -286,6 +288,7 @@ test('surrender removes half the bet and ends hand', () => {
       activeHandIndex: 0,
       phase: 'playing' as const,
       bet: 50,
+      handBets: [50],
       tableRules: DEFAULT_TABLE_RULES,
     })
     result.current.surrender()
@@ -390,5 +393,19 @@ describe('per-hand stakes and stat recording', () => {
     })
     expect(stats().losses).toBe(1)
     expect(stats().net).toBe(-15)
+  })
+  test('surrender is not allowed once the hand has been split', () => {
+    setProfile('finite', 500)
+    const { result } = renderHook(() => useBlackjackStore())
+    act(() => {
+      playing({ playerHands: [[k('K'), k('7')], [k('K', '♥'), k('6')]], handBets: [10, 10], bet: 10 })
+    })
+    const before = useBlackjackStore.getState()
+    act(() => { result.current.surrender() })
+    expect(result.current.phase).toBe('playing')
+    expect(result.current.playerHands).toBe(before.playerHands)
+    expect(result.current.lastDelta).toBe(before.lastDelta)
+    expect(stats().losses).toBe(0)
+    expect(stats().net).toBe(0)
   })
 })

@@ -289,6 +289,8 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
   surrender: () => {
     const { phase, playerHands, activeHandIndex, tableRules } = get()
     if (phase !== 'playing') return
+    // Surrender is only offered on the original two-card hand, never after a split
+    if (playerHands.length > 1) return
     const hand = playerHands[activeHandIndex]
     if (!canSurrender(hand, tableRules)) return
     const { bet, handBets } = get()
