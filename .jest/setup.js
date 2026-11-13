@@ -12,7 +12,6 @@ try { void globalThis.__ExpoImportMetaRegistry; } catch (_) {}
 try { void globalThis.structuredClone; } catch (_) {}
 try { void globalThis.fetch; } catch (_) {}
 
-// Default stubs for native Expo modules used by profile pictures. Tests that need
-// specific behavior (e.g. __tests__/profile/pictures.test.ts) override these with their own jest.mock.
+// Default stubs for native Expo modules used by profile pictures. Tests that need specific behavior (e.g. __tests__/profile/pictures.test.ts) override these with their own jest.mock.
 jest.mock('expo-image-picker', () => ({ launchImageLibraryAsync: jest.fn() }));
 jest.mock('expo-file-system', () => ({ Paths: {}, Directory: jest.fn(), File: jest.fn() }));
