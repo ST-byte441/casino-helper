@@ -22,6 +22,7 @@ export default function RootLayout() {
         <Stack.Screen name="baccarat/index" options={{ headerShown: false }} />
         <Stack.Screen name="sandbox/baccarat" options={{ headerShown: false }} />
         <Stack.Screen name="craps/index" options={{ headerShown: false }} />
+        <Stack.Screen name="profile/[id]" options={{ headerShown: false }} />
       </Stack>
       {updateInfo && (
         <UpdateModal

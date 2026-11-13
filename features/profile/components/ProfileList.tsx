@@ -5,11 +5,11 @@ import { ProfileCard } from './ProfileCard'
 type Props = {
   profiles: Profile[]
   activeProfileId: string | null
-  onSelect: (id: string) => void
+  onOpen: (id: string) => void
   onDelete: (id: string) => void
 }
 
-export function ProfileList({ profiles, activeProfileId, onSelect, onDelete }: Props) {
+export function ProfileList({ profiles, activeProfileId, onOpen, onDelete }: Props) {
   return (
     <FlatList
       data={profiles}
@@ -18,7 +18,7 @@ export function ProfileList({ profiles, activeProfileId, onSelect, onDelete }: P
         <ProfileCard
           profile={item}
           isActive={item.id === activeProfileId}
-          onSelect={() => onSelect(item.id)}
+          onOpen={() => onOpen(item.id)}
           onDelete={() => onDelete(item.id)}
         />
       )}
