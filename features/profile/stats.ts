@@ -9,7 +9,7 @@ export function emptyStats(): ProfileStats {
   return {
     blackjack: emptyHandRecord(),
     baccarat: emptyHandRecord(),
-    craps: { rolls: 0, pointsMade: 0, sevenOuts: 0, biggestWin: 0, net: 0 },
+    craps: { rolls: 0, pointsMade: 0, sevenOuts: 0, biggestWin: 0, net: 0, longestRoll: 0 },
   }
 }
 
@@ -43,6 +43,7 @@ export function applyCrapsRoll(r: CrapsRecord, roll: SettledRoll): CrapsRecord {
     sevenOuts: r.sevenOuts + (roll.phaseChange === 'seven-out' ? 1 : 0),
     biggestWin: Math.max(r.biggestWin, roll.delta),
     net: r.net + roll.delta,
+    longestRoll: Math.max(r.longestRoll, roll.shooterRolls),
   }
 }
 

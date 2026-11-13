@@ -15,6 +15,7 @@ type CrapsState = {
   assistEnabled: boolean
   lastRoll: ReturnType<typeof resolveRoll> | null
   lastDelta: number
+  shooterRolls: number // rolls the current shooter has survived while the player had bets down
 }
 
 type CrapsActions = {
@@ -39,6 +40,7 @@ const initialState: CrapsState = {
   assistEnabled: false,
   lastRoll: null,
   lastDelta: 0,
+  shooterRolls: 0,
 }
 
 export const useCrapsStore = create<CrapsState & CrapsActions>((set, get) => ({
@@ -120,17 +122,22 @@ export const useCrapsStore = create<CrapsState & CrapsActions>((set, get) => ({
   },
 
   roll() {
-    const { phase, point, bets, tableRules } = get()
+    const { phase, point, bets, tableRules, shooterRolls } = get()
     if (phase === 'setup') return
 
     const dice: [number, number] = [Math.ceil(Math.random() * 6), Math.ceil(Math.random() * 6)]
     const resolution = resolveRoll(dice, phase, point, bets, tableRules)
 
     const totalDelta = resolution.outcomes.reduce((sum, o) => sum + o.delta, 0)
+    const hadBets = bets.length > 0
+    const sevenOut = resolution.phaseChange === 'seven-out'
+    // The seven-out roll ends the shooter's run, so it doesn't count as a roll survived.
+    const survived = hadBets && !sevenOut ? shooterRolls + 1 : shooterRolls
     useProfileStore.getState().recordCrapsRoll({
       delta: totalDelta,
-      hadBets: bets.length > 0,
+      hadBets,
       phaseChange: resolution.phaseChange,
+      shooterRolls: survived,
     })
 
     // Multi-roll bets stay on the table after winning — only removed on a loss
@@ -170,6 +177,9 @@ export const useCrapsStore = create<CrapsState & CrapsActions>((set, get) => ({
       )
     }
 
-    set({ dice, phase: nextPhase, point: nextPoint ?? null, bets: updatedBets, lastRoll: resolution, lastDelta: totalDelta })
+    set({
+      dice, phase: nextPhase, point: nextPoint ?? null, bets: updatedBets, lastRoll: resolution, lastDelta: totalDelta,
+      shooterRolls: sevenOut ? 0 : survived,
+    })
   },
 }))

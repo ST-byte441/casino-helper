@@ -33,8 +33,8 @@ describe('applyHands', () => {
 describe('applyCrapsRoll', () => {
   const empty = emptyStats().craps
   it('seven-out', () => {
-    expect(applyCrapsRoll(empty, { delta: -10, hadBets: true, phaseChange: 'seven-out' }))
-      .toEqual({ rolls: 1, pointsMade: 0, sevenOuts: 1, biggestWin: 0, net: -10 })
+    expect(applyCrapsRoll(empty, { delta: -10, hadBets: true, phaseChange: 'seven-out', shooterRolls: 0 }))
+      .toEqual({ rolls: 1, pointsMade: 0, sevenOuts: 1, biggestWin: 0, net: -10, longestRoll: 0 })
   })
   it('point-made', () => {
     const r = applyCrapsRoll(empty, { delta: 20, hadBets: true, phaseChange: 'point-made' })
@@ -43,6 +43,12 @@ describe('applyCrapsRoll', () => {
   })
   it('ignores rolls without bets', () => {
     expect(applyCrapsRoll(empty, { delta: 0, hadBets: false, phaseChange: 'seven-out' })).toEqual(empty)
+  })
+  it('longestRoll keeps the longest shooter run seen', () => {
+    const r1 = applyCrapsRoll(empty, { delta: 0, hadBets: true, shooterRolls: 5 })
+    expect(r1.longestRoll).toBe(5)
+    const r2 = applyCrapsRoll(r1, { delta: 0, hadBets: true, shooterRolls: 2 })
+    expect(r2.longestRoll).toBe(5)
   })
   it('natural does not touch sevenOuts', () => {
     const r = applyCrapsRoll(empty, { delta: 10, hadBets: true, phaseChange: 'natural' })

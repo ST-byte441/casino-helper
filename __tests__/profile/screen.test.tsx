@@ -80,7 +80,7 @@ test('stats tabs', () => {
   const stats = emptyStats()
   stats.blackjack = { wins: 3, losses: 1, pushes: 2, biggestWin: 150, net: 220 }
   stats.baccarat = { wins: 0, losses: 0, pushes: 2, biggestWin: 0, net: -180 }
-  stats.craps = { rolls: 212, pointsMade: 9, sevenOuts: 14, biggestWin: 300, net: -1200 }
+  stats.craps = { rolls: 212, pointsMade: 9, sevenOuts: 14, biggestWin: 300, net: -1200, longestRoll: 23 }
   setup(base({ stats }))
   const { getByText, queryByText } = render(<ProfileDetail />)
   getByText('Wins'); getByText('Losses'); getByText('Pushes'); getByText('75.0%')
@@ -89,6 +89,7 @@ test('stats tabs', () => {
   getByText('Ties'); getByText('—'); getByText('−$180')
   fireEvent.press(getByText('Craps'))
   getByText('Points made'); getByText('Seven-outs'); getByText('Rolls'); getByText('Lifetime'); getByText('−$1,200')
+  getByText('Longest roll'); getByText('23 rolls')
   expect(queryByText('Wins')).toBeNull()
 })
 

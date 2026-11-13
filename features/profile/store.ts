@@ -112,7 +112,7 @@ export const useProfileStore = create<ProfileStore>()(
     {
       name: 'profile-store',
       storage: createJSONStorage(() => AsyncStorage),
-      version: 1,
+      version: 2,
       migrate: (s, v) => migrateProfileState(s, v, Date.now()) as any,
     }
   )

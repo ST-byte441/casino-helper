@@ -20,6 +20,7 @@ function rowsFor(id: GameId, stats: ProfileStats): StatRow[] {
       { label: 'Points made', value: String(c.pointsMade) },
       { label: 'Seven-outs', value: String(c.sevenOuts) },
       { label: 'Rolls', value: String(c.rolls) },
+      { label: 'Longest roll', value: `${c.longestRoll} ${c.longestRoll === 1 ? 'roll' : 'rolls'}` },
       { label: 'Biggest win', value: formatMoney(c.biggestWin) },
       { label: 'Lifetime', value: formatSigned(c.net), color: signColor(c.net) },
     ]

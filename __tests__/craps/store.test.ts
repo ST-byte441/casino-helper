@@ -84,6 +84,25 @@ describe('roll recording', () => {
     expect(useProfileStore.getState().profiles[0].stats.craps.pointsMade).toBe(1)
   })
 
+  test('longest roll counts rolls a shooter survives before the seven-out', () => {
+    setProfile(1000)
+    useCrapsStore.setState({
+      phase: 'come-out', point: null, bets: [passBet(10)], shooterRolls: 0,
+      tableRules: { variant: 'craps', oddsMultiple: '3-4-5x', fieldPays3on12: false },
+    })
+    const roll = (a: number, b: number) => { mockDice(a, b); useCrapsStore.getState().roll() }
+    roll(3, 3) // point 6 set
+    roll(2, 2) // 4
+    roll(2, 3) // 5
+    roll(3, 4) // seven-out: not counted as survived
+    expect(useProfileStore.getState().profiles[0].stats.craps.longestRoll).toBe(3)
+    expect(useCrapsStore.getState().shooterRolls).toBe(0)
+    useCrapsStore.setState({ bets: [{ ...passBet(10), id: 'b2' }] })
+    roll(4, 4) // new shooter: point 8
+    roll(3, 4) // seven-out after 1 roll
+    expect(useProfileStore.getState().profiles[0].stats.craps.longestRoll).toBe(3)
+  })
+
   test('roll with no bets is not counted', () => {
     setProfile(100)
     pointPhase([])
