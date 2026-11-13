@@ -50,6 +50,7 @@ features/
   baccarat/
     engine.ts     # Pure TS: deck, scoring, natural/third-card rules, hand resolution
     strategy.ts   # Pure TS: bet quality ratings (player/banker/tie/side bets)
+    cardFaces.ts  # Static require map: card -> assets/card-faces/<V><S>.jpg (big squeeze card art)
     reveal.ts     # Pure TS: card reveal order (P1,B1,P2,B2,P3,B3) and per-hand face-up/shown counts
     store.ts      # Session Zustand store (shoe, hands, bets, betting→revealing→result phases, deferred settlement, assist toggle)
     components/   # UI components (BetPanel, HandDisplay, ResultBanner, SqueezeCard)
