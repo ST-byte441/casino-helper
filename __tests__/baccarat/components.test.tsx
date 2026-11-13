@@ -69,33 +69,49 @@ describe('ResultBanner', () => {
 })
 
 describe('BetPanel', () => {
-  function panel(onAdd = jest.fn(), onChipChange = jest.fn(), chip = 25) {
+  function panel(mainChip = 25, sideChip = 5) {
+    const onAdd = jest.fn(), onMainChipChange = jest.fn(), onSideChipChange = jest.fn()
     const utils = render(
-      <BetPanel bets={{}} assistEnabled={false} chip={chip} onChipChange={onChipChange} onAdd={onAdd} onClear={jest.fn()} />
+      <BetPanel bets={{}} assistEnabled={false} mainChip={mainChip} sideChip={sideChip}
+        onMainChipChange={onMainChipChange} onSideChipChange={onSideChipChange}
+        onAdd={onAdd} onClear={jest.fn()} />
     )
-    return { ...utils, onAdd, onChipChange }
+    return { ...utils, onAdd, onMainChipChange, onSideChipChange }
   }
 
-  test('shows $15 / $25 / $50 / $100 chips and reports the chosen one', () => {
-    const { getByText, onChipChange } = panel()
-    for (const label of ['$15', '$25', '$50', '$100']) getByText(label)
-    fireEvent.press(getByText('$100'))
-    expect(onChipChange).toHaveBeenCalledWith(100)
+  test('main chips are $15 / $25 / $50 / $100 and side chips are $1 / $5 / $10 / $25', () => {
+    const { getByTestId, onMainChipChange, onSideChipChange } = panel()
+    for (const v of [15, 25, 50, 100]) getByTestId(`main-chip-${v}`)
+    for (const v of [1, 5, 10, 25]) getByTestId(`side-chip-${v}`)
+    fireEvent.press(getByTestId('main-chip-100'))
+    fireEvent.press(getByTestId('side-chip-1'))
+    expect(onMainChipChange).toHaveBeenCalledWith(100)
+    expect(onSideChipChange).toHaveBeenCalledWith(1)
   })
 
-  test('Player and Banker add the selected chip', () => {
-    const { getByText, onAdd } = panel(undefined, undefined, 50)
+  test('Player and Banker add the main chip', () => {
+    const { getByText, onAdd } = panel(50, 5)
     fireEvent.press(getByText('Player'))
     fireEvent.press(getByText('Banker'))
     expect(onAdd).toHaveBeenNthCalledWith(1, 'player', 50)
     expect(onAdd).toHaveBeenNthCalledWith(2, 'banker', 50)
   })
 
-  test('side bets keep their small increments', () => {
-    const { getByText, onAdd } = panel(undefined, undefined, 100)
+  test('Tie and pairs add the side chip', () => {
+    const { getByText, onAdd } = panel(100, 10)
     fireEvent.press(getByText('Tie\n8:1'))
     fireEvent.press(getByText('P.Pair\n11:1'))
-    expect(onAdd).toHaveBeenNthCalledWith(1, 'tie', 5)
-    expect(onAdd).toHaveBeenNthCalledWith(2, 'player-pair', 1)
+    fireEvent.press(getByText('B.Pair\n11:1'))
+    expect(onAdd).toHaveBeenNthCalledWith(1, 'tie', 10)
+    expect(onAdd).toHaveBeenNthCalledWith(2, 'player-pair', 10)
+    expect(onAdd).toHaveBeenNthCalledWith(3, 'banker-pair', 10)
+  })
+
+  test('side bets have a dashed outline, main bets a solid one', () => {
+    const { getByTestId } = panel()
+    const style = (id: string) => Object.assign({}, ...[getByTestId(id).props.style].flat(Infinity).filter(Boolean))
+    expect(style('bet-tie').borderStyle).toBe('dashed')
+    expect(style('bet-player-pair').borderStyle).toBe('dashed')
+    expect(style('bet-player').borderStyle ?? 'solid').toBe('solid')
   })
 })

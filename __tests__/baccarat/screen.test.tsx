@@ -83,9 +83,9 @@ test('DEAL stays disabled with a hint until Player or Banker has the $15 minimum
     activeProfileId: 'p',
   })
   useBaccaratStore.getState().newHand()
-  const { getByText, queryByText } = render(<BaccaratScreen />)
+  const { getByText, getByTestId, queryByText } = render(<BaccaratScreen />)
   getByText('Min $15 on Player or Banker')
-  fireEvent.press(getByText('$25'))
+  fireEvent.press(getByTestId('main-chip-25'))
   fireEvent.press(getByText('Banker'))
   expect(useBaccaratStore.getState().bets.banker).toBe(25)
   expect(queryByText('Min $15 on Player or Banker')).toBeNull()

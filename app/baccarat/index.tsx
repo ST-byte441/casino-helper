@@ -14,7 +14,7 @@ import { SqueezeCard } from '../../features/baccarat/components/SqueezeCard'
 import { scoreHand, meetsTableMinimum } from '../../features/baccarat/engine'
 import { handView } from '../../features/baccarat/reveal'
 import { BaccaratBet } from '../../lib/types'
-import { BACCARAT_CHIPS, BACCARAT_MIN_MAIN_BET } from '../../lib/constants'
+import { BACCARAT_CHIPS, BACCARAT_SIDE_CHIPS, BACCARAT_MIN_MAIN_BET } from '../../lib/constants'
 
 export default function BaccaratScreen() {
   const router = useRouter()
@@ -27,7 +27,8 @@ export default function BaccaratScreen() {
   const balance = active ? (isInfinite ? '∞' : formatMoney(active.balance)) : '—'
 
   const [showFundsWarning, setFundsWarning] = useState(false)
-  const [chip, setChip] = useState<number>(BACCARAT_CHIPS[0])
+  const [mainChip, setMainChip] = useState<number>(BACCARAT_CHIPS[0])
+  const [sideChip, setSideChip] = useState<number>(BACCARAT_SIDE_CHIPS[1])
   const fundsTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const tableRef = useRef<React.ComponentRef<typeof LegacyScrollView>>(null)
 
@@ -139,8 +140,10 @@ export default function BaccaratScreen() {
             bets={store.bets}
             assistEnabled={false}
             disabled={false}
-            chip={chip}
-            onChipChange={setChip}
+            mainChip={mainChip}
+            sideChip={sideChip}
+            onMainChipChange={setMainChip}
+            onSideChipChange={setSideChip}
             onAdd={handlePlaceBet}
             onClear={store.clearBets}
           />
