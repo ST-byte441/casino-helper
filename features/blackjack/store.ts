@@ -14,6 +14,7 @@ import { DEFAULT_TABLE_RULES } from '../../lib/constants'
 import { canSplit, canSurrender, createDeck, dealCard, isBlackjack, needsReshuffle, resolveHand, scoreHand, shouldDealerHit } from './engine'
 import { getOptimalAction } from './strategy'
 import { useProfileStore } from '../profile/store'
+import { classifyBlackjack } from '../profile/stats'
 
 type BlackjackState = {
   deck: Card[]
@@ -150,7 +151,7 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
       if (isBlackjack([c2, c4])) {
         const revealed = [c2, { ...c4, faceDown: false }]
         const { outcome, delta } = resolveHand(playerHands[0], revealed, bet, tableRules)
-        useProfileStore.getState().updateBalance(delta)
+        useProfileStore.getState().recordHands('blackjack', [{ result: classifyBlackjack(outcome), delta }])
         set({ dealerHand: revealed, phase: 'result', lastOutcome: outcome, lastDelta: delta, suggestedAction: null })
         return
       }
@@ -208,7 +209,10 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
       scheduleStep(() => set({ dealerHand: cards }), D * (i - 1))
     }
     scheduleStep(() => {
-      useProfileStore.getState().updateBalance(totalDelta)
+      useProfileStore.getState().recordHands(
+        'blackjack',
+        outcomes.map(r => ({ result: classifyBlackjack(r.outcome), delta: r.delta })),
+      )
       set({ phase: 'result', lastOutcome, lastDelta: totalDelta })
     }, D * fullDealerHand.length)
   },
@@ -261,7 +265,7 @@ export const useBlackjackStore = create<BlackjackState & BlackjackActions>((set,
     if (!canSurrender(hand, tableRules)) return
     const { bet } = get()
     const delta = -Math.floor(bet / 2)
-    useProfileStore.getState().updateBalance(delta)
+    useProfileStore.getState().recordHands('blackjack', [{ result: 'loss', delta }])
     set({ phase: 'result', lastOutcome: 'lose', lastDelta: delta })
   },
 

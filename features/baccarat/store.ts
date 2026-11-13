@@ -8,6 +8,7 @@ import {
 } from './engine'
 import { revealOrder } from './reveal'
 import { useProfileStore } from '../profile/store'
+import { classifyNet } from '../profile/stats'
 
 type BaccaratState = {
   phase: BaccaratPhase
@@ -52,7 +53,7 @@ const initialState: BaccaratState = {
 }
 
 function applyDelta(delta: number) {
-  if (delta !== 0) useProfileStore.getState().updateBalance(delta)
+  useProfileStore.getState().recordHands('baccarat', [{ result: classifyNet(delta), delta }])
 }
 
 export const useBaccaratStore = create<BaccaratState & BaccaratActions>((set, get) => ({

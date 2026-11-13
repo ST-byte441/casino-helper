@@ -117,9 +117,11 @@ export const useCrapsStore = create<CrapsState & CrapsActions>((set, get) => ({
     const resolution = resolveRoll(dice, phase, point, bets, tableRules)
 
     const totalDelta = resolution.outcomes.reduce((sum, o) => sum + o.delta, 0)
-    if (totalDelta !== 0) {
-      useProfileStore.getState().updateBalance(totalDelta)
-    }
+    useProfileStore.getState().recordCrapsRoll({
+      delta: totalDelta,
+      hadBets: bets.length > 0,
+      phaseChange: resolution.phaseChange,
+    })
 
     // Multi-roll bets stay on the table after winning — only removed on a loss
     const persistOnWin: ActiveBet['type'][] = ['place', 'buy', 'lay', 'big6', 'big8', 'hardway']

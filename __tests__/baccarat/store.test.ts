@@ -11,6 +11,7 @@ jest.mock('zustand/middleware', () => {
 })
 
 import { useBaccaratStore } from '../../features/baccarat/store'
+import { emptyStats } from '../../features/profile/stats'
 import { useProfileStore } from '../../features/profile/store'
 import { usePreferencesStore } from '../../features/preferences/store'
 import { Card } from '../../lib/types'
@@ -31,7 +32,7 @@ function revealAll() {
 beforeEach(() => {
   jest.useFakeTimers()
   useProfileStore.setState({
-    profiles: [{ id: 'p', name: 'T', bankrollMode: 'finite', balance: 1000, createdAt: 0 }],
+    profiles: [{ id: 'p', name: 'T', bankrollMode: 'finite', balance: 1000, createdAt: 0, startingBalance: 1000, trackingSince: 0, refills: [], stats: emptyStats() }],
     activeProfileId: 'p',
   })
   store().newHand()
