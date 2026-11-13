@@ -163,3 +163,39 @@ test('deleteProfile does not touch files for preset pictures', () => {
   act(() => result.current.deleteProfile(id))
   expect(deleteUploadedPicture).not.toHaveBeenCalled()
 })
+
+describe('setPicture cleans up replaced uploads', () => {
+  const { deleteUploadedPicture } = require('../../features/profile/pictures')
+  function withPicture(picture: any) {
+    const { result } = renderHook(() => useProfileStore())
+    act(() => result.current.addProfile('Up', 100, 'finite'))
+    const id = result.current.profiles[result.current.profiles.length - 1].id
+    act(() => result.current.setPicture(id, picture))
+    deleteUploadedPicture.mockClear()
+    return { result, id }
+  }
+
+  test('replacing an upload with another picture deletes the old file', () => {
+    const { result, id } = withPicture({ kind: 'upload', uri: 'file:///old.jpg' })
+    act(() => result.current.setPicture(id, { kind: 'upload', uri: 'file:///new.jpg' }))
+    expect(deleteUploadedPicture).toHaveBeenCalledTimes(1)
+    expect(deleteUploadedPicture).toHaveBeenCalledWith('file:///old.jpg')
+  })
+
+  test('replacing an upload with a preset or clearing it deletes the old file', () => {
+    const a = withPicture({ kind: 'upload', uri: 'file:///a.jpg' })
+    act(() => a.result.current.setPicture(a.id, { kind: 'preset', id: 'x' }))
+    expect(deleteUploadedPicture).toHaveBeenCalledWith('file:///a.jpg')
+    const b = withPicture({ kind: 'upload', uri: 'file:///b.jpg' })
+    act(() => b.result.current.setPicture(b.id, undefined))
+    expect(deleteUploadedPicture).toHaveBeenCalledWith('file:///b.jpg')
+  })
+
+  test('setting the same upload again or replacing a preset deletes nothing', () => {
+    const a = withPicture({ kind: 'upload', uri: 'file:///same.jpg' })
+    act(() => a.result.current.setPicture(a.id, { kind: 'upload', uri: 'file:///same.jpg' }))
+    const b = withPicture({ kind: 'preset', id: 'x' })
+    act(() => b.result.current.setPicture(b.id, { kind: 'upload', uri: 'file:///c.jpg' }))
+    expect(deleteUploadedPicture).not.toHaveBeenCalled()
+  })
+})

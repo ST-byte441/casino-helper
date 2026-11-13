@@ -89,10 +89,16 @@ export const useProfileStore = create<ProfileStore>()(
         return true
       },
 
-      setPicture: (id, picture) =>
+      setPicture: (id, picture) => {
+        const old = get().profiles.find(p => p.id === id)?.picture
+        // A replaced upload is no longer referenced anywhere, so remove its file
+        if (old?.kind === 'upload' && !(picture?.kind === 'upload' && picture.uri === old.uri)) {
+          deleteUploadedPicture(old.uri)
+        }
         set(state => ({
           profiles: state.profiles.map(p => (p.id === id ? { ...p, picture } : p)),
-        })),
+        }))
+      },
 
       deleteProfile: (id) => {
         const pic = get().profiles.find(p => p.id === id)?.picture
