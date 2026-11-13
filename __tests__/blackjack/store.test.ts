@@ -394,6 +394,22 @@ describe('per-hand stakes and stat recording', () => {
     expect(stats().losses).toBe(1)
     expect(stats().net).toBe(-15)
   })
+  test('re-splitting the second of two hands copies that hand\'s stake', () => {
+    setProfile('infinite', 0)
+    const { result } = renderHook(() => useBlackjackStore())
+    act(() => {
+      playing({
+        playerHands: [[k('K'), k('9')], [k('8'), k('8', '♥')]],
+        handBets: [10, 20], bet: 10, activeHandIndex: 1,
+        deck: [k('3'), k('2'), k('5'), k('6')],
+      })
+      result.current.split()
+      jest.runAllTimers()
+    })
+    expect(result.current.playerHands).toHaveLength(3)
+    expect(result.current.handBets).toEqual([10, 20, 20])
+  })
+
   test('surrender is not allowed once the hand has been split', () => {
     setProfile('finite', 500)
     const { result } = renderHook(() => useBlackjackStore())
