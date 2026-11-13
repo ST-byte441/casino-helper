@@ -18,7 +18,7 @@ npx jest <path>   # single file
 npx tsc --noEmit  # type check only
 ```
 
-328 tests cover the game engine, strategy lookup, profile store and stats, and update utility.
+360 tests cover the game engine, strategy lookup, profile store and stats, and update utility.
 
 ## Project Structure
 
@@ -57,8 +57,8 @@ features/
     store.ts      # Session Zustand store (shoe, hands, bets, betting→revealing→result phases, deferred settlement, assist toggle)
     components/   # UI components (BetPanel, HandDisplay, ResultBanner, SqueezeCard)
   profile/
-    store.ts      # Persisted Zustand store (AsyncStorage, persist v1) — recordHands, recordCrapsRoll, addMoney, setPicture
-    migrate.ts    # Persist migration (v0 -> v1, adds stats/picture)
+    store.ts      # Persisted Zustand store (AsyncStorage, persist v2) — recordHands, recordCrapsRoll, addMoney, setPicture
+    migrate.ts    # Persist migration (v0 -> v1 adds stats/picture; v1 -> v2 adds craps longestRoll)
     stats.ts      # Pure TS: stats types, recording, win rate
     types.ts      # Profile and stats types
     format.ts     # Money formatting (negative shown as -$X)
