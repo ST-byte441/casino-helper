@@ -1,10 +1,14 @@
 jest.mock('react-native-worklets', () => require('react-native-worklets/src/mock'))
-jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'))
+jest.mock('react-native-reanimated', () => require('../../.jest/reanimatedMock'))
 import 'react-native-gesture-handler/jestSetup'
 import React from 'react'
-import { render, fireEvent } from '@testing-library/react-native'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { render as rtlRender, fireEvent } from '@testing-library/react-native'
 import { SqueezeCard } from '../../features/baccarat/components/SqueezeCard'
 import { Card } from '../../lib/types'
+
+// gesture-handler 3 requires every GestureDetector to sit inside a GestureHandlerRootView.
+const render: typeof rtlRender = (ui, options) => rtlRender(ui, { wrapper: GestureHandlerRootView, ...options })
 
 const card: Card = { value: '8', suit: '♥' }
 

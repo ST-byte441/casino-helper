@@ -51,7 +51,7 @@ Get the latest APK from the [Releases page](../../releases/latest).
 
 | Layer | Library |
 |---|---|
-| Framework | Expo (Managed, SDK 56) |
+| Framework | Expo (Managed, SDK 58) |
 | Language | TypeScript |
 | Navigation | Expo Router |
 | State | Zustand + AsyncStorage |

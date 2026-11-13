@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
-import { ScrollView } from 'react-native-gesture-handler'
+import { LegacyScrollView } from 'react-native-gesture-handler'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useBaccaratStore } from '../../features/baccarat/store'
@@ -26,7 +26,7 @@ export default function BaccaratScreen() {
 
   const [showFundsWarning, setFundsWarning] = useState(false)
   const fundsTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const tableRef = useRef<ScrollView>(null)
+  const tableRef = useRef<React.ComponentRef<typeof LegacyScrollView>>(null)
 
   // Leaving the table settles an unfinished hand and starts the next visit fresh.
   useEffect(() => () => {
@@ -83,7 +83,7 @@ export default function BaccaratScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView
+      <LegacyScrollView
         testID="baccarat-table"
         style={styles.table}
         contentContainerStyle={styles.tableContent}
@@ -128,7 +128,7 @@ export default function BaccaratScreen() {
             )}
           </>
         )}
-      </ScrollView>
+      </LegacyScrollView>
 
       {isBetting && (
         <View style={styles.betArea}>
