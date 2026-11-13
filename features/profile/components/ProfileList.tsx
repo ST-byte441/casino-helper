@@ -5,20 +5,26 @@ import { ProfileCard } from './ProfileCard'
 type Props = {
   profiles: Profile[]
   activeProfileId: string | null
-  onSelect: (id: string) => void
+  onOpen: (id: string) => void
   onDelete: (id: string) => void
 }
 
-export function ProfileList({ profiles, activeProfileId, onSelect, onDelete }: Props) {
+// The active profile is always listed first; the rest keep their original order.
+function activeFirst(profiles: Profile[], activeProfileId: string | null): Profile[] {
+  const active = profiles.find(p => p.id === activeProfileId)
+  return active ? [active, ...profiles.filter(p => p !== active)] : profiles
+}
+
+export function ProfileList({ profiles, activeProfileId, onOpen, onDelete }: Props) {
   return (
     <FlatList
-      data={profiles}
+      data={activeFirst(profiles, activeProfileId)}
       keyExtractor={p => p.id}
       renderItem={({ item }) => (
         <ProfileCard
           profile={item}
           isActive={item.id === activeProfileId}
-          onSelect={() => onSelect(item.id)}
+          onOpen={() => onOpen(item.id)}
           onDelete={() => onDelete(item.id)}
         />
       )}

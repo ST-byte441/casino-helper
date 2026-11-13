@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, FlatList, StyleSheet } from 'react-native
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useProfileStore } from '../../features/profile/store'
+import { formatMoney } from '../../features/profile/format'
 
 const GAMES = [
   { id: 'blackjack', label: 'Blackjack', available: true, route: '/blackjack' },
@@ -15,15 +16,17 @@ export default function LobbyScreen() {
   const router = useRouter()
   const { profiles, activeProfileId } = useProfileStore()
   const active = profiles.find(p => p.id === activeProfileId)
+  const isInfinite = active?.bankrollMode === 'infinite'
   const balance = active
-    ? active.bankrollMode === 'infinite' ? '∞' : `$${active.balance}`
+    ? isInfinite ? '∞' : formatMoney(active.balance)
     : '—'
+  const isNegative = !!active && !isInfinite && active.balance < 0
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.profileName}>{active?.name ?? 'No profile'}</Text>
-        {active && <Text style={styles.balance}>{balance}</Text>}
+        {active && <Text style={[styles.balance, isNegative && styles.negative]}>{balance}</Text>}
       </View>
       <FlatList
         data={GAMES}
@@ -50,6 +53,7 @@ const styles = StyleSheet.create({
     padding: 16, borderBottomWidth: 1, borderColor: '#2a2a3e' },
   profileName: { color: '#fff', fontSize: 20, fontWeight: '600' },
   balance: { color: '#FFD700', fontSize: 20, fontWeight: '700' },
+  negative: { color: '#ff5555' },
   grid: { padding: 12 },
   gameCard: { marginHorizontal: 12, marginVertical: 6, height: 80, backgroundColor: '#1e1e2e',
     borderRadius: 12, justifyContent: 'center', alignItems: 'center' },

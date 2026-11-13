@@ -4,10 +4,11 @@ import {
 } from '../../lib/types'
 import {
   buildDeck, dealHands, isNatural, scoreHand, shouldPlayerDraw, shouldBankerDraw,
-  resolveRound, calculateDeltas, baccaratValue,
+  resolveRound, calculateDeltas, baccaratValue, meetsTableMinimum,
 } from './engine'
 import { revealOrder } from './reveal'
 import { useProfileStore } from '../profile/store'
+import { classifyNet } from '../profile/stats'
 
 type BaccaratState = {
   phase: BaccaratPhase
@@ -51,8 +52,10 @@ const initialState: BaccaratState = {
   handRevealMode: 'squeeze',
 }
 
-function applyDelta(delta: number) {
-  if (delta !== 0) useProfileStore.getState().updateBalance(delta)
+function applyDelta(delta: number, bets: Partial<Record<BaccaratBet, number>>) {
+  const stake = Object.values(bets).reduce((sum, v) => sum + (v ?? 0), 0)
+  if (stake <= 0) return
+  useProfileStore.getState().recordHands('baccarat', [{ result: classifyNet(delta), delta }])
 }
 
 export const useBaccaratStore = create<BaccaratState & BaccaratActions>((set, get) => ({
@@ -77,7 +80,7 @@ export const useBaccaratStore = create<BaccaratState & BaccaratActions>((set, ge
 
   deal(mode) {
     const { deck: currentDeck, bets, phase } = get()
-    if (phase !== 'betting') return
+    if (phase !== 'betting' || !meetsTableMinimum(bets)) return
     const deck = currentDeck.length < 10 ? buildDeck() : currentDeck
     let { playerHand, bankerHand, deck: remaining } = dealHands(deck)
 
@@ -117,22 +120,22 @@ export const useBaccaratStore = create<BaccaratState & BaccaratActions>((set, ge
   },
 
   revealNext() {
-    const { phase, revealedCount, revealOrder: order, settled, lastNetDelta } = get()
+    const { phase, revealedCount, revealOrder: order, settled, lastNetDelta, bets } = get()
     if (phase !== 'revealing') return
     const next = revealedCount + 1
     if (next < order.length) {
       set({ revealedCount: next })
       return
     }
-    if (!settled) applyDelta(lastNetDelta)
+    if (!settled) applyDelta(lastNetDelta, bets)
     set({ revealedCount: order.length, settled: true, phase: 'result' })
   },
 
   abandonHand() {
-    const { phase, settled, lastNetDelta } = get()
+    const { phase, settled, lastNetDelta, bets } = get()
     if (phase === 'revealing' && !settled) {
       set({ settled: true })
-      applyDelta(lastNetDelta)
+      applyDelta(lastNetDelta, bets)
     }
     get().newHand()
   },

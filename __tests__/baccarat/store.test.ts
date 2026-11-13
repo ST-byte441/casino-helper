@@ -11,6 +11,7 @@ jest.mock('zustand/middleware', () => {
 })
 
 import { useBaccaratStore } from '../../features/baccarat/store'
+import { emptyStats } from '../../features/profile/stats'
 import { useProfileStore } from '../../features/profile/store'
 import { usePreferencesStore } from '../../features/preferences/store'
 import { Card } from '../../lib/types'
@@ -31,7 +32,7 @@ function revealAll() {
 beforeEach(() => {
   jest.useFakeTimers()
   useProfileStore.setState({
-    profiles: [{ id: 'p', name: 'T', bankrollMode: 'finite', balance: 1000, createdAt: 0 }],
+    profiles: [{ id: 'p', name: 'T', bankrollMode: 'finite', balance: 1000, createdAt: 0, startingBalance: 1000, trackingSince: 0, refills: [], stats: emptyStats() }],
     activeProfileId: 'p',
   })
   store().newHand()
@@ -113,4 +114,61 @@ test('result phase stays until newHand', () => {
   expect(store().phase).toBe('result')
   store().newHand()
   expect(store().phase).toBe('betting')
+})
+
+const bacStats = () => useProfileStore.getState().profiles[0].stats.baccarat
+
+test('full reveal records exactly one hand matching lastNetDelta', () => {
+  store().deal('squeeze')
+  revealAll()
+  const net = store().lastNetDelta
+  store().revealNext()
+  store().abandonHand()
+  const s = bacStats()
+  expect(s.wins + s.losses + s.pushes).toBe(1)
+  expect(s.wins).toBe(1)
+  expect(s.net).toBe(net)
+})
+
+test('abandonHand mid-reveal records once, even when called twice', () => {
+  store().deal('squeeze')
+  store().revealNext()
+  const net = store().lastNetDelta
+  store().abandonHand()
+  store().abandonHand()
+  const s = bacStats()
+  expect(s.wins + s.losses + s.pushes).toBe(1)
+  expect(s.net).toBe(net)
+})
+
+test('zero-stake hand records nothing', () => {
+  store().clearBets()
+  store().deal('squeeze')
+  revealAll()
+  store().abandonHand()
+  const s = bacStats()
+  expect(s.wins + s.losses + s.pushes).toBe(0)
+  expect(s.net).toBe(0)
+})
+
+describe('table minimum', () => {
+  test('deal is refused without at least $15 on Player or Banker', () => {
+    store().newHand()
+    useBaccaratStore.setState({ deck: [...STACKED] })
+    store().placeBet('player', 10)
+    store().placeBet('tie', 5)
+    store().deal('squeeze')
+    expect(store().phase).toBe('betting')
+    store().placeBet('player', 5) // now $15 on Player
+    store().deal('squeeze')
+    expect(store().phase).toBe('revealing')
+  })
+
+  test('side bets alone cannot be dealt', () => {
+    store().newHand()
+    store().placeBet('tie', 50)
+    store().placeBet('player-pair', 20)
+    store().deal('squeeze')
+    expect(store().phase).toBe('betting')
+  })
 })

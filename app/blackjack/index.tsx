@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router'
 import { useBlackjackStore } from '../../features/blackjack/store'
 import { useProfileStore } from '../../features/profile/store'
 import { usePreferencesStore } from '../../features/preferences/store'
+import { formatMoney } from '../../features/profile/format'
 import { TableSetup } from '../../features/blackjack/components/TableSetup'
 import { Hand } from '../../features/blackjack/components/Hand'
 import { ActionButtons } from '../../features/blackjack/components/ActionButtons'
@@ -35,6 +36,12 @@ export default function BlackjackScreen() {
     clearTimeout(fundsTimer.current)
     fundsTimer.current = setTimeout(() => setFundsWarning(false), 2000)
   }
+
+  // Leaving the table settles an unfinished hand and starts the next visit fresh.
+  useEffect(() => () => {
+    clearTimeout(fundsTimer.current)
+    useBlackjackStore.getState().abandonHand()
+  }, [])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ y: handOffsets.current[store.activeHandIndex] ?? 0, animated: true })
@@ -125,9 +132,9 @@ export default function BlackjackScreen() {
       {isPlaying && (
         <ActionButtons
           suggestedAction={store.suggestedAction}
-          canDouble={canDouble(activeHand, store.activeHandIndex > 0, rules)}
-          canSplit={canSplit(activeHand)}
-          canSurrender={canSurrender(activeHand, rules)}
+          canDouble={canDouble(activeHand, store.activeHandIndex > 0, rules) && store.canAffordExtra()}
+          canSplit={canSplit(activeHand) && store.canAffordExtra()}
+          canSurrender={canSurrender(activeHand, rules) && store.playerHands.length === 1}
           onHit={store.hit}
           onStand={store.stand}
           onDouble={store.doubleDown}
@@ -152,8 +159,8 @@ export default function BlackjackScreen() {
       {/* Footer */}
       <View style={styles.footer}>
         {showFundsWarning && <Text style={styles.fundsWarning}>Insufficient funds</Text>}
-        <Text style={styles.footerText}>
-          Balance: {isInfinite ? '∞' : `$${activeProfile?.balance ?? 0}`}
+        <Text style={[styles.footerText, balance < 0 && styles.negative]}>
+          Balance: {isInfinite ? '∞' : formatMoney(balance)}
         </Text>
       </View>
     </SafeAreaView>
@@ -178,5 +185,6 @@ const styles = StyleSheet.create({
   nextBtnText: { fontWeight: '700', fontSize: 16 },
   footer: { padding: 12, backgroundColor: '#0a4a24', alignItems: 'flex-end' },
   footerText: { color: '#aaa', fontSize: 14 },
+  negative: { color: '#ff5555' },
   fundsWarning: { color: '#e74c3c', fontSize: 12, fontWeight: '600', marginBottom: 2 },
 })

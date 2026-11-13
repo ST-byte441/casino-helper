@@ -18,7 +18,7 @@ npx jest <path>   # single file
 npx tsc --noEmit  # type check only
 ```
 
-239 tests cover the game engine, strategy lookup, profile store, and update utility.
+361 tests cover the game engine, strategy lookup, profile store and stats, and update utility.
 
 ## Project Structure
 
@@ -34,6 +34,8 @@ app/
     index.tsx     # Craps table screen
   baccarat/
     index.tsx     # Baccarat table screen
+  profile/
+    [id].tsx      # Profile detail (avatar, balance, Add Money, bankroll, per-game stats)
   sandbox/
     blackjack.tsx # Blackjack strategy sandbox
 features/
@@ -55,8 +57,13 @@ features/
     store.ts      # Session Zustand store (shoe, hands, bets, betting→revealing→result phases, deferred settlement, assist toggle)
     components/   # UI components (BetPanel, HandDisplay, ResultBanner, SqueezeCard)
   profile/
-    store.ts      # Persisted Zustand store (AsyncStorage)
-    components/   # ProfileCard, ProfileList, CreateProfileModal
+    store.ts      # Persisted Zustand store (AsyncStorage, persist v2) — recordHands, recordCrapsRoll, addMoney, setPicture
+    migrate.ts    # Persist migration (v0 -> v1 adds stats/picture; v1 -> v2 adds craps longestRoll)
+    stats.ts      # Pure TS: stats types, recording, win rate
+    types.ts      # Profile and stats types
+    format.ts     # Money formatting (negative shown as -$X)
+    pictures.ts   # Bundled avatar map + photo copy to app storage
+    components/   # ProfileCard, ProfileList, CreateProfileModal, ProfileAvatar, PicturePicker, AddMoneyModal, BankrollBox, GameStatsTabs
   preferences/
     store.ts      # Persisted Zustand store (AsyncStorage) for table rules per game + baccarat Squeeze/Flip mode
 lib/
@@ -65,6 +72,8 @@ lib/
   updates.ts      # GitHub release version check utility
 components/
   UpdateModal.tsx # In-app update prompt modal
+assets/
+  avatars/        # Bundled 256px profile pictures + default (originals in gitignored assets/profile-pictures/)
 __tests__/        # Mirrors the feature folder structure
 ```
 
@@ -73,6 +82,11 @@ __tests__/        # Mirrors the feature folder structure
 1. Create `features/<game>/` with `engine.ts`, `strategy.ts`, `store.ts`, and `components/`
 2. Add a route at `app/<game>/index.tsx`
 3. Add a tile in `app/(tabs)/index.tsx`
+4. Track stats for the game in the profile:
+   - Add the game to `GameId` and a new key to `ProfileStats` (`features/profile/types.ts`), and give it a zeroed record in `emptyStats()` (`features/profile/stats.ts`)
+   - Add a `GAME_TABS` entry (`features/profile/components/GameStatsTabs.tsx`) so the profile detail screen shows a tab for it
+   - Bump the persist `version` in `features/profile/store.ts` and extend `migrateProfileState` (`features/profile/migrate.ts`) so existing profiles get the new key filled with the empty record; cover it in `__tests__/profile/migrate.test.ts`
+   - Record settled results from the game store with `useProfileStore.getState().recordHands(...)` (or a game-specific recorder), exactly once per settled hand, including when the player leaves the table mid-hand
 
 ## Publishing a Release
 
@@ -94,7 +108,7 @@ Users get the update silently on their next app launch. Takes ~1 minute.
 
 > **Note:** The update is only delivered to APKs whose `runtimeVersion` matches the value in `app.json` at build time. If you bumped `runtimeVersion`, users need a new APK — use the Full APK rebuild flow below.
 
-### Native changes (new permissions, new native packages) — Full APK rebuild
+### Native changes (new permissions, new native packages; e.g. v1.4.0 added expo-image-picker and expo-file-system) — Full APK rebuild
 
 Required when bumping `runtimeVersion` in `app.json`.
 

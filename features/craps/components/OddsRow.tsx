@@ -8,9 +8,10 @@ type Props = {
   onRemove(amount: number): void
   increments: number[]
   quality?: 'optimal' | null
+  canAdd?(amount: number): boolean
 }
 
-export function OddsRow({ odds, maxOdds, onAdd, onRemove, increments, quality }: Props) {
+export function OddsRow({ odds, maxOdds, onAdd, onRemove, increments, quality, canAdd }: Props) {
   const isOptimal = quality === 'optimal'
   return (
     <View style={[styles.row, isOptimal && styles.rowOptimal]}>
@@ -24,16 +25,19 @@ export function OddsRow({ odds, maxOdds, onAdd, onRemove, increments, quality }:
         <TouchableOpacity style={styles.btn} onPress={() => onRemove(increments[0])} disabled={odds === 0}>
           <Text style={styles.btnText}>−</Text>
         </TouchableOpacity>
-        {increments.map(inc => (
+        {increments.map(inc => {
+          const disabled = odds >= maxOdds || (canAdd ? !canAdd(inc) : false)
+          return (
           <TouchableOpacity
             key={inc}
-            style={[styles.btn, isOptimal && styles.btnOptimal]}
+            style={[styles.btn, isOptimal && styles.btnOptimal, disabled && styles.btnDisabled]}
             onPress={() => onAdd(inc)}
-            disabled={odds >= maxOdds}
+            disabled={disabled}
           >
             <Text style={[styles.btnText, isOptimal && styles.btnTextOptimal]}>+${inc}</Text>
           </TouchableOpacity>
-        ))}
+          )
+        })}
       </View>
     </View>
   )
@@ -49,6 +53,7 @@ const styles = StyleSheet.create({
   amountOptimal: { color: '#2ecc71' },
   btn: { backgroundColor: '#2a2a3e', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 6 },
   btnOptimal: { backgroundColor: '#1a3a1a', borderWidth: 1, borderColor: '#2ecc71' },
+  btnDisabled: { opacity: 0.4 },
   btnText: { color: '#fff', fontSize: 12, fontWeight: '600' },
   btnTextOptimal: { color: '#2ecc71' },
 })

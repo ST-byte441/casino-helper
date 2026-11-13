@@ -11,6 +11,7 @@ Get the latest APK from the [Releases page](../../releases/latest).
 ## Features
 
 - **Multiple player profiles** — create profiles with a real bankroll or infinite chips for pure practice
+- **Profile detail & stats** — tap a profile to set a picture (20 bundled avatars or your own photo), add money, and see bankroll and per-game stats (hands, win rate, net result; craps points made, seven-outs and longest roll). Stakes are capped by your balance
 - **In-app update notifications** — prompted to download a newer version on launch if one is available
 
 ### Blackjack
@@ -33,6 +34,7 @@ Get the latest APK from the [Releases page](../../releases/latest).
 ### Baccarat
 
 - **Standard Baccarat** — Player, Banker (5% commission), Tie (8:1), Player Pair and Banker Pair (11:1) bets
+- **Chip betting** — pick a main chip ($15 / $25 / $50 / $100) for Player and Banker ($15 table minimum) and a side chip ($1 / $5 / $10 / $25) for Tie and the pairs. Side bets have a dashed purple outline
 - **Fully automatic rules** — all drawing rules applied after Deal; no player decisions required
 - **Card squeeze** — reveal every card in real dealing order (P1, B1, P2, B2, then third cards) by dragging up to peel it back, or turn the header **Squeeze ●/○** toggle off for a quick automatic flip. The result waits until you tap **Next Hand**
 - **Sandbox mode** — manually set all four starting cards, pick third cards step-by-step, and see the rule explanation driving each draw decision
@@ -55,6 +57,7 @@ Get the latest APK from the [Releases page](../../releases/latest).
 | Language | TypeScript |
 | Navigation | Expo Router |
 | State | Zustand + AsyncStorage |
+| Media | expo-image-picker + expo-file-system (profile photos) |
 | Testing | Jest + React Native Testing Library |
 
 ## Development

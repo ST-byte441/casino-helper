@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Modal, View, Text, TextInput, TouchableOpacity, Switch, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
 import { useProfileStore } from '../store'
+import { MoneyInput } from './MoneyInput'
 
 type Props = { visible: boolean; onClose: () => void }
 
@@ -25,8 +26,7 @@ export function CreateProfileModal({ visible, onClose }: Props) {
           <TextInput style={styles.input} placeholder="Name" placeholderTextColor="#666"
             value={name} onChangeText={setName} />
           {!infinite && (
-            <TextInput style={styles.input} placeholder="Starting chips" placeholderTextColor="#666"
-              keyboardType="numeric" value={chips} onChangeText={setChips} />
+            <MoneyInput placeholder="Starting money" value={chips} onChangeText={setChips} />
           )}
           <View style={styles.row}>
             <Text style={styles.label}>Infinite bankroll</Text>

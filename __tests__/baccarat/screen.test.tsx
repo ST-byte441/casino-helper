@@ -26,7 +26,7 @@ const STACKED: Card[] = [c('9'), c('3'), c('K'), c('K'), ...Array.from({ length:
 function dealWith(mode: 'squeeze' | 'flip') {
   useBaccaratStore.getState().newHand()
   useBaccaratStore.setState({ deck: [...STACKED] })
-  useBaccaratStore.getState().placeBet('player', 10)
+  useBaccaratStore.getState().placeBet('player', 15)
   useBaccaratStore.getState().deal(mode)
 }
 
@@ -71,4 +71,22 @@ describe('header squeeze toggle', () => {
     const { queryByText } = render(<BaccaratScreen />)
     expect(queryByText(/Assist/)).toBeNull()
   })
+})
+
+test('DEAL stays disabled with a hint until Player or Banker has the $15 minimum', () => {
+  const { fireEvent } = require('@testing-library/react-native')
+  const { useProfileStore } = require('../../features/profile/store')
+  const { emptyStats } = require('../../features/profile/stats')
+  useProfileStore.setState({
+    profiles: [{ id: 'p', name: 'T', bankrollMode: 'finite', balance: 500, createdAt: 0,
+      startingBalance: 500, trackingSince: 0, refills: [], stats: emptyStats() }],
+    activeProfileId: 'p',
+  })
+  useBaccaratStore.getState().newHand()
+  const { getByText, getByTestId, queryByText } = render(<BaccaratScreen />)
+  getByText('Min $15 on Player or Banker')
+  fireEvent.press(getByTestId('main-chip-25'))
+  fireEvent.press(getByText('Banker'))
+  expect(useBaccaratStore.getState().bets.banker).toBe(25)
+  expect(queryByText('Min $15 on Player or Banker')).toBeNull()
 })

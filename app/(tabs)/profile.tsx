@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useRouter } from 'expo-router'
 import { useProfileStore } from '../../features/profile/store'
 import { ProfileList } from '../../features/profile/components/ProfileList'
 import { CreateProfileModal } from '../../features/profile/components/CreateProfileModal'
 
 export default function ProfileScreen() {
-  const { profiles, activeProfileId, setActiveProfile, deleteProfile } = useProfileStore()
+  const router = useRouter()
+  const { profiles, activeProfileId, deleteProfile } = useProfileStore()
   const [showCreate, setShowCreate] = useState(false)
 
   return (
@@ -15,7 +17,7 @@ export default function ProfileScreen() {
       <ProfileList
         profiles={profiles}
         activeProfileId={activeProfileId}
-        onSelect={setActiveProfile}
+        onOpen={id => router.push(`/profile/${id}`)}
         onDelete={deleteProfile}
       />
       <TouchableOpacity style={styles.btn} onPress={() => setShowCreate(true)}>

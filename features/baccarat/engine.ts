@@ -1,5 +1,5 @@
 import { Card, BaccaratBet, BaccaratOutcome } from '../../lib/types'
-import { SUITS, VALUES } from '../../lib/constants'
+import { SUITS, VALUES, BACCARAT_MIN_MAIN_BET } from '../../lib/constants'
 
 export function baccaratValue(card: Card): number {
   if (card.value === 'A') return 1
@@ -109,4 +109,10 @@ export function calculateDeltas(
   }
 
   return result
+}
+
+// A hand can be dealt only with a Player or Banker bet, and every main bet placed must meet the table minimum.
+export function meetsTableMinimum(bets: Partial<Record<BaccaratBet, number>>): boolean {
+  const main = [bets.player ?? 0, bets.banker ?? 0].filter(v => v > 0)
+  return main.length > 0 && main.every(v => v >= BACCARAT_MIN_MAIN_BET)
 }
