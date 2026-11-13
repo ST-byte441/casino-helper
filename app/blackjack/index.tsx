@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, type ScrollViewInstance } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useBlackjackStore } from '../../features/blackjack/store'
@@ -25,7 +25,7 @@ export default function BlackjackScreen() {
     ? isInfinite ? Infinity : activeProfile.balance
     : 0
 
-  const scrollRef = useRef<ScrollView>(null)
+  const scrollRef = useRef<ScrollViewInstance>(null)
   const handOffsets = useRef<number[]>([])
   const [showFundsWarning, setFundsWarning] = useState(false)
   const fundsTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)

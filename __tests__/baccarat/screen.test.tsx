@@ -1,5 +1,5 @@
 jest.mock('react-native-worklets', () => require('react-native-worklets/src/mock'))
-jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'))
+jest.mock('react-native-reanimated', () => require('../../.jest/reanimatedMock'))
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 )
@@ -11,10 +11,14 @@ jest.mock('expo-router', () => ({ useRouter: () => ({ back: jest.fn() }) }))
 import 'react-native-gesture-handler/jestSetup'
 
 import React from 'react'
-import { render } from '@testing-library/react-native'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { render as rtlRender } from '@testing-library/react-native'
 import BaccaratScreen from '../../app/baccarat'
 import { useBaccaratStore } from '../../features/baccarat/store'
 import { Card } from '../../lib/types'
+
+// gesture-handler 3 requires every GestureDetector to sit inside a GestureHandlerRootView.
+const render: typeof rtlRender = (ui, options) => rtlRender(ui, { wrapper: GestureHandlerRootView, ...options })
 
 const c = (value: Card['value']): Card => ({ value, suit: '♠' })
 const STACKED: Card[] = [c('9'), c('3'), c('K'), c('K'), ...Array.from({ length: 10 }, () => c('K'))]
