@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useCrapsStore } from '../../features/craps/store'
 import { useProfileStore } from '../../features/profile/store'
+import { formatMoney } from '../../features/profile/format'
 import { usePreferencesStore } from '../../features/preferences/store'
 import { getBetQuality } from '../../features/craps/strategy'
 import { isValidBetForVariant, isValidBetForPhase, suggestedBetIncrement, getMaxOdds } from '../../features/craps/engine'
@@ -25,7 +26,7 @@ export default function CrapsScreen() {
   const active = profiles.find(p => p.id === activeProfileId)
   const isInfinite = active?.bankrollMode === 'infinite'
   const numericBalance = isInfinite ? Infinity : (active?.balance ?? 0)
-  const balance = active ? (isInfinite ? '∞' : `$${active.balance}`) : '—'
+  const balance = active ? (isInfinite ? '∞' : formatMoney(active.balance)) : '—'
 
   const [showBanner, setShowBanner] = useState(false)
   const [showFundsWarning, setFundsWarning] = useState(false)
@@ -347,7 +348,7 @@ export default function CrapsScreen() {
 
       <View style={styles.footer}>
         {showFundsWarning && <Text style={styles.fundsWarning}>Insufficient funds</Text>}
-        <Animated.Text style={[styles.balanceText, { color: balanceFlash.interpolate({ inputRange: [0, 1], outputRange: ['#aaa', '#2ecc71'] }) }]}>
+        <Animated.Text style={[styles.balanceText, { color: balanceFlash.interpolate({ inputRange: [0, 1], outputRange: [numericBalance < 0 ? '#ff5555' : '#aaa', '#2ecc71'] }) }]}>
           Balance: {balance}
         </Animated.Text>
         <RollButton onRoll={handleRoll} disabled={bets.length === 0} />

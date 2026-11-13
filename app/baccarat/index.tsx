@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useBaccaratStore } from '../../features/baccarat/store'
 import { useProfileStore } from '../../features/profile/store'
+import { formatMoney } from '../../features/profile/format'
 import { usePreferencesStore } from '../../features/preferences/store'
 import { HandDisplay } from '../../features/baccarat/components/HandDisplay'
 import { BetPanel } from '../../features/baccarat/components/BetPanel'
@@ -22,7 +23,7 @@ export default function BaccaratScreen() {
   const active = profiles.find(p => p.id === activeProfileId)
   const isInfinite = active?.bankrollMode === 'infinite'
   const numericBalance = isInfinite ? Infinity : (active?.balance ?? 0)
-  const balance = active ? (isInfinite ? '∞' : `$${active.balance}`) : '—'
+  const balance = active ? (isInfinite ? '∞' : formatMoney(active.balance)) : '—'
 
   const [showFundsWarning, setFundsWarning] = useState(false)
   const fundsTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -145,7 +146,7 @@ export default function BaccaratScreen() {
       <View style={styles.footer}>
         <View>
           {showFundsWarning && <Text style={styles.fundsWarning}>Insufficient funds</Text>}
-          <Text style={styles.balance}>Balance: {balance}</Text>
+          <Text style={[styles.balance, numericBalance < 0 && styles.negative]}>Balance: {balance}</Text>
         </View>
         {isResult && (
           <TouchableOpacity style={styles.dealBtn} onPress={store.newHand}>
@@ -183,6 +184,7 @@ const styles = StyleSheet.create({
   footer: { padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     minHeight: 80 },
   balance: { color: '#aaa', fontSize: 14 },
+  negative: { color: '#ff5555' },
   fundsWarning: { color: '#e74c3c', fontSize: 12, fontWeight: '600', marginBottom: 2 },
   dealBtn: { backgroundColor: '#FFD700', borderRadius: 10, paddingHorizontal: 32, paddingVertical: 14 },
   dealDisabled: { opacity: 0.4 },
