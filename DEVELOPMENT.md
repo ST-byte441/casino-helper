@@ -25,7 +25,7 @@ npx tsc --noEmit  # type check only
 ```
 app/
   (tabs)/         # Tab bar screens
-    index.tsx     # Game lobby
+    index.tsx     # Game lobby (header: active profile avatar + name, taps through to profile stats)
     sandbox.tsx   # Sandbox game picker
     profile.tsx   # Profile switcher
   blackjack/
