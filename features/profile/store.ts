@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Profile, BankrollMode } from './types'
+import { emptyStats } from './stats'
 
 type ProfileStore = {
   profiles: Profile[]
@@ -19,12 +20,17 @@ export const useProfileStore = create<ProfileStore>()(
       activeProfileId: null,
 
       addProfile: (name, startingChips, mode) => {
+        const createdAt = Date.now()
         const profile: Profile = {
-          id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+          id: createdAt.toString(36) + Math.random().toString(36).slice(2),
           name,
           bankrollMode: mode,
           balance: startingChips,
-          createdAt: Date.now(),
+          createdAt,
+          startingBalance: startingChips,
+          trackingSince: createdAt,
+          refills: [],
+          stats: emptyStats(),
         }
         set(state => ({ profiles: [...state.profiles, profile], activeProfileId: profile.id }))
       },
