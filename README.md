@@ -12,6 +12,7 @@ Get the latest APK from the [Releases page](../../releases/latest).
 
 - **Multiple player profiles** — create profiles with a real bankroll or infinite chips for pure practice
 - **Profile detail & stats** — tap a profile to set a picture (20 bundled avatars or your own photo), add money, and see bankroll and per-game stats (hands, win rate, net result; craps points made, seven-outs and longest roll). Stakes are capped by your balance
+- **Lobby header** — the Games tab shows the active profile's picture next to its name; tap either to open the Profile tab
 - **In-app update notifications** — prompted to download a newer version on launch if one is available
 
 ### Blackjack
