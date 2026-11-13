@@ -30,8 +30,8 @@ export default function LobbyScreen() {
           testID="lobby-profile-button"
           style={styles.profileButton}
           accessibilityRole="button"
-          accessibilityLabel="Open profile"
-          onPress={() => router.navigate('/(tabs)/profile')}
+          accessibilityLabel={active ? 'Open profile stats' : 'Open profiles'}
+          onPress={() => (active ? router.push(`/profile/${active.id}`) : router.navigate('/(tabs)/profile'))}
         >
           <ProfileAvatar picture={active?.picture} size={36} />
           <Text style={styles.profileName} numberOfLines={1}>{active?.name ?? 'No profile'}</Text>
