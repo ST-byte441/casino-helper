@@ -11,6 +11,7 @@ Get the latest APK from the [Releases page](../../releases/latest).
 ## Features
 
 - **Multiple player profiles** — create profiles with a real bankroll or infinite chips for pure practice
+- **Profile detail & stats** — tap a profile to set a picture (20 bundled avatars or your own photo), add money, and see bankroll and per-game stats (hands, win rate, net result). Stakes are capped by your balance
 - **In-app update notifications** — prompted to download a newer version on launch if one is available
 
 ### Blackjack
@@ -55,6 +56,7 @@ Get the latest APK from the [Releases page](../../releases/latest).
 | Language | TypeScript |
 | Navigation | Expo Router |
 | State | Zustand + AsyncStorage |
+| Media | expo-image-picker + expo-file-system (profile photos) |
 | Testing | Jest + React Native Testing Library |
 
 ## Development

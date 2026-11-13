@@ -18,7 +18,7 @@ npx jest <path>   # single file
 npx tsc --noEmit  # type check only
 ```
 
-239 tests cover the game engine, strategy lookup, profile store, and update utility.
+328 tests cover the game engine, strategy lookup, profile store and stats, and update utility.
 
 ## Project Structure
 
@@ -34,6 +34,8 @@ app/
     index.tsx     # Craps table screen
   baccarat/
     index.tsx     # Baccarat table screen
+  profile/
+    [id].tsx      # Profile detail (avatar, balance, Add Money, bankroll, per-game stats)
   sandbox/
     blackjack.tsx # Blackjack strategy sandbox
 features/
@@ -55,8 +57,13 @@ features/
     store.ts      # Session Zustand store (shoe, hands, bets, betting→revealing→result phases, deferred settlement, assist toggle)
     components/   # UI components (BetPanel, HandDisplay, ResultBanner, SqueezeCard)
   profile/
-    store.ts      # Persisted Zustand store (AsyncStorage)
-    components/   # ProfileCard, ProfileList, CreateProfileModal
+    store.ts      # Persisted Zustand store (AsyncStorage, persist v1) — recordHands, recordCrapsRoll, addMoney, setPicture
+    migrate.ts    # Persist migration (v0 -> v1, adds stats/picture)
+    stats.ts      # Pure TS: stats types, recording, win rate
+    types.ts      # Profile and stats types
+    format.ts     # Money formatting (negative shown as -$X)
+    pictures.ts   # Bundled avatar map + photo copy to app storage
+    components/   # ProfileCard, ProfileList, CreateProfileModal, ProfileAvatar, PicturePicker, AddMoneyModal, BankrollBox, GameStatsTabs
   preferences/
     store.ts      # Persisted Zustand store (AsyncStorage) for table rules per game + baccarat Squeeze/Flip mode
 lib/
@@ -65,6 +72,8 @@ lib/
   updates.ts      # GitHub release version check utility
 components/
   UpdateModal.tsx # In-app update prompt modal
+assets/
+  avatars/        # Bundled 256px profile pictures + default (originals in gitignored assets/profile-pictures/)
 __tests__/        # Mirrors the feature folder structure
 ```
 
@@ -94,7 +103,7 @@ Users get the update silently on their next app launch. Takes ~1 minute.
 
 > **Note:** The update is only delivered to APKs whose `runtimeVersion` matches the value in `app.json` at build time. If you bumped `runtimeVersion`, users need a new APK — use the Full APK rebuild flow below.
 
-### Native changes (new permissions, new native packages) — Full APK rebuild
+### Native changes (new permissions, new native packages; e.g. v1.4.0 added expo-image-picker and expo-file-system) — Full APK rebuild
 
 Required when bumping `runtimeVersion` in `app.json`.
 
