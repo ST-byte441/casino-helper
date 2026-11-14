@@ -36,9 +36,9 @@ The app makes a few network requests to keep itself up to date. None of them inc
 
 If you install the app from Google Play, Google may collect information as described in [Google's privacy policy](https://policies.google.com/privacy).
 
-## Children
+## Age requirement
 
-The app is not directed at children under 13 and does not knowingly collect personal information from anyone.
+The app is intended for adults aged 18 and over. It is not directed at anyone under 18, and it does not knowingly collect personal information from anyone.
 
 ## Changes to this policy
 
