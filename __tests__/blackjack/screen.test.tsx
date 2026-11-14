@@ -163,3 +163,67 @@ describe('large portrait', () => {
     expect(flat(screen.getByText(/You Win!/).props.style).fontSize).toBe(32)
   })
 })
+
+describe('large landscape', () => {
+  const panel = (screen: ReturnType<typeof render>) => screen.getByTestId('bj-panel')
+
+  test('felt on the left, a 300dp control panel on the right with actions in a column and the balance', () => {
+    const screen = renderTable(LARGE_LANDSCAPE)
+    setPhase(PLAYING)
+    expect(flat(panel(screen).props.style)).toMatchObject({
+      width: 300, backgroundColor: '#0a4a24', borderLeftWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+    })
+    const hit = within(panel(screen)).getByText('Hit')
+    let row = hit.parent
+    while (row && !(row.type === 'View' && flat(row.props.style)?.flexDirection)) row = row.parent
+    expect(flat(row!.props.style).flexDirection).toBe('column')
+    within(screen.getByTestId('bj-felt')).getByText('Dealer')
+    within(panel(screen)).getByText('Balance: $1,000')
+  })
+
+  test('betting puts the chips and Deal in the panel', () => {
+    const screen = renderTable(LARGE_LANDSCAPE)
+    setPhase({ bet: 25 })
+    within(panel(screen)).getByText('$15')
+    within(panel(screen)).getByText('Deal')
+  })
+
+  test('the result and Next Hand show in the panel', () => {
+    const screen = renderTable(LARGE_LANDSCAPE)
+    setPhase({ ...PLAYING, phase: 'result', dealerHand: [c('K'), c('7')], lastOutcome: 'win', lastDelta: 25 })
+    within(panel(screen)).getByText('Next Hand')
+  })
+
+  test.each(['dealing', 'dealer'] as const)('the %s phase shows only the balance in the panel', phase => {
+    const screen = renderTable(LARGE_LANDSCAPE)
+    setPhase({ ...PLAYING, phase })
+    const p = within(panel(screen))
+    p.getByText('Balance: $1,000')
+    expect(p.queryByText('Hit')).toBeNull()
+    expect(p.queryByText('Deal')).toBeNull()
+    expect(p.queryByText('Next Hand')).toBeNull()
+  })
+
+  test('the funds warning appears in the panel', () => {
+    seedProfile(10)
+    const screen = renderTable(LARGE_LANDSCAPE)
+    fireEvent.press(screen.getByText('$15'))
+    within(panel(screen)).getByText('Insufficient funds')
+  })
+
+  test('rotating mid-hand keeps the hand and moves the controls', () => {
+    const screen = renderTable(LARGE_PORTRAIT)
+    setPhase({ ...SPLIT3, playerHands: SPLIT3.playerHands.slice(0, 2), handBets: [25, 25] })
+    const before = useBlackjackStore.getState()
+    setWindow(LARGE_LANDSCAPE)
+    screen.rerender(<BlackjackScreen />)
+    expect(useBlackjackStore.getState().playerHands).toBe(before.playerHands)
+    expect(useBlackjackStore.getState().activeHandIndex).toBe(1)
+    within(panel(screen)).getByText('Hit')
+    within(screen.getByTestId('bj-felt')).getByText('Hand 2')
+    setWindow(LARGE_PORTRAIT)
+    screen.rerender(<BlackjackScreen />)
+    expect(screen.queryByTestId('bj-panel')).toBeNull()
+    within(screen.getByTestId('bj-controls-column')).getByText('Hit')
+  })
+})

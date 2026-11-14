@@ -7,12 +7,14 @@ type Props = {
   balanceText: string
   negative: boolean
   showFundsWarning: boolean
+  /** 'bar': full-width footer strip (phone, large portrait). 'panel': pinned to the bottom of the landscape side panel. */
+  variant?: 'bar' | 'panel'
 }
 
-export function BalanceFooter({ size, balanceText, negative, showFundsWarning }: Props) {
+export function BalanceFooter({ size, balanceText, negative, showFundsWarning, variant = 'bar' }: Props) {
   const s = SHEETS[size]
   return (
-    <View style={s.footer}>
+    <View style={variant === 'panel' ? [s.footer, panelStyles.footer] : s.footer}>
       {showFundsWarning && <Text style={s.fundsWarning}>Insufficient funds</Text>}
       <Text style={[s.footerText, negative && s.negative]}>
         Balance: {balanceText}
@@ -32,4 +34,9 @@ const SHEETS = sizedStyles(base, {
   footer: { padding: 16 },
   footerText: { fontSize: 18 },
   fundsWarning: { fontSize: 16, marginBottom: 4 },
+})
+
+// The panel already has the header's background; push the balance to the panel's bottom edge.
+const panelStyles = StyleSheet.create({
+  footer: { marginTop: 'auto', backgroundColor: 'transparent', alignItems: 'flex-start' },
 })

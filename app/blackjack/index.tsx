@@ -14,6 +14,7 @@ import { ResultBanner } from '../../features/blackjack/components/table/ResultBa
 import { Controls } from '../../features/blackjack/components/table/Controls'
 import { BalanceFooter } from '../../features/blackjack/components/table/BalanceFooter'
 import { pickLayout } from '../../features/blackjack/layout'
+import { TableSize } from '../../features/blackjack/sizes'
 import { useScreenClass } from '../../lib/useScreenClass'
 import { TableRules } from '../../lib/types'
 import { canDouble, canSplit, canSurrender, scoreHand } from '../../features/blackjack/engine'
@@ -73,7 +74,7 @@ export default function BlackjackScreen() {
     return scoreHand(store.playerHands[i]) > 21 ? 'bust' : 'stood'
   }
 
-  const size = layout === 'phone' ? 'regular' : 'large'
+  const size: TableSize = layout === 'phone' ? 'regular' : 'large'
 
   const header = (
     <TableHeader
@@ -97,40 +98,38 @@ export default function BlackjackScreen() {
   const result = isResult && (
     <ResultBanner size={size} outcome={store.lastOutcome} delta={store.lastDelta} onNext={store.newHand} />
   )
-  const controls = (
-    <Controls
-      size={size}
-      phase={store.phase}
-      actions={{
-        suggestedAction: store.suggestedAction,
-        canDouble: canDouble(activeHand, store.activeHandIndex > 0, rules) && store.canAffordExtra(),
-        canSplit: canSplit(activeHand) && store.canAffordExtra(),
-        canSurrender: canSurrender(activeHand, rules) && store.playerHands.length === 1,
-        onHit: store.hit,
-        onStand: store.stand,
-        onDouble: store.doubleDown,
-        onSplit: store.split,
-        onSurrender: store.surrender,
-      }}
-      betting={{
-        bet: store.bet,
-        balance: isInfinite ? Infinity : (activeProfile?.balance ?? 0),
-        isInfinite,
-        onPlaceBet: store.placeBet,
-        onClearBet: store.clearBet,
-        onDeal: store.deal,
-        onInsufficientFunds: triggerFundsWarning,
-      }}
-    />
-  )
-  const footer = (
-    <BalanceFooter
-      size={size}
-      balanceText={isInfinite ? '∞' : formatMoney(balance)}
-      negative={balance < 0}
-      showFundsWarning={showFundsWarning}
-    />
-  )
+  const controlProps = {
+    size,
+    phase: store.phase,
+    actions: {
+      suggestedAction: store.suggestedAction,
+      canDouble: canDouble(activeHand, store.activeHandIndex > 0, rules) && store.canAffordExtra(),
+      canSplit: canSplit(activeHand) && store.canAffordExtra(),
+      canSurrender: canSurrender(activeHand, rules) && store.playerHands.length === 1,
+      onHit: store.hit,
+      onStand: store.stand,
+      onDouble: store.doubleDown,
+      onSplit: store.split,
+      onSurrender: store.surrender,
+    },
+    betting: {
+      bet: store.bet,
+      balance: isInfinite ? Infinity : (activeProfile?.balance ?? 0),
+      isInfinite,
+      onPlaceBet: store.placeBet,
+      onClearBet: store.clearBet,
+      onDeal: store.deal,
+      onInsufficientFunds: triggerFundsWarning,
+    },
+  }
+  const controls = <Controls {...controlProps} />
+  const footerProps = {
+    size,
+    balanceText: isInfinite ? '∞' : formatMoney(balance),
+    negative: balance < 0,
+    showFundsWarning,
+  } as const
+  const footer = <BalanceFooter {...footerProps} />
 
   if (layout === 'phone') {
     return (
@@ -145,8 +144,29 @@ export default function BlackjackScreen() {
     )
   }
 
-  // Large portrait (and, until the landscape layout lands, large landscape): the phone order,
-  // bigger, with the result and controls in a centred column so tablets don't stretch them.
+  if (layout === 'largeLandscape') {
+    // Felt (dealer over hands) on the left; one control panel on the right holds whichever of
+    // bet controls / action buttons / result the phase calls for, with the balance at its bottom.
+    return (
+      <SafeAreaView style={styles.container}>
+        {header}
+        <View style={styles.landscapeRow}>
+          <View testID="bj-felt" style={styles.felt}>
+            {dealer}
+            {hands}
+          </View>
+          <View testID="bj-panel" style={styles.panel}>
+            {result}
+            <Controls {...controlProps} direction="column" />
+            <BalanceFooter {...footerProps} variant="panel" />
+          </View>
+        </View>
+      </SafeAreaView>
+    )
+  }
+
+  // Large portrait: the phone order, bigger, with the result and controls in a centred
+  // column so tablets don't stretch them.
   return (
     <SafeAreaView style={styles.container}>
       {header}
@@ -164,4 +184,8 @@ export default function BlackjackScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0d5c2e' },
   controlsColumn: { width: '100%', maxWidth: 520, alignSelf: 'center' },
+  landscapeRow: { flex: 1, flexDirection: 'row' },
+  felt: { flex: 1 },
+  panel: { width: 300, backgroundColor: '#0a4a24', borderLeftWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+    paddingVertical: 8 },
 })
