@@ -35,7 +35,13 @@ export function BetControls({ bet, balance, isInfinite, onPlaceBet, onClearBet, 
           )
         })}
         <TouchableOpacity style={s.clear} onPress={onClearBet}>
-          <Text style={s.clearText}>Clear</Text>
+          <Text
+            style={s.clearText}
+            // Large text in the narrow landscape panel: keep "Clear" on one line (phones unchanged).
+            {...(size === 'large' ? { numberOfLines: 1, adjustsFontSizeToFit: true } : {})}
+          >
+            Clear
+          </Text>
         </TouchableOpacity>
       </View>
       <View style={s.betRow}>

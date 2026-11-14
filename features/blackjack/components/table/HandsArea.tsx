@@ -17,6 +17,9 @@ type Props = {
 export function HandsArea({ size, wrap, hands, activeHandIndex, getHandStatus }: Props) {
   const scrollRef = useRef<ScrollViewInstance>(null)
   const handOffsets = useRef<number[]>([])
+  // A rotation remounts this area with no offsets measured yet, so the effect below scrolls to 0.
+  // Scroll to the active hand once, as soon as its own layout arrives.
+  const scrollOnFirstLayout = useRef(true)
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ y: handOffsets.current[activeHandIndex] ?? 0, animated: true })
@@ -25,7 +28,13 @@ export function HandsArea({ size, wrap, hands, activeHandIndex, getHandStatus }:
   const items = hands.map((hand, i) => (
     <View
       key={i}
-      onLayout={e => { handOffsets.current[i] = e.nativeEvent.layout.y }}
+      onLayout={e => {
+        handOffsets.current[i] = e.nativeEvent.layout.y
+        if (scrollOnFirstLayout.current && i === activeHandIndex) {
+          scrollOnFirstLayout.current = false
+          scrollRef.current?.scrollTo({ y: e.nativeEvent.layout.y, animated: false })
+        }
+      }}
     >
       <Hand
         hand={hand}

@@ -33,7 +33,8 @@ const base = StyleSheet.create({
 
 const SHEETS = sizedStyles(base, {
   result: { padding: 30, borderRadius: 18 },
-  resultText: { fontSize: 32, marginBottom: 18 },
+  // Centred so a line that wraps in the 300dp landscape panel stays centred.
+  resultText: { fontSize: 32, marginBottom: 18, textAlign: 'center' },
   nextBtn: { paddingVertical: 15, paddingHorizontal: 48, borderRadius: 12 },
   nextBtnText: { fontSize: 22 },
 })

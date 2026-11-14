@@ -13,7 +13,7 @@ jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
 }))
 
 import React from 'react'
-import { StyleSheet } from 'react-native'
+import { StyleSheet, ScrollView } from 'react-native'
 import { render, fireEvent, act, within } from '@testing-library/react-native'
 import { Card as CardView } from '../../features/blackjack/components/Card'
 import BlackjackScreen from '../../app/blackjack'
@@ -234,4 +234,37 @@ test('on large screens the rules setup sits in a centred 520dp column', () => {
   const column = screen.getByTestId('bj-setup-column')
   expect(flat(column.props.style)).toMatchObject({ maxWidth: 520, width: '100%', alignSelf: 'center' })
   within(column).getByText('Play')
+})
+
+describe('final review fixes', () => {
+  test('after a rotation remounts the hands, the view scrolls to the active hand once it is laid out', () => {
+    const screen = renderTable(LARGE_PORTRAIT)
+    setPhase(SPLIT4)
+    setWindow(LARGE_LANDSCAPE)
+    screen.rerender(<BlackjackScreen />)
+    const felt = screen.getByTestId('bj-felt')
+    const scroll = within(felt).UNSAFE_getAllByType(ScrollView).find(s => s.props.style && flat(s.props.style).flex === 1)!
+    const scrollTo = jest.fn()
+    scroll.instance.scrollTo = scrollTo
+    // Hand 3 (active) sits on the second row of the wrap.
+    const items = (screen.getByTestId('bj-hands').children as any[]).filter(n => typeof n.props?.onLayout === 'function')
+    expect(items).toHaveLength(4)
+    act(() => {
+      items.forEach((n: any, i: number) => n.props.onLayout({ nativeEvent: { layout: { x: 0, y: i < 2 ? 0 : 240, width: 200, height: 230 } } }))
+    })
+    expect(scrollTo).toHaveBeenCalledWith({ y: 240, animated: false })
+  })
+
+  test('the large result text is centred so a wrapped second line stays centred in the panel', () => {
+    const screen = renderTable(LARGE_LANDSCAPE)
+    setPhase({ ...PLAYING, phase: 'result', dealerHand: [c('K'), c('7')], lastOutcome: 'blackjack', lastDelta: 37.5 })
+    expect(flat(screen.getByText(/Blackjack!/).props.style).textAlign).toBe('center')
+  })
+
+  test('the large Clear label stays on one line, shrinking if it has to', () => {
+    const screen = renderTable(LARGE_LANDSCAPE)
+    const clear = within(screen.getByTestId('bj-panel')).getByText('Clear')
+    expect(clear.props.numberOfLines).toBe(1)
+    expect(clear.props.adjustsFontSizeToFit).toBe(true)
+  })
 })
