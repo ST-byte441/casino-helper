@@ -79,3 +79,16 @@ export type BaccaratOutcome = 'player' | 'banker' | 'tie'
 export type BaccaratSide = 'player' | 'banker'
 export type RevealStep = { side: BaccaratSide; index: number }
 export type BaccaratRevealMode = 'squeeze' | 'flip'
+
+export type RouletteWheel = 'single' | 'double' | 'triple'
+export type RouletteSpeed = 'slow' | 'fast'
+export type RouletteSettings = { wheel: RouletteWheel; speed: RouletteSpeed }
+// 0 = "0", -1 = "00", -2 = "000"
+export type Pocket = number
+export type RouletteBetKind =
+  | 'straight' | 'split' | 'street' | 'corner' | 'sixline' | 'basket'
+  | 'firstFour' | 'firstFive' | 'dozen' | 'column'
+  | 'low' | 'high' | 'red' | 'black' | 'odd' | 'even'
+export type RouletteBet = { id: string; kind: RouletteBetKind; pockets: Pocket[] }
+export type PlacedBets = Record<string, number>
+export type RoulettePhase = 'betting' | 'spinning' | 'result'
