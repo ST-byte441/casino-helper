@@ -227,3 +227,11 @@ describe('large landscape', () => {
     within(screen.getByTestId('bj-controls-column')).getByText('Hit')
   })
 })
+
+test('on large screens the rules setup sits in a centred 520dp column', () => {
+  setWindow(LARGE_PORTRAIT)
+  const screen = render(<BlackjackScreen />)
+  const column = screen.getByTestId('bj-setup-column')
+  expect(flat(column.props.style)).toMatchObject({ maxWidth: 520, width: '100%', alignSelf: 'center' })
+  within(column).getByText('Play')
+})
