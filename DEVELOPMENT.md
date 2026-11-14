@@ -109,17 +109,26 @@ Releases come in two forms depending on what changed.
 
 ### JS/Asset changes (most updates) — EAS Update
 
-No new APK needed. Run:
+No new APK or AAB needed. One command updates **both** the GitHub APKs and the Play installs:
 
 ```bash
-eas update --channel preview --environment preview --message "describe what changed"
+eas update --branch master --environment production --message "describe what changed"
 ```
 
 Users get the update silently on their next app launch. Takes ~1 minute.
 
-> **`--channel` vs `--environment`:** `--channel preview` controls *which installed apps receive* the update (our APKs are built with `"channel": "preview"` in `eas.json`). `--environment preview` controls *which EAS environment variables get baked into the JS bundle*. Any `EXPO_PUBLIC_*` variables stored on EAS for that environment are inlined into the bundle when you publish. Recent eas-cli versions require `--environment` when running with `--non-interactive`. Interactively, the CLI prompts you to pick one instead. This makes sure the wrong environment's values never get bundled by accident. The project currently has no EAS environment variables (check with `eas env:list --environment preview`), so the flag has no effect yet. It will start to matter once variables such as API URLs or keys are added.
+> **Channels → branch:** both EAS channels point at the same update branch, so a single publish to `master` reaches every install:
+>
+> | Build | Channel (fixed at build time) | Branch |
+> |---|---|---|
+> | GitHub APK (`preview` profile) | `preview` | `master` |
+> | Play install (`production` profile) | `production` | `master` |
+>
+> This is server-side config. Check it with `eas channel:list`. To send an update to only one group (for example APK users first), split them with `eas channel:edit production --branch production`, publish to that branch, and run `eas channel:edit production --branch master` when you're done.
 
-> **Note:** The update is only delivered to APKs whose `runtimeVersion` matches the value in `app.json` at build time. If you bumped `runtimeVersion`, users need a new APK — use the Full APK rebuild flow below.
+> **`--branch` vs `--environment`:** `--branch master` controls *which installed apps receive* the update, through the channel mapping above. `--environment preview` controls *which EAS environment variables get baked into the JS bundle*. Any `EXPO_PUBLIC_*` variables stored on EAS for that environment are inlined into the bundle when you publish. Recent eas-cli versions require `--environment` when running with `--non-interactive`. Interactively, the CLI prompts you to pick one instead. This makes sure the wrong environment's values never get bundled by accident. The project currently has no EAS environment variables (check with `eas env:list --environment preview`), so the flag has no effect yet. It will start to matter once variables such as API URLs or keys are added.
+
+> **Note:** The update is only delivered to builds (APK or AAB) whose `runtimeVersion` matches the value in `app.json` at build time. If you bumped `runtimeVersion`, users need a new build. Rebuild **both** the APK (flow below) and the Play AAB so they stay on the same runtime and keep sharing the `master` branch.
 
 ### Native changes (new permissions, new native packages; e.g. v1.4.0 added expo-image-picker and expo-file-system, v1.5.0 added react-native-svg and expo-screen-orientation) — Full APK rebuild
 
@@ -165,11 +174,7 @@ eas build --platform android --profile production --auto-submit
 eas submit --platform android --profile production
 ```
 
-**OTA updates for Play installs** go to the `production` channel:
-
-```bash
-eas update --channel production --environment production --message "describe what changed"
-```
+**OTA updates for Play installs:** the `production` channel points at the `master` update branch, so the normal `eas update --branch master ...` from the EAS Update section reaches Play installs too. You don't need a separate publish.
 
 > **Signing:** Google re-signs Play builds with its own app-signing key, so a Play install and a GitHub APK have different certificates. One can't be installed over the other: uninstall first. Because of this, `lib/updates.ts` skips the GitHub release check (and the `UpdateModal` prompt) when `Updates.channel` is `production`. Play delivers those updates itself. For Android developer verification, keep **both** fingerprints registered:
 >
