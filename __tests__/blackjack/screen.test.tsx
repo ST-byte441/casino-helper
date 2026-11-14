@@ -13,7 +13,9 @@ jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
 }))
 
 import React from 'react'
-import { render, fireEvent, act } from '@testing-library/react-native'
+import { StyleSheet } from 'react-native'
+import { render, fireEvent, act, within } from '@testing-library/react-native'
+import { Card as CardView } from '../../features/blackjack/components/Card'
 import BlackjackScreen from '../../app/blackjack'
 import { useBlackjackStore } from '../../features/blackjack/store'
 import { useProfileStore } from '../../features/profile/store'
@@ -26,6 +28,10 @@ const DOWN: Card = { value: 'K', suit: '♠', faceDown: true }
 type Win = { width: number; height: number }
 const PHONE: Win = { width: 384, height: 832 }
 const COMPACT: Win = { width: 320, height: 700 }
+const LARGE_PORTRAIT: Win = { width: 673, height: 884 }
+const LARGE_LANDSCAPE: Win = { width: 884, height: 673 }
+
+const flat = (style: unknown) => StyleSheet.flatten(style as any)
 
 function setWindow(w: Win) {
   mockWindow = { ...w, scale: 3, fontScale: 1 }
@@ -59,6 +65,12 @@ const PLAYING = {
   dealerHand: [c('K'), DOWN],
   playerHands: [[c('8', '♥'), c('3', '♣')]],
   activeHandIndex: 0,
+}
+const SPLIT4 = {
+  ...PLAYING,
+  handBets: [25, 25, 25, 25],
+  playerHands: [[c('8', '♥'), c('3')], [c('8', '♦'), c('K')], [c('8', '♣'), c('2')], [c('8'), c('5')]],
+  activeHandIndex: 2,
 }
 const SPLIT3 = {
   ...PLAYING,
@@ -119,5 +131,35 @@ describe('phone layout is pinned', () => {
     const screen = renderTable(COMPACT)
     setPhase(PLAYING)
     expect(screen.toJSON()).toMatchSnapshot()
+  })
+})
+
+describe('large portrait', () => {
+  test('cards are large, split hands wrap side by side, controls sit in a centred column', () => {
+    const screen = renderTable(LARGE_PORTRAIT)
+    setPhase(SPLIT4)
+    const cards = screen.UNSAFE_getAllByType(CardView)
+    expect(cards.length).toBeGreaterThan(0)
+    cards.forEach(card => expect(card.props.size).toBe('large'))
+    expect(flat(screen.getByTestId('bj-hands').props.style)).toMatchObject({
+      flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center',
+    })
+    const column = screen.getByTestId('bj-controls-column')
+    expect(flat(column.props.style)).toMatchObject({ maxWidth: 520, alignSelf: 'center', width: '100%' })
+    expect(flat(within(column).getByText('Hit').props.style).fontSize).toBe(22)
+  })
+
+  test('header and footer text grow 1.3x', () => {
+    const screen = renderTable(LARGE_PORTRAIT)
+    setPhase(PLAYING)
+    expect(flat(screen.getByText('Back').props.style).fontSize).toBe(20)
+    expect(flat(screen.getByText('Balance: $1,000').props.style).fontSize).toBe(18)
+  })
+
+  test('the result banner is large', () => {
+    const screen = renderTable(LARGE_PORTRAIT)
+    setPhase({ ...PLAYING, phase: 'result', dealerHand: [c('K'), c('7')], lastOutcome: 'win', lastDelta: 25 })
+    expect(flat(screen.getByText('Next Hand').props.style).fontSize).toBe(22)
+    expect(flat(screen.getByText(/You Win!/).props.style).fontSize).toBe(32)
   })
 })
