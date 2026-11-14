@@ -20,3 +20,12 @@ test("setBaccaratRevealMode('flip') updates it", () => {
   usePreferencesStore.getState().setBaccaratRevealMode('flip')
   expect(usePreferencesStore.getState().baccaratRevealMode).toBe('flip')
 })
+
+test("rouletteSettings default to double wheel, slow speed", () => {
+  expect(usePreferencesStore.getState().rouletteSettings).toEqual({ wheel: 'double', speed: 'slow' })
+})
+
+test("saveRouletteSettings persists in state", () => {
+  usePreferencesStore.getState().saveRouletteSettings({ wheel: 'triple', speed: 'fast' })
+  expect(usePreferencesStore.getState().rouletteSettings).toEqual({ wheel: 'triple', speed: 'fast' })
+})
