@@ -6,6 +6,14 @@ jest.mock('expo-constants', () => ({
   default: { expoConfig: { version: '1.0.0' } },
 }))
 
+// Mock expo-updates so we control which EAS Update channel the build is on
+const mockUpdates: { channel: string | null } = { channel: 'preview' }
+jest.mock('expo-updates', () => ({
+  get channel() {
+    return mockUpdates.channel
+  },
+}))
+
 const mockFetch = (body: unknown, status = 200) => {
   global.fetch = jest.fn().mockResolvedValueOnce({
     ok: status === 200,
@@ -15,6 +23,7 @@ const mockFetch = (body: unknown, status = 200) => {
 
 afterEach(() => {
   jest.restoreAllMocks()
+  mockUpdates.channel = 'preview'
 })
 
 describe('isNewerVersion', () => {
@@ -84,5 +93,22 @@ describe('checkForUpdate', () => {
     mockFetch({ html_url: 'https://github.com/...' })
     const result = await checkForUpdate()
     expect(result).toBeNull()
+  })
+})
+
+describe('checkForUpdate on the Play Store build', () => {
+  test('returns null without calling GitHub on the production channel', async () => {
+    mockUpdates.channel = 'production'
+    global.fetch = jest.fn()
+    expect(await checkForUpdate()).toBeNull()
+    expect(global.fetch).not.toHaveBeenCalled()
+  })
+
+  test('still checks GitHub when the channel is unknown (dev / Expo Go)', async () => {
+    mockUpdates.channel = null
+    mockFetch({ tag_name: 'v1.1.0', html_url: 'https://example.com/r' })
+    const info = await checkForUpdate()
+    expect(global.fetch).toHaveBeenCalled()
+    expect(info?.hasUpdate).toBe(true)
   })
 })
