@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, TouchableOpacity, StyleSheet } from 'react-native'
+import { Text } from '../../../components/Text'
 import { Pocket } from '../../../lib/types'
 import { pocketColor, pocketLabel } from '../engine'
 import { POCKET_BG } from './Board'

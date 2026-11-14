@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native'
+import { Text } from '../../components/Text'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
-import * as ScreenOrientation from 'expo-screen-orientation'
+import { useOrientationStore } from '../../lib/orientation'
 import { useRouletteStore } from '../../features/roulette/store'
 import { useProfileStore } from '../../features/profile/store'
 import { usePreferencesStore } from '../../features/preferences/store'
@@ -38,14 +39,14 @@ export default function RouletteScreen() {
   const { width, height } = useWindowDimensions()
   const orientation: BoardOrientation = width > height ? 'landscape' : 'portrait'
 
-  // The app is locked to portrait in app/_layout.tsx; the table follows the phone while it is open.
+  // The root layout owns the orientation lock (lib/orientation.ts); the table asks for rotation while it is open.
   useEffect(() => {
-    if (setupDone) ScreenOrientation.unlockAsync().catch(noop)
+    if (setupDone) useOrientationStore.getState().setRotationRequested(true)
   }, [setupDone])
 
-  // Leaving relocks portrait, settles a spin in flight and starts the next visit fresh.
+  // Leaving withdraws the rotation request, settles a spin in flight and starts the next visit fresh.
   useEffect(() => () => {
-    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(noop)
+    useOrientationStore.getState().setRotationRequested(false)
     useRouletteStore.getState().abandon()
   }, [])
 

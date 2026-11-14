@@ -1,5 +1,6 @@
 import React from 'react'
-import { View, Text, TouchableOpacity, Switch, StyleSheet } from 'react-native'
+import { View, TouchableOpacity, Switch, StyleSheet } from 'react-native'
+import { Text } from '../../../components/Text'
 import { CrapsTableRules, CrapsVariant, OddsMultiple } from '../../../lib/types'
 
 type Props = {

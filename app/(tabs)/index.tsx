@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, FlatList, StyleSheet } from 'react-native'
+import { View, TouchableOpacity, FlatList, StyleSheet } from 'react-native'
+import { Text } from '../../components/Text'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useProfileStore } from '../../features/profile/store'

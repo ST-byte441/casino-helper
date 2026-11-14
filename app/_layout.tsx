@@ -1,17 +1,15 @@
 import { useEffect, useState } from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { Stack } from 'expo-router'
-import * as ScreenOrientation from 'expo-screen-orientation'
+import { useOrientationLock } from '../lib/orientation'
 import { checkForUpdate, UpdateInfo } from '../lib/updates'
 import UpdateModal from '../components/UpdateModal'
 
 export default function RootLayout() {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
 
-  // The app is portrait-only; the roulette table unlocks rotation while it is open.
-  useEffect(() => {
-    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {})
-  }, [])
+  // Phones are portrait-only (the roulette table requests rotation while open); large screens rotate everywhere.
+  useOrientationLock()
 
   useEffect(() => {
     checkForUpdate().then(info => {

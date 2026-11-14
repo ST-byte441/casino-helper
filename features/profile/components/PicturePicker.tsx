@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Modal, View, Text, Image, TouchableOpacity, ScrollView, StyleSheet } from 'react-native'
+import { Modal, View, Image, TouchableOpacity, ScrollView, StyleSheet } from 'react-native'
+import { Text } from '../../../components/Text'
 import { ProfilePicture } from '../types'
 import { PRESET_PICTURES, pictureSource, pickAndStoreUpload } from '../pictures'
 

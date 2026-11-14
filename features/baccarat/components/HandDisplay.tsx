@@ -1,5 +1,6 @@
 import React from 'react'
-import { View, Text, ScrollView, StyleSheet } from 'react-native'
+import { View, ScrollView, StyleSheet } from 'react-native'
+import { Text } from '../../../components/Text'
 import { Card as CardType } from '../../../lib/types'
 import { Card } from '../../blackjack/components/Card'
 import { scoreHand, isNatural } from '../engine'

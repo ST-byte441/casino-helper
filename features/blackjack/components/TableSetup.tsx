@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
+import { View, TouchableOpacity, ScrollView, StyleSheet, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
+import { Text } from '../../../components/Text'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { TableRules, PayoutMode, SoftSeven, SurrenderMode, DeckCount } from '../../../lib/types'
 import { DEFAULT_TABLE_RULES } from '../../../lib/constants'

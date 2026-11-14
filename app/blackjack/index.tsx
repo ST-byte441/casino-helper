@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, type ScrollViewInstance } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, type ScrollViewInstance } from 'react-native'
+import { Text } from '../../components/Text'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useBlackjackStore } from '../../features/blackjack/store'
@@ -82,7 +83,7 @@ export default function BlackjackScreen() {
           <Text style={styles.backArrow}>←</Text>
           <Text style={styles.back}>Back</Text>
         </TouchableOpacity>
-        <Text style={styles.pill}>{rulePill}</Text>
+        <Text style={styles.pill} numberOfLines={1}>{rulePill}</Text>
         <TouchableOpacity onPress={store.toggleAssist}>
           <Text style={styles.assist}>Assist: {store.assistEnabled ? '●' : '○'}</Text>
         </TouchableOpacity>
@@ -174,7 +175,7 @@ const styles = StyleSheet.create({
   backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   backArrow: { color: '#fff', fontSize: 15, transform: [{ translateY: -1 }] },
   back: { color: '#fff', fontSize: 15 },
-  pill: { color: '#FFD700', fontSize: 12, fontWeight: '600' },
+  pill: { color: '#FFD700', fontSize: 12, fontWeight: '600', flexShrink: 1, marginHorizontal: 8 },
   assist: { color: '#FFD700', fontSize: 15 },
   dealer: { paddingVertical: 8, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
   playerScroll: { flex: 1 },

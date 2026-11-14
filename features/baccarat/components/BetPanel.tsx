@@ -1,5 +1,6 @@
 import React from 'react'
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, TouchableOpacity, StyleSheet } from 'react-native'
+import { Text } from '../../../components/Text'
 import { BaccaratBet, BetQuality } from '../../../lib/types'
 import { BACCARAT_CHIPS, BACCARAT_SIDE_CHIPS } from '../../../lib/constants'
 import { getBaccaratBetQuality } from '../strategy'

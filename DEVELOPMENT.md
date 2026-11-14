@@ -78,7 +78,11 @@ lib/
   types.ts        # Shared types
   constants.ts    # Suits, values, chip denominations, default table rules
   updates.ts      # GitHub release version check utility
+  screenClass.ts  # Pure: size class (compact <360dp / regular / large >=600dp, by the shorter side) + orientation
+  useScreenClass.ts # Hook wrapping screenClass with useWindowDimensions
+  orientation.ts  # Orientation lock owner (useOrientationLock) + rotation-request store
 components/
+  Text.tsx        # Text/TextInput wrappers that cap font scaling at 1.3x; import these, not react-native's
   UpdateModal.tsx # In-app update prompt modal
 assets/
   avatars/        # Bundled 256px profile pictures + default (originals in gitignored assets/profile-pictures/)
@@ -97,9 +101,13 @@ __tests__/        # Mirrors the feature folder structure
    - Bump the persist `version` in `features/profile/store.ts` and extend `migrateProfileState` (`features/profile/migrate.ts`) so existing profiles get the new key filled with the empty record; cover it in `__tests__/profile/migrate.test.ts`
    - Record settled results from the game store with `useProfileStore.getState().recordHands(...)` (or a game-specific recorder), exactly once per settled hand, including when the player leaves the table mid-hand
 
-## Screen Orientation
+## Screen Sizes and Orientation
 
-The app is portrait-only. `app.json` sets `"orientation": "default"` so the native build may rotate, and `app/_layout.tsx` locks portrait on mount with `expo-screen-orientation` (`lockAsync(PORTRAIT_UP)`). A screen that should follow the phone unlocks while it is open and relocks on unmount; today only the roulette table does this (`unlockAsync()` once setup is done, `lockAsync(PORTRAIT_UP)` when the screen unmounts). Jest gets a default `expo-screen-orientation` mock in `.jest/setup.js`.
+`lib/screenClass.ts` sorts the window into `compact` (shorter side under 360dp, e.g. a Galaxy Fold cover screen), `regular` (360–599dp, most phones) or `large` (600dp and up, a Fold inner screen or tablet). It uses the shorter side, so rotating never changes the class. Components read it with `useScreenClass()`.
+
+`app.json` sets `"orientation": "default"` so the native build may rotate. The root layout is the only place that locks: `useOrientationLock()` (`lib/orientation.ts`) unlocks on `large` screens and otherwise locks `PORTRAIT_UP`, re-applying on fold/unfold. A screen that should follow the phone on regular phones sets `useOrientationStore.setRotationRequested(true)` while open and `false` on unmount. Today only the roulette table does this. Android 16+ ignores orientation locks on large screens anyway. Jest gets a default `expo-screen-orientation` mock in `.jest/setup.js`.
+
+**Font scaling:** import `Text`/`TextInput` from `components/Text.tsx`, not `react-native`. They cap the system font-size setting at 1.3× (`MAX_FONT_SCALE`). `__tests__/lib/textCap.test.tsx` fails if a file imports them from `react-native`. `Animated.Text` needs `maxFontSizeMultiplier={MAX_FONT_SCALE}` passed by hand.
 
 ## Publishing a Release
 

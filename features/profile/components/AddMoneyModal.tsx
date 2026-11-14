@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Modal, View, Text, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
+import { Modal, View, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
+import { Text } from '../../../components/Text'
 import { MoneyInput } from './MoneyInput'
 import { parseAddAmount } from '../stats'
 

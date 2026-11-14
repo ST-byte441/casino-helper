@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Animated } from 'react-native'
+import { View, ScrollView, StyleSheet, TouchableOpacity, Animated } from 'react-native'
+import { Text, MAX_FONT_SCALE } from '../../components/Text'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useCrapsStore } from '../../features/craps/store'
@@ -153,7 +154,7 @@ export default function CrapsScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.back}>← Back</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>CRAPS · {tableRules.oddsMultiple}</Text>
+        <Text style={styles.headerTitle} numberOfLines={1}>CRAPS · {tableRules.oddsMultiple}</Text>
         <TouchableOpacity onPress={store.toggleAssist}>
           <Text style={[styles.assist, assistEnabled && styles.assistOn]}>Assist {assistEnabled ? '●' : '○'}</Text>
         </TouchableOpacity>
@@ -348,7 +349,7 @@ export default function CrapsScreen() {
 
       <View style={styles.footer}>
         {showFundsWarning && <Text style={styles.fundsWarning}>Insufficient funds</Text>}
-        <Animated.Text style={[styles.balanceText, { color: balanceFlash.interpolate({ inputRange: [0, 1], outputRange: [numericBalance < 0 ? '#ff5555' : '#aaa', '#2ecc71'] }) }]}>
+        <Animated.Text maxFontSizeMultiplier={MAX_FONT_SCALE} style={[styles.balanceText, { color: balanceFlash.interpolate({ inputRange: [0, 1], outputRange: [numericBalance < 0 ? '#ff5555' : '#aaa', '#2ecc71'] }) }]}>
           Balance: {balance}
         </Animated.Text>
         <RollButton onRoll={handleRoll} disabled={bets.length === 0} />
@@ -369,7 +370,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#13131f' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14, borderBottomWidth: 1, borderColor: '#2a2a3e' },
   back: { color: '#aaa', fontSize: 15 },
-  headerTitle: { color: '#FFD700', fontWeight: '700', fontSize: 15 },
+  headerTitle: { color: '#FFD700', fontWeight: '700', fontSize: 15, flexShrink: 1, marginHorizontal: 8 },
   assist: { color: '#aaa', fontSize: 13 },
   assistOn: { color: '#FFD700' },
   scroll: { flex: 1 },
