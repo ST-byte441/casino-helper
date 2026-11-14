@@ -1,10 +1,12 @@
 import { View, Text, StyleSheet } from 'react-native'
-import { PlacedBets, Pocket } from '../../../lib/types'
+import { PlacedBets, Pocket, RouletteWheel } from '../../../lib/types'
 import { ROULETTE_CHIPS } from '../../../lib/constants'
-import { makeBetId } from '../engine'
+import { betById, makeBetId } from '../engine'
 import { BoardCell, BoardLayout } from '../layout'
 
-type Props = { layout: BoardLayout; bets: PlacedBets; marker: Pocket | null; highlight: string | null }
+type Props = { wheel: RouletteWheel; layout: BoardLayout; bets: PlacedBets; marker: Pocket | null; highlight: string | null }
+
+const SPOT = 22
 
 export const FELT = '#0f5132'
 export const POCKET_BG: Record<BoardCell['color'], string> = {
@@ -29,6 +31,7 @@ function Cell({ cell, lit }: { cell: BoardCell; lit: boolean }) {
   const sideways = !cell.key.startsWith('straight:') && h > w * 1.5
   return (
     <View
+      testID={`cell-${cell.key}`}
       style={[styles.cell, { left: x, top: y, width: w, height: h, backgroundColor: POCKET_BG[cell.color] },
         lit && styles.lit]}
     >
@@ -55,15 +58,32 @@ export function Stack({ total, x, y, betId }: { total: number; x: number; y: num
   )
 }
 
-export function Board({ layout, bets, marker, highlight }: Props) {
+/**
+ * Cell keys to light for the bet under the dragged chip. A straight or outside bet lights its own cell; a bet
+ * on a line or corner (split, street, corner, six line, basket, first four/five) has no cell, so every number
+ * it covers lights up — the dragged chip itself hides the small spot on the line.
+ */
+function litKeys(wheel: RouletteWheel, layout: BoardLayout, highlight: string | null): Set<string> {
+  if (highlight === null) return new Set()
+  const own = layout.cells.find(c => c.betId === highlight)
+  if (own) return new Set([own.key])
+  const bet = betById(wheel, highlight)
+  return new Set(bet ? bet.pockets.map(p => makeBetId('straight', [p])) : [])
+}
+
+export function Board({ wheel, layout, bets, marker, highlight }: Props) {
   const markerCell = marker === null ? undefined : layout.cells.find(c => c.key === makeBetId('straight', [marker]))
+  const lit = litKeys(wheel, layout, highlight)
   const litIsCell = highlight !== null && layout.cells.some(c => c.betId === highlight)
   const spot = highlight !== null && !litIsCell ? layout.anchors[highlight] : undefined
 
   return (
     <View style={[styles.board, { width: layout.width, height: layout.height }]}>
-      {layout.cells.map(c => <Cell key={c.key} cell={c} lit={c.betId !== null && c.betId === highlight} />)}
-      {spot && <View pointerEvents="none" style={[styles.spot, { left: spot.x - 9, top: spot.y - 9 }]} />}
+      {layout.cells.map(c => <Cell key={c.key} cell={c} lit={lit.has(c.key)} />)}
+      {spot && (
+        <View testID="highlight-spot" pointerEvents="none"
+          style={[styles.spot, { left: spot.x - SPOT / 2, top: spot.y - SPOT / 2 }]} />
+      )}
       {markerCell && (
         <View
           testID="roulette-marker"
@@ -88,8 +108,8 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   lit: { borderWidth: 2, borderColor: '#FFD700' },
   label: { color: '#fff', fontSize: 12, fontWeight: '700', textAlign: 'center' },
-  spot: { position: 'absolute', width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: '#FFD700',
-    backgroundColor: 'rgba(255,215,0,0.35)' },
+  spot: { position: 'absolute', width: SPOT, height: SPOT, borderRadius: SPOT / 2, borderWidth: 2,
+    borderColor: '#FFD700', backgroundColor: 'rgba(255,215,0,0.5)' },
   marker: { position: 'absolute', width: 18, height: 18, borderRadius: 9, backgroundColor: '#fff',
     borderWidth: 2, borderColor: '#FFD700' },
   stack: { position: 'absolute', width: STACK_SIZE, height: STACK_SIZE, borderRadius: STACK_SIZE / 2,

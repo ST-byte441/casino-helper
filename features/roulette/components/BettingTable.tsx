@@ -38,6 +38,18 @@ export function fingerInWindow(handleOrigin: Point, rel: Point): Point {
   return { x: handleOrigin.x + rel.x, y: handleOrigin.y + rel.y }
 }
 
+/** How far the dragged chip floats above the fingertip, so the finger never covers it (chip + a gap). */
+export const DRAG_LIFT = CHIP_SIZE + 12
+
+/**
+ * The point a drag acts on: the finger lifted by DRAG_LIFT. The ghost chip is drawn here, and the highlight and
+ * the drop use it too, so a chip lands exactly where it is shown.
+ */
+export function dragPoint(finger: Point): Point {
+  'worklet'
+  return { x: finger.x, y: finger.y - DRAG_LIFT }
+}
+
 /**
  * What a drag that just ended does. A gesture that was cancelled or failed (system cancel, rotation, handler
  * dropped on remount) does nothing, so the chip goes back to where it came from. `origin` is the board's
@@ -79,20 +91,20 @@ function DragHandle({ source, ghost, onBegin, onMove, onDrop, onFinish, style, t
   const pan = Gesture.Pan()
     .minDistance(2)
     .onStart(e => {
-      const p = fingerInWindow(self.value, { x: e.x, y: e.y })
+      const p = dragPoint(fingerInWindow(self.value, { x: e.x, y: e.y }))
       ghost.x.value = p.x - ghost.origin.value.x
       ghost.y.value = p.y - ghost.origin.value.y
       scheduleOnRN(onBegin, source, p.x, p.y)
     })
     .onUpdate(e => {
-      const p = fingerInWindow(self.value, { x: e.x, y: e.y })
+      const p = dragPoint(fingerInWindow(self.value, { x: e.x, y: e.y }))
       ghost.x.value = p.x - ghost.origin.value.x
       ghost.y.value = p.y - ghost.origin.value.y
       scheduleOnRN(onMove, p.x, p.y)
     })
     // success is false when an active gesture was cancelled or failed; onDrop then does nothing.
     .onEnd((e, success) => {
-      const p = fingerInWindow(self.value, { x: e.x, y: e.y })
+      const p = dragPoint(fingerInWindow(self.value, { x: e.x, y: e.y }))
       scheduleOnRN(onDrop, success, p.x, p.y)
     })
     // Runs on every outcome (end, cancel, fail), so the ghost and highlight are always cleared.
@@ -194,7 +206,7 @@ export function BettingTable({ wheel, orientation, onSpin }: Props) {
         <View ref={boardRef} style={styles.boardArea} onLayout={onBoardLayout}>
           {layout && (
             <>
-              <Board layout={layout} bets={bets} marker={marker} highlight={highlight} />
+              <Board wheel={wheel} layout={layout} bets={bets} marker={marker} highlight={highlight} />
               {Object.keys(bets).map(id => {
                 const a = layout.anchors[id]
                 if (!a) return null
@@ -266,5 +278,6 @@ const styles = StyleSheet.create({
     borderColor: '#2a2a3e' },
   chip: { alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderStyle: 'dashed', borderColor: '#FFD700' },
   chipText: { fontWeight: '800', fontSize: 13 },
-  ghost: { position: 'absolute', left: 0, top: 0 },
+  // Slightly see-through so the highlighted spot on a line or corner shows through the chip.
+  ghost: { position: 'absolute', left: 0, top: 0, opacity: 0.8 },
 })

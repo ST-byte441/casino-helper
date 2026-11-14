@@ -14,7 +14,10 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { render as rtlRender, fireEvent, within, act } from '@testing-library/react-native'
 import { RouletteSetup } from '../../features/roulette/components/RouletteSetup'
 import { Board } from '../../features/roulette/components/Board'
-import { BettingTable, applyDrop, dragEndAction, fingerInWindow } from '../../features/roulette/components/BettingTable'
+import { StyleSheet } from 'react-native'
+import {
+  BettingTable, DRAG_LIFT, applyDrop, dragEndAction, dragPoint, fingerInWindow,
+} from '../../features/roulette/components/BettingTable'
 import { ResultPanel } from '../../features/roulette/components/ResultPanel'
 import { buildLayout } from '../../features/roulette/layout'
 import { useRouletteStore } from '../../features/roulette/store'
@@ -62,16 +65,56 @@ describe('Board', () => {
   const layout = buildLayout('double', 'portrait', 300, 600)
 
   test('draws a stack with its total at the bet anchor', () => {
-    const { getByTestId } = render(<Board layout={layout} bets={{ 'split:17-20': 6 }} marker={null} highlight={null} />)
+    const { getByTestId } = render(
+      <Board wheel="double" layout={layout} bets={{ 'split:17-20': 6 }} marker={null} highlight={null} />)
     const stack = getByTestId('stack-split:17-20')
     expect(within(stack).getByText('$6')).toBeTruthy()
   })
 
   test('marker renders only when set', () => {
-    const { queryByTestId, rerender } = render(<Board layout={layout} bets={{}} marker={null} highlight={null} />)
+    const { queryByTestId, rerender } = render(
+      <Board wheel="double" layout={layout} bets={{}} marker={null} highlight={null} />)
     expect(queryByTestId('roulette-marker')).toBeNull()
-    rerender(<Board layout={layout} bets={{}} marker={17} highlight={null} />)
+    rerender(<Board wheel="double" layout={layout} bets={{}} marker={17} highlight={null} />)
     expect(queryByTestId('roulette-marker')).toBeTruthy()
+  })
+
+  // A line/corner bet has no cell of its own, so the numbers it covers light up (the dragged chip hides the
+  // small spot on the line).
+  const isLit = (el: { props: { style: unknown } }) => StyleSheet.flatten(el.props.style as any).borderColor === '#FFD700'
+
+  test('highlighting a split lights both numbers and shows the line spot', () => {
+    const { getByTestId } = render(
+      <Board wheel="double" layout={layout} bets={{}} marker={null} highlight="split:7-8" />)
+    expect(isLit(getByTestId('cell-straight:7'))).toBe(true)
+    expect(isLit(getByTestId('cell-straight:8'))).toBe(true)
+    expect(isLit(getByTestId('cell-straight:9'))).toBe(false)
+    expect(getByTestId('highlight-spot')).toBeTruthy()
+  })
+
+  test('highlighting a corner lights its four numbers', () => {
+    const { getByTestId } = render(
+      <Board wheel="double" layout={layout} bets={{}} marker={null} highlight="corner:7-8-10-11" />)
+    for (const n of [7, 8, 10, 11]) expect(isLit(getByTestId(`cell-straight:${n}`))).toBe(true)
+    expect(isLit(getByTestId('cell-straight:9'))).toBe(false)
+  })
+
+  test('highlighting a straight or outside bet lights only its own cell, with no line spot', () => {
+    const { getByTestId, queryByTestId, rerender } = render(
+      <Board wheel="double" layout={layout} bets={{}} marker={null} highlight="straight:7" />)
+    expect(isLit(getByTestId('cell-straight:7'))).toBe(true)
+    expect(isLit(getByTestId('cell-straight:8'))).toBe(false)
+    expect(queryByTestId('highlight-spot')).toBeNull()
+    rerender(<Board wheel="double" layout={layout} bets={{}} marker={null} highlight="red" />)
+    expect(isLit(getByTestId('cell-straight:7'))).toBe(false)
+    expect(queryByTestId('highlight-spot')).toBeNull()
+  })
+})
+
+describe('dragPoint', () => {
+  test('the dragged chip and drop point float DRAG_LIFT above the finger', () => {
+    expect(DRAG_LIFT).toBeGreaterThanOrEqual(44)
+    expect(dragPoint({ x: 100, y: 400 })).toEqual({ x: 100, y: 400 - DRAG_LIFT })
   })
 })
 
