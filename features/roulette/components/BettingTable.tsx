@@ -12,7 +12,7 @@ import { Board, CHIP_COLORS, STACK_SIZE, stackChip } from './Board'
 
 type Props = { wheel: RouletteWheel; orientation: BoardOrientation; onSpin(): void }
 
-const CHIP_SIZE = 44
+export const CHIP_SIZE = 44
 
 /** Applies a resolved drop to the roulette store. */
 export function applyDrop(action: DropAction): void {
@@ -38,8 +38,10 @@ export function fingerInWindow(handleOrigin: Point, rel: Point): Point {
   return { x: handleOrigin.x + rel.x, y: handleOrigin.y + rel.y }
 }
 
-/** How far the dragged chip floats above the fingertip, so the finger never covers it (chip + a gap). */
-export const DRAG_LIFT = CHIP_SIZE + 12
+/** Share of the dragged chip that sits above the touch point; the rest overlaps the fingertip. */
+const LIFT_SHARE = 0.75
+/** How far the dragged chip's centre sits above the touch point (a quarter chip for 75% above). */
+export const DRAG_LIFT = CHIP_SIZE * LIFT_SHARE - CHIP_SIZE / 2
 
 /**
  * The point a drag acts on: the finger lifted by DRAG_LIFT. The ghost chip is drawn here, and the highlight and

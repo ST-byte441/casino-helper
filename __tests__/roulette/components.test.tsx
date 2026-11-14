@@ -16,7 +16,7 @@ import { RouletteSetup } from '../../features/roulette/components/RouletteSetup'
 import { Board } from '../../features/roulette/components/Board'
 import { StyleSheet } from 'react-native'
 import {
-  BettingTable, DRAG_LIFT, applyDrop, dragEndAction, dragPoint, fingerInWindow,
+  BettingTable, CHIP_SIZE, DRAG_LIFT, applyDrop, dragEndAction, dragPoint, fingerInWindow,
 } from '../../features/roulette/components/BettingTable'
 import { ResultPanel } from '../../features/roulette/components/ResultPanel'
 import { buildLayout } from '../../features/roulette/layout'
@@ -112,8 +112,9 @@ describe('Board', () => {
 })
 
 describe('dragPoint', () => {
-  test('the dragged chip and drop point float DRAG_LIFT above the finger', () => {
-    expect(DRAG_LIFT).toBeGreaterThanOrEqual(44)
+  test('75% of the dragged chip sits above the finger: its centre is a quarter chip above the touch point', () => {
+    // Chip spans [centre - CHIP_SIZE/2, centre + CHIP_SIZE/2]; the part above the touch point is 75% of it.
+    expect((DRAG_LIFT + CHIP_SIZE / 2) / CHIP_SIZE).toBeCloseTo(0.75)
     expect(dragPoint({ x: 100, y: 400 })).toEqual({ x: 100, y: 400 - DRAG_LIFT })
   })
 })
