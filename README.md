@@ -44,7 +44,7 @@ Get the latest APK from the [Releases page](../../releases/latest).
 
 - **Three wheels** — Single zero (European), Double zero (American) and Triple zero, chosen on the setup screen along with Slow or Fast spins
 - **Full betting layout** — straight, split, street, corner, six line, basket / first four / first five (where the wheel allows), dozens, columns and the even-money bets; $10 table minimum (inside bets combined, each outside bet)
-- **Drag-and-drop chips** — drag $1 / $5 / $25 / $100 chips from the tray onto the board, drag a stack to move it, or off the board to remove it; a chip you cannot afford is refused with a "Not enough balance" note; Undo and Clear
+- **Drag-and-drop chips** — drag $1 / $5 / $25 / $100 chips from the tray onto the board (the chip floats just above your finger so you can see where it lands, and the numbers a split/corner/street covers light up), drag a stack to move it, or off the board to remove it; a chip you cannot afford is refused with a "Not enough balance" note; Undo and Clear
 - **Animated wheel** — Slow shows the ball dropping into its pocket, Fast stops the wheel quickly; the winning number stays marked on the board and winning bets stay up for the next spin
 - **Follows the phone** — the roulette table rotates between portrait and landscape layouts; the rest of the app stays portrait
 
