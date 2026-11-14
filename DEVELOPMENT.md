@@ -150,7 +150,7 @@ Testers install through the Play Store, so Play Protect doesn't flag the app as 
 **One-time setup:**
 
 1. In Play Console, create the app with package `com.stbyte441.casinohelper`, then enroll in Play App Signing.
-2. Fill in the required App content forms: content rating (includes simulated gambling questions), data safety, target audience and a privacy policy URL.
+2. Fill in the required App content forms: content rating (includes simulated gambling questions), data safety (no data collected or shared), target audience and the privacy policy URL `https://st-byte441.github.io/casino-helper/privacy`. That page is `docs/privacy.md`, served by GitHub Pages from `master` → `/docs`. Edit that file and bump its effective date whenever the app starts using data differently.
 3. Make sure EAS's `versionCode` starts above any build you've already shipped: `eas build:version:set --platform android`.
 4. Build: `eas build --platform android --profile production`.
 5. Upload this **first** `.aab` by hand: Test and release → Testing → Internal testing → Create new release. Google doesn't allow the first upload through the API.

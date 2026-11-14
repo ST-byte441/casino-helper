@@ -73,4 +73,6 @@ Get the latest APK from the [Releases page](../../releases/latest).
 
 ## Development
 
+Privacy policy: [docs/privacy.md](docs/privacy.md) (no data collected; everything stays on the device).
+
 See [DEVELOPMENT.md](DEVELOPMENT.md) for setup, project structure, adding games, and publishing releases.
