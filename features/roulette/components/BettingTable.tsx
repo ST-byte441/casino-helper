@@ -28,9 +28,21 @@ export function applyDrop(action: DropAction): void {
 type Point = { x: number; y: number }
 
 /**
+ * The finger's window position, from the dragged handle's measureInWindow origin plus the handle-relative
+ * touch point (`e.x`/`e.y`, valid even outside the handle). Deliberately not `absoluteX/Y`: those use a
+ * different vertical frame from measureInWindow on Android edge-to-edge (status bar), which drew the chip
+ * below the finger and dropped it there.
+ */
+export function fingerInWindow(handleOrigin: Point, rel: Point): Point {
+  'worklet'
+  return { x: handleOrigin.x + rel.x, y: handleOrigin.y + rel.y }
+}
+
+/**
  * What a drag that just ended does. A gesture that was cancelled or failed (system cancel, rotation, handler
  * dropped on remount) does nothing, so the chip goes back to where it came from. `origin` is the board's
- * window position; the absolute finger point is converted to board coordinates before hit-testing.
+ * window position; the finger's window point (see `fingerInWindow`) is converted to board coordinates
+ * before hit-testing.
  */
 export function dragEndAction(args: {
   success: boolean
@@ -59,21 +71,29 @@ type HandleProps = {
 }
 
 function DragHandle({ source, ghost, onBegin, onMove, onDrop, onFinish, style, testID, children }: HandleProps) {
+  const selfRef = useRef<React.ComponentRef<typeof View>>(null)
+  // This handle's window origin, in the same measureInWindow frame as the board and root origins.
+  const self = useSharedValue<Point>({ x: 0, y: 0 })
+  const measureSelf = () => selfRef.current?.measureInWindow((x, y) => { self.value = { x, y } })
+
   const pan = Gesture.Pan()
     .minDistance(2)
     .onStart(e => {
-      ghost.x.value = e.absoluteX - ghost.origin.value.x
-      ghost.y.value = e.absoluteY - ghost.origin.value.y
-      scheduleOnRN(onBegin, source, e.absoluteX, e.absoluteY)
+      const p = fingerInWindow(self.value, { x: e.x, y: e.y })
+      ghost.x.value = p.x - ghost.origin.value.x
+      ghost.y.value = p.y - ghost.origin.value.y
+      scheduleOnRN(onBegin, source, p.x, p.y)
     })
     .onUpdate(e => {
-      ghost.x.value = e.absoluteX - ghost.origin.value.x
-      ghost.y.value = e.absoluteY - ghost.origin.value.y
-      scheduleOnRN(onMove, e.absoluteX, e.absoluteY)
+      const p = fingerInWindow(self.value, { x: e.x, y: e.y })
+      ghost.x.value = p.x - ghost.origin.value.x
+      ghost.y.value = p.y - ghost.origin.value.y
+      scheduleOnRN(onMove, p.x, p.y)
     })
     // success is false when an active gesture was cancelled or failed; onDrop then does nothing.
     .onEnd((e, success) => {
-      scheduleOnRN(onDrop, success, e.absoluteX, e.absoluteY)
+      const p = fingerInWindow(self.value, { x: e.x, y: e.y })
+      scheduleOnRN(onDrop, success, p.x, p.y)
     })
     // Runs on every outcome (end, cancel, fail), so the ghost and highlight are always cleared.
     .onFinalize(() => {
@@ -81,7 +101,7 @@ function DragHandle({ source, ghost, onBegin, onMove, onDrop, onFinish, style, t
     })
   return (
     <GestureDetector gesture={pan}>
-      <View testID={testID} style={style}>{children}</View>
+      <View ref={selfRef} testID={testID} style={style} onLayout={measureSelf}>{children}</View>
     </GestureDetector>
   )
 }

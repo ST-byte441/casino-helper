@@ -14,7 +14,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { render as rtlRender, fireEvent, within, act } from '@testing-library/react-native'
 import { RouletteSetup } from '../../features/roulette/components/RouletteSetup'
 import { Board } from '../../features/roulette/components/Board'
-import { BettingTable, applyDrop, dragEndAction } from '../../features/roulette/components/BettingTable'
+import { BettingTable, applyDrop, dragEndAction, fingerInWindow } from '../../features/roulette/components/BettingTable'
 import { ResultPanel } from '../../features/roulette/components/ResultPanel'
 import { buildLayout } from '../../features/roulette/layout'
 import { useRouletteStore } from '../../features/roulette/store'
@@ -165,6 +165,27 @@ describe('dragEndAction', () => {
       origin, absX: abs17.x, absY: abs17.y })).toEqual({ type: 'none' })
     expect(dragEndAction({ success: true, layout, wheel: 'double', source: null,
       origin, absX: abs17.x, absY: abs17.y })).toEqual({ type: 'none' })
+  })
+})
+
+describe('fingerInWindow', () => {
+  // The finger is located from the dragged handle's own window origin plus the handle-relative touch point,
+  // so it shares measureInWindow's frame with the board origin (absoluteX/Y can be offset, e.g. by the
+  // Android status bar under edge-to-edge, which put the chip below the finger).
+  test('adds the handle-relative point to the handle origin', () => {
+    expect(fingerInWindow({ x: 120, y: 700 }, { x: 10, y: -350 })).toEqual({ x: 130, y: 350 })
+  })
+
+  test('a drag from a tray chip lands on the cell drawn under the finger', () => {
+    const layout = buildLayout('double', 'portrait', 300, 600)
+    const boardOrigin = { x: 8, y: 60 }
+    const handleOrigin = { x: 150, y: 720 }
+    const c17 = layout.anchors['straight:17']
+    // Handle-relative point of a finger resting on cell 17.
+    const rel = { x: c17.x + boardOrigin.x - handleOrigin.x, y: c17.y + boardOrigin.y - handleOrigin.y }
+    const p = fingerInWindow(handleOrigin, rel)
+    expect(dragEndAction({ success: true, layout, wheel: 'double', source: { type: 'tray', amount: 5 },
+      origin: boardOrigin, absX: p.x, absY: p.y })).toEqual({ type: 'place', betId: 'straight:17', amount: 5 })
   })
 })
 
