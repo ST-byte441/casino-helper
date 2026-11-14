@@ -46,7 +46,7 @@ Get the latest APK from the [Releases page](../../releases/latest).
 - **Full betting layout** — straight, split, street, corner, six line, basket / first four / first five (where the wheel allows), dozens, columns and the even-money bets; $10 table minimum (inside bets combined, each outside bet)
 - **Drag-and-drop chips** — drag $1 / $5 / $25 / $100 chips from the tray onto the board (the chip sits mostly above your fingertip, with 75% of it visible, so you can see where it lands, and the numbers a split/corner/street covers light up), drag a stack to move it, or off the board to remove it; a chip you cannot afford is refused with a "Not enough balance" note; Undo and Clear
 - **Animated wheel** — Slow shows the ball dropping into its pocket, Fast stops the wheel quickly; the winning number stays marked on the board and winning bets stay up for the next spin
-- **Follows the phone** — the roulette table rotates between portrait and landscape layouts; the rest of the app stays portrait
+- **Follows the phone** — the roulette table rotates between portrait and landscape layouts; the rest of the app stays portrait on phones, and large screens (e.g. a Galaxy Fold's inner screen) can rotate anywhere
 
 ## Games
 
@@ -68,7 +68,7 @@ Get the latest APK from the [Releases page](../../releases/latest).
 | State | Zustand + AsyncStorage |
 | Media | expo-image-picker + expo-file-system (profile photos) |
 | Graphics | react-native-svg (roulette wheel) |
-| Orientation | expo-screen-orientation (portrait lock, roulette unlocks) |
+| Orientation | expo-screen-orientation (portrait on phones, roulette and large screens unlock) |
 | Testing | Jest + React Native Testing Library |
 
 ## Development
