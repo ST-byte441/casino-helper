@@ -117,7 +117,7 @@ export default function BaccaratSandbox() {
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.back}>← Back</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Baccarat Sandbox</Text>
+        <Text style={styles.title} numberOfLines={1}>Baccarat Sandbox</Text>
         <TouchableOpacity onPress={reset}>
           <Text style={styles.resetBtn}>Reset</Text>
         </TouchableOpacity>
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     padding: 14, borderBottomWidth: 1, borderColor: '#2a2a3e' },
   back: { color: '#aaa', fontSize: 15 },
-  title: { color: '#FFD700', fontWeight: '700', fontSize: 15 },
+  title: { color: '#FFD700', fontWeight: '700', fontSize: 15, flexShrink: 1, marginHorizontal: 8 },
   resetBtn: { color: '#aaa', fontSize: 14 },
   content: { padding: 16, gap: 16 },
   section: { alignItems: 'center', gap: 8 },

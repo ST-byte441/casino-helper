@@ -1,5 +1,5 @@
 import React from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
+import { View, TouchableOpacity, StyleSheet } from 'react-native'
 import { Text } from '../../../components/Text'
 
 type Props = {
@@ -21,7 +21,7 @@ const HOPS = genHops()
 
 export function HopBetGrid({ onPlace, increment }: Props) {
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.grid}>
+    <View testID="hop-grid" style={styles.grid}>
       {HOPS.map(({ dice, hard }) => (
         <TouchableOpacity
           key={`${dice[0]}-${dice[1]}`}
@@ -32,12 +32,12 @@ export function HopBetGrid({ onPlace, increment }: Props) {
           <Text style={styles.payout}>{hard ? '30:1' : '15:1'}</Text>
         </TouchableOpacity>
       ))}
-    </ScrollView>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
-  grid: { flexDirection: 'row', flexWrap: 'wrap', padding: 8, gap: 6, width: 320 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', padding: 8, gap: 6, width: 320, maxWidth: '100%' },
   cell: { width: 56, height: 48, backgroundColor: '#2a2a3e', borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   hardCell: { borderWidth: 1, borderColor: '#FFD700' },
   label: { color: '#fff', fontSize: 13, fontWeight: '600' },

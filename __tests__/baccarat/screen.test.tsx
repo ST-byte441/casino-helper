@@ -90,3 +90,9 @@ test('DEAL stays disabled with a hint until Player or Banker has the $15 minimum
   expect(useBaccaratStore.getState().bets.banker).toBe(25)
   expect(queryByText('Min $15 on Player or Banker')).toBeNull()
 })
+
+test('the header title stays on one line so narrow screens shrink it instead of crowding', () => {
+  useBaccaratStore.getState().newHand()
+  const screen = render(<BaccaratScreen />)
+  expect(screen.getByText('BACCARAT').props.numberOfLines).toBe(1)
+})

@@ -101,7 +101,7 @@ export default function BlackjackSandboxScreen() {
           <Text style={styles.backArrow}>←</Text>
           <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Blackjack Sandbox</Text>
+        <Text style={styles.title} numberOfLines={1}>Blackjack Sandbox</Text>
         <TouchableOpacity onPress={() => setRulesOpen(true)}>
           <Text style={styles.gearIcon}>⚙️</Text>
         </TouchableOpacity>
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   backArrow: { color: '#fff', fontSize: 15, transform: [{ translateY: -1 }] },
   backText: { color: '#fff', fontSize: 15 },
-  title: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  title: { color: '#fff', fontSize: 16, fontWeight: '700', flexShrink: 1, marginHorizontal: 8 },
   gearIcon: { fontSize: 22, padding: 8 },
   scroll: { padding: 16 },
   section: { marginBottom: 24 },

@@ -76,7 +76,7 @@ export default function BaccaratScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.back}>← Back</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>BACCARAT</Text>
+        <Text style={styles.title} numberOfLines={1}>BACCARAT</Text>
         <TouchableOpacity
           disabled={isRevealing}
           style={isRevealing && styles.toggleDisabled}
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     padding: 14, borderBottomWidth: 1, borderColor: '#2a2a3e' },
   back: { color: '#aaa', fontSize: 15 },
-  title: { color: '#FFD700', fontWeight: '700', fontSize: 15 },
+  title: { color: '#FFD700', fontWeight: '700', fontSize: 15, flexShrink: 1, marginHorizontal: 8 },
   toggle: { color: '#aaa', fontSize: 13 },
   toggleOn: { color: '#FFD700' },
   toggleDisabled: { opacity: 0.4 },
