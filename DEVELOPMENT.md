@@ -45,7 +45,10 @@ features/
     engine.ts     # Pure TS: deck, scoring, rule checks, hand resolution
     strategy.ts   # Pure TS: basic strategy lookup table
     store.ts      # Session Zustand store
+    layout.ts     # Pure: pickLayout(sizeClass, orientation) → phone | largePortrait | largeLandscape
+    sizes.ts      # TableSize ('regular' | 'large'), LARGE_SCALE, sizedStyles()
     components/   # UI components (Card, Hand, ActionButtons, BetControls, TableSetup)
+      table/      # Screen pieces shared by every layout (TableHeader, DealerArea, HandsArea, ResultBanner, Controls, BalanceFooter)
   craps/
     engine.ts     # Pure TS: dice, phase helpers, bet validity, odds helpers, payout calc, roll resolution
     strategy.ts   # Pure TS: getBetQuality — rates any bet type as optimal/acceptable/poor/avoid
@@ -108,6 +111,14 @@ __tests__/        # Mirrors the feature folder structure
 `app.json` sets `"orientation": "default"` so the native build may rotate. The root layout is the only place that locks: `useOrientationLock()` (`lib/orientation.ts`) unlocks on `large` screens and otherwise locks `PORTRAIT_UP`, re-applying on fold/unfold. A screen that should follow the phone on regular phones sets `useOrientationStore.setRotationRequested(true)` while open and `false` on unmount. Today only the roulette table does this. Android 16+ ignores orientation locks on large screens anyway. Jest gets a default `expo-screen-orientation` mock in `.jest/setup.js`.
 
 **Font scaling:** import `Text`/`TextInput` from `components/Text.tsx`, not `react-native`. They cap the system font-size setting at 1.3× (`MAX_FONT_SCALE`). `__tests__/lib/textCap.test.tsx` fails if a file imports them from `react-native`. `Animated.Text` needs `maxFontSizeMultiplier={MAX_FONT_SCALE}` passed by hand.
+
+### Per-game large-screen layouts
+
+Blackjack is the first game with its own large-screen layouts. Baccarat and craps should follow the same pattern:
+- `features/<game>/layout.ts`: `pickLayout(sizeClass, orientation)` returns `phone`, `largePortrait` or `largeLandscape`. Phones keep one layout whatever the orientation.
+- The screen is built from small pieces (`components/table/`). Each layout only arranges them: the phone order, the same order bigger with the controls in a centred `maxWidth: 520` column, or the felt plus a 300dp right-hand control panel.
+- Sizing: components take `size: 'regular' | 'large'` (default `regular`) and pick a whole style sheet from `sizedStyles(base, largeOverrides)`. Don't write `size === 'large' && styles.x`: that adds `false` to style arrays and changes the phone output.
+- Guard: `__tests__/<game>/screen.test.tsx` snapshots the phone screen in every phase. Never update those snapshots with `-u` as part of large-screen work, because a diff there means phones changed.
 
 ## Publishing a Release
 
