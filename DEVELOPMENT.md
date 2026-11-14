@@ -142,3 +142,33 @@ Required when bumping `runtimeVersion` in `app.json`.
    ```
 
 Each release gets its own version tag. The Releases page always shows the latest at the top.
+
+### Google Play internal testing — `production` profile
+
+Testers install through the Play Store, so Play Protect doesn't flag the app as a sideload. The `production` profile builds an `.aab`, signs it with the EAS keystore (the upload key) and uses the `production` OTA channel. `versionCode` is managed remotely by EAS (`appVersionSource: "remote"`) and bumped automatically on every build.
+
+**One-time setup:**
+
+1. In Play Console, create the app with package `com.stbyte441.casinohelper`, then enroll in Play App Signing.
+2. Fill in the required App content forms: content rating (includes simulated gambling questions), data safety, target audience and a privacy policy URL.
+3. Make sure EAS's `versionCode` starts above any build you've already shipped: `eas build:version:set --platform android`.
+4. Build: `eas build --platform android --profile production`.
+5. Upload this **first** `.aab` by hand: Test and release → Testing → Internal testing → Create new release. Google doesn't allow the first upload through the API.
+6. Add testers (emails or a Google Group, up to 100) and send them the opt-in link.
+7. For automated submits, create a Google Cloud service account with release permissions in Play Console, download its JSON key as `play-service-account.json` in the repo root (gitignored, **never commit it**).
+
+**Each release after that:**
+
+```bash
+eas build --platform android --profile production --auto-submit
+# or submit an existing build:
+eas submit --platform android --profile production
+```
+
+**OTA updates for Play installs** go to the `production` channel:
+
+```bash
+eas update --channel production --environment production --message "describe what changed"
+```
+
+> **Signing:** Google re-signs Play builds with its own app-signing key, so a Play install and a GitHub APK have different certificates. One can't be installed over the other: uninstall first. For Android developer verification, register the **app-signing key** SHA-256 (Play Console → Test and release → App integrity), not the EAS upload key.
