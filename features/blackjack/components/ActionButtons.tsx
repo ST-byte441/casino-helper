@@ -1,6 +1,7 @@
 import { View, TouchableOpacity, StyleSheet } from 'react-native'
 import { Text } from '../../../components/Text'
 import { Action } from '../../../lib/types'
+import { sizedStyles, TableSize } from '../sizes'
 
 type Props = {
   suggestedAction: Action | null
@@ -12,6 +13,9 @@ type Props = {
   onDouble: () => void
   onSplit: () => void
   onSurrender: () => void
+  size?: TableSize
+  /** 'column': one full-width button per row (the large-landscape side panel). */
+  direction?: 'row' | 'column'
 }
 
 const ACTIONS: { key: Action; label: string }[] = [
@@ -24,8 +28,9 @@ const ACTIONS: { key: Action; label: string }[] = [
 
 export function ActionButtons({
   suggestedAction, canDouble, canSplit, canSurrender,
-  onHit, onStand, onDouble, onSplit, onSurrender,
+  onHit, onStand, onDouble, onSplit, onSurrender, size = 'regular', direction = 'row',
 }: Props) {
+  const s = SHEETS[size]
   const handlers: Record<Action, () => void> = {
     hit: onHit, stand: onStand, double: onDouble, split: onSplit, surrender: onSurrender,
   }
@@ -34,16 +39,16 @@ export function ActionButtons({
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.row}>
+    <View style={s.container}>
+      <View style={direction === 'column' ? [s.row, columnStyles.row] : s.row}>
         {ACTIONS.map(({ key, label }) => (
           <TouchableOpacity
             key={key}
-            style={[styles.btn, !enabled[key] && styles.btnDisabled, suggestedAction === key && styles.btnSuggested]}
+            style={[s.btn, ...(direction === 'column' ? [columnStyles.btn] : []), !enabled[key] && s.btnDisabled, suggestedAction === key && s.btnSuggested]}
             disabled={!enabled[key]}
             onPress={handlers[key]}
           >
-            <Text style={[styles.btnText, !enabled[key] && styles.btnTextDisabled]}>{label}</Text>
+            <Text style={[s.btnText, !enabled[key] && s.btnTextDisabled]}>{label}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -51,7 +56,7 @@ export function ActionButtons({
   )
 }
 
-const styles = StyleSheet.create({
+const base = StyleSheet.create({
   container: { paddingHorizontal: 12, paddingVertical: 8 },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
   btn: { paddingVertical: 12, paddingHorizontal: 20, backgroundColor: '#2a2a3e',
@@ -60,4 +65,16 @@ const styles = StyleSheet.create({
   btnDisabled: { opacity: 0.3 },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   btnTextDisabled: { color: '#666' },
+})
+
+const SHEETS = sizedStyles(base, {
+  row: { gap: 12 },
+  btn: { paddingVertical: 18, paddingHorizontal: 30 },
+  btnText: { fontSize: 22 },
+})
+
+// Column mode only exists on large landscape, so it never touches phone output.
+const columnStyles = StyleSheet.create({
+  row: { flexDirection: 'column', flexWrap: 'nowrap' },
+  btn: { alignSelf: 'stretch', alignItems: 'center' },
 })

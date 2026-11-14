@@ -1,6 +1,7 @@
 import { View, TouchableOpacity, StyleSheet } from 'react-native'
 import { Text } from '../../../components/Text'
 import { CHIP_DENOMINATIONS, TABLE_MINIMUM } from '../../../lib/constants'
+import { sizedStyles, TableSize } from '../sizes'
 
 type Props = {
   bet: number
@@ -10,46 +11,48 @@ type Props = {
   onClearBet: () => void
   onDeal: () => void
   onInsufficientFunds?: () => void
+  size?: TableSize
 }
 
-export function BetControls({ bet, balance, isInfinite, onPlaceBet, onClearBet, onDeal, onInsufficientFunds }: Props) {
+export function BetControls({ bet, balance, isInfinite, onPlaceBet, onClearBet, onDeal, onInsufficientFunds, size = 'regular' }: Props) {
+  const s = SHEETS[size]
   return (
-    <View style={styles.container}>
-      <View style={styles.chips}>
+    <View style={s.container}>
+      <View style={s.chips}>
         {CHIP_DENOMINATIONS.map(denom => {
           const canAfford = isInfinite || bet + denom <= balance
           return (
             <TouchableOpacity
               key={denom}
-              style={[styles.chip, !canAfford && styles.chipDisabled]}
+              style={[s.chip, !canAfford && s.chipDisabled]}
               onPress={() => {
                 if (!canAfford) { onInsufficientFunds?.(); return }
                 onPlaceBet(denom)
               }}
             >
-              <Text style={styles.chipText}>${denom}</Text>
+              <Text style={s.chipText}>${denom}</Text>
             </TouchableOpacity>
           )
         })}
-        <TouchableOpacity style={styles.clear} onPress={onClearBet}>
-          <Text style={styles.clearText}>Clear</Text>
+        <TouchableOpacity style={s.clear} onPress={onClearBet}>
+          <Text style={s.clearText}>Clear</Text>
         </TouchableOpacity>
       </View>
-      <View style={styles.betRow}>
-        <Text style={styles.betLabel}>Bet: <Text style={styles.betAmount}>${bet}</Text></Text>
+      <View style={s.betRow}>
+        <Text style={s.betLabel}>Bet: <Text style={s.betAmount}>${bet}</Text></Text>
         <TouchableOpacity
-          style={[styles.deal, bet < TABLE_MINIMUM && styles.dealDisabled]}
+          style={[s.deal, bet < TABLE_MINIMUM && s.dealDisabled]}
           disabled={bet < TABLE_MINIMUM}
           onPress={onDeal}
         >
-          <Text style={styles.dealText}>Deal</Text>
+          <Text style={s.dealText}>Deal</Text>
         </TouchableOpacity>
       </View>
     </View>
   )
 }
 
-const styles = StyleSheet.create({
+const base = StyleSheet.create({
   container: { padding: 12, backgroundColor: '#1e1e2e', borderRadius: 12, margin: 8 },
   chips: { flexDirection: 'row', gap: 8, marginBottom: 12 },
   chip: { flex: 1, paddingVertical: 12, backgroundColor: '#FFD700', borderRadius: 8, alignItems: 'center' },
@@ -63,4 +66,15 @@ const styles = StyleSheet.create({
   deal: { backgroundColor: '#22c55e', paddingVertical: 10, paddingHorizontal: 28, borderRadius: 8 },
   dealDisabled: { opacity: 0.3 },
   dealText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+})
+
+const SHEETS = sizedStyles(base, {
+  chips: { gap: 12, marginBottom: 18 },
+  chip: { paddingVertical: 18 },
+  chipText: { fontSize: 22 },
+  clear: { paddingVertical: 18 },
+  clearText: { fontSize: 22 },
+  betLabel: { fontSize: 22 },
+  deal: { paddingVertical: 15, paddingHorizontal: 42 },
+  dealText: { fontSize: 22 },
 })
