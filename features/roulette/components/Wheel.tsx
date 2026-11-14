@@ -36,8 +36,11 @@ const TURNS: Record<RouletteSpeed, number> = { slow: 5, fast: 2 }
 // The ball goes round the track this many times (counter-clockwise) in slow mode, ending back at the top.
 const BALL_TURNS = 8
 // Slow mode: the ball rides the outer track until DROP_AT of the spin, then spirals inward until SETTLE_AT.
+// Wheel and ball share the cubic ease-out, so their relative angle still moves by (1 - SETTLE_AT)^3 of the
+// total relative travel (~4700 deg) after settling: 0.95 keeps that drift under 1 deg (0.9 gave ~4.7 deg,
+// half a triple-zero pocket).
 const DROP_AT = 0.55
-const SETTLE_AT = 0.9
+const SETTLE_AT = 0.95
 
 function xy(r: number, deg: number): [number, number] {
   const a = (deg * Math.PI) / 180

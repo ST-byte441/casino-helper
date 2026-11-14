@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
   ruleRow: { marginBottom: 20 },
   ruleInfo: { marginBottom: 8 },
   ruleLabel: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  ruleNote: { color: '#888', fontSize: 12, marginTop: 2 },
+  ruleNote: { color: '#aaa', fontSize: 12, marginTop: 2 },
   segments: { flexDirection: 'row', gap: 8 },
   segment: { flex: 1, paddingVertical: 10, borderRadius: 8, backgroundColor: '#2a2a3e', alignItems: 'center' },
   segmentActive: { backgroundColor: '#FFD700' },
