@@ -10,6 +10,9 @@ const useSharedValue = initial => {
 const useAnimatedStyle = updater => updater()
 const withTiming = toValue => toValue
 const withSpring = toValue => toValue
+const withDelay = (_delay, animation) => animation
+const identity = t => t
+const Easing = { linear: identity, quad: identity, cubic: identity, in: identity, out: identity, inOut: identity }
 
 // gesture-handler wraps its detector with createAnimatedComponent and probes a few hooks.
 const Animated = { View, createAnimatedComponent: Component => Component }
@@ -24,6 +27,8 @@ module.exports = {
   useAnimatedStyle,
   withTiming,
   withSpring,
+  withDelay,
+  Easing,
   isSharedValue,
   useEvent,
   useHandler,
