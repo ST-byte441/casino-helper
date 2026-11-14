@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native'
+import { View, TouchableOpacity, ScrollView, StyleSheet } from 'react-native'
+import { Text } from '../../components/Text'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Card as CardType, Value, BaccaratBet } from '../../lib/types'

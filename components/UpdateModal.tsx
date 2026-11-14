@@ -1,4 +1,5 @@
-import { Modal, View, Text, TouchableOpacity, StyleSheet, Linking } from 'react-native'
+import { Modal, View, TouchableOpacity, StyleSheet, Linking } from 'react-native'
+import { Text } from './Text'
 
 type Props = {
   currentVersion: string

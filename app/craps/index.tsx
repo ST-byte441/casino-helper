@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Animated } from 'react-native'
+import { View, ScrollView, StyleSheet, TouchableOpacity, Animated } from 'react-native'
+import { Text, MAX_FONT_SCALE } from '../../components/Text'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useCrapsStore } from '../../features/craps/store'
@@ -348,7 +349,7 @@ export default function CrapsScreen() {
 
       <View style={styles.footer}>
         {showFundsWarning && <Text style={styles.fundsWarning}>Insufficient funds</Text>}
-        <Animated.Text style={[styles.balanceText, { color: balanceFlash.interpolate({ inputRange: [0, 1], outputRange: [numericBalance < 0 ? '#ff5555' : '#aaa', '#2ecc71'] }) }]}>
+        <Animated.Text maxFontSizeMultiplier={MAX_FONT_SCALE} style={[styles.balanceText, { color: balanceFlash.interpolate({ inputRange: [0, 1], outputRange: [numericBalance < 0 ? '#ff5555' : '#aaa', '#2ecc71'] }) }]}>
           Balance: {balance}
         </Animated.Text>
         <RollButton onRoll={handleRoll} disabled={bets.length === 0} />

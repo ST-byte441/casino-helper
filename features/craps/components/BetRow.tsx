@@ -1,5 +1,6 @@
 import React from 'react'
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, TouchableOpacity, StyleSheet } from 'react-native'
+import { Text } from '../../../components/Text'
 import { BetQuality } from '../../../lib/types'
 import { WorkingToggle } from './WorkingToggle'
 

@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet } from 'react-native'
+import { View, StyleSheet } from 'react-native'
+import { Text } from '../../../components/Text'
 import { Profile } from '../types'
 import { gamesNet, refillTotal } from '../stats'
 import { formatDate, formatMoney, formatSigned, signColor } from '../format'

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, type ScrollViewInstance } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, type ScrollViewInstance } from 'react-native'
+import { Text } from '../../components/Text'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useBlackjackStore } from '../../features/blackjack/store'

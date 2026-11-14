@@ -1,4 +1,5 @@
-import { View, Text, ScrollView, StyleSheet } from 'react-native'
+import { View, ScrollView, StyleSheet } from 'react-native'
+import { Text } from '../../../components/Text'
 import { Card as CardType } from '../../../lib/types'
 import { Card } from './Card'
 import { formatHandTotal, scoreHand } from '../engine'

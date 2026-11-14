@@ -1,5 +1,6 @@
 import React from 'react'
-import { TouchableOpacity, Text, StyleSheet } from 'react-native'
+import { TouchableOpacity, StyleSheet } from 'react-native'
+import { Text } from '../../../components/Text'
 
 type Props = { disabled?: boolean; onRoll(): void }
 

@@ -1,4 +1,5 @@
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { Modal, View, TouchableOpacity, StyleSheet } from 'react-native'
+import { Text } from '../../../components/Text'
 import { Value } from '../../../lib/types'
 import { VALUES } from '../../../lib/constants'
 

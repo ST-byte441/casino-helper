@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native'
+import { View, TouchableOpacity, Image, StyleSheet } from 'react-native'
+import { Text } from '../../../components/Text'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withSpring,

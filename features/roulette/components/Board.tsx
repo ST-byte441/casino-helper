@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet } from 'react-native'
+import { View, StyleSheet } from 'react-native'
+import { Text } from '../../../components/Text'
 import { PlacedBets, Pocket, RouletteWheel } from '../../../lib/types'
 import { ROULETTE_CHIPS } from '../../../lib/constants'
 import { betById, makeBetId } from '../engine'

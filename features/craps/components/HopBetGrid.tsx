@@ -1,5 +1,6 @@
 import React from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
+import { Text } from '../../../components/Text'
 
 type Props = {
   onPlace(hopDice: [number, number], isHard: boolean, amount: number): void

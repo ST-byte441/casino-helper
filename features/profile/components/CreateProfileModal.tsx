@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Modal, View, Text, TextInput, TouchableOpacity, Switch, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
+import { Modal, View, TouchableOpacity, Switch, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
+import { Text, TextInput } from '../../../components/Text'
 import { useProfileStore } from '../store'
 import { MoneyInput } from './MoneyInput'
 

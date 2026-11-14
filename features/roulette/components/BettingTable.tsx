@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, LayoutChangeEvent, StyleProp, ViewStyle } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, LayoutChangeEvent, StyleProp, ViewStyle } from 'react-native'
+import { Text } from '../../../components/Text'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, { SharedValue, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'

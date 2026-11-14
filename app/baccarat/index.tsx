@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, TouchableOpacity, StyleSheet } from 'react-native'
+import { Text } from '../../components/Text'
 import { LegacyScrollView } from 'react-native-gesture-handler'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
