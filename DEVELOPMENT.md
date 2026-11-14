@@ -171,4 +171,11 @@ eas submit --platform android --profile production
 eas update --channel production --environment production --message "describe what changed"
 ```
 
-> **Signing:** Google re-signs Play builds with its own app-signing key, so a Play install and a GitHub APK have different certificates. One can't be installed over the other: uninstall first. Because of this, `lib/updates.ts` skips the GitHub release check (and the `UpdateModal` prompt) when `Updates.channel` is `production`. Play delivers those updates itself. For Android developer verification, register the **app-signing key** SHA-256 (Play Console → Test and release → App integrity), not the EAS upload key.
+> **Signing:** Google re-signs Play builds with its own app-signing key, so a Play install and a GitHub APK have different certificates. One can't be installed over the other: uninstall first. Because of this, `lib/updates.ts` skips the GitHub release check (and the `UpdateModal` prompt) when `Updates.channel` is `production`. Play delivers those updates itself. For Android developer verification, keep **both** fingerprints registered:
+>
+> - **App-signing key** (Google's, signs Play installs): `DD:0D:49:3A:BB:AA:4F:73:ED:79:3D:F5:D1:C7:8D:C7:C0:3D:AC:2B:6A:22:EE:0D:F8:40:26:95:10:2B:20:0A`, shown under Play Console → Test and release → App integrity.
+> - **EAS keystore** (the Play upload key, also signs the GitHub `preview` APKs): `BE:A8:A5:01:67:63:41:25:B4:DD:B1:47:00:BB:90:5E:1A:27:07:F8:FF:AF:B4:8E:05:4B:CF:CD:A4:64:99:22`.
+
+### Store listing assets
+
+`store-assets/play/` holds the Play icon (`icon-512.png`, 512×512) and feature graphic (`feature-graphic-1024x500.png`). `make_graphics.py` regenerates them from `assets/chipLogo.png`. It needs Pillow and the Playfair Display and Inter variable fonts from github.com/google/fonts: `python make_graphics.py <repo> <fonts-dir> <out-dir>`. Phone screenshots go in `store-assets/play/screenshots/`. They must be real device captures, and the long side can be at most twice the short side, so don't use the Galaxy Fold cover screen.
