@@ -1,6 +1,11 @@
 import Constants from 'expo-constants'
+import * as Updates from 'expo-updates'
 
 const RELEASES_API = 'https://api.github.com/repos/ST-byte441/casino-helper/releases/latest'
+
+// Play Store builds (eas.json `production` profile) are updated by Play. Google re-signs them,
+// so a GitHub APK can't install over them, and prompting for one would only fail.
+const PLAY_STORE_CHANNEL = 'production'
 
 export type UpdateInfo = {
   hasUpdate: boolean
@@ -19,6 +24,7 @@ export function isNewerVersion(remote: string, current: string): boolean {
 }
 
 export async function checkForUpdate(): Promise<UpdateInfo | null> {
+  if (Updates.channel === PLAY_STORE_CHANNEL) return null
   try {
     const res = await fetch(RELEASES_API)
     if (!res.ok) return null

@@ -171,4 +171,4 @@ eas submit --platform android --profile production
 eas update --channel production --environment production --message "describe what changed"
 ```
 
-> **Signing:** Google re-signs Play builds with its own app-signing key, so a Play install and a GitHub APK have different certificates. One can't be installed over the other: uninstall first. For Android developer verification, register the **app-signing key** SHA-256 (Play Console → Test and release → App integrity), not the EAS upload key.
+> **Signing:** Google re-signs Play builds with its own app-signing key, so a Play install and a GitHub APK have different certificates. One can't be installed over the other: uninstall first. Because of this, `lib/updates.ts` skips the GitHub release check (and the `UpdateModal` prompt) when `Updates.channel` is `production`. Play delivers those updates itself. For Android developer verification, register the **app-signing key** SHA-256 (Play Console → Test and release → App integrity), not the EAS upload key.
