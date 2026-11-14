@@ -16,7 +16,7 @@ import { RouletteSetup } from '../../features/roulette/components/RouletteSetup'
 import { Board } from '../../features/roulette/components/Board'
 import { StyleSheet } from 'react-native'
 import {
-  BettingTable, CHIP_SIZE, DRAG_LIFT, applyDrop, dragEndAction, dragPoint, fingerInWindow,
+  BettingTable, CHIP_SIZE, DRAG_LIFT, FINGERTIP_REACH, applyDrop, dragEndAction, dragPoint, fingerInWindow,
 } from '../../features/roulette/components/BettingTable'
 import { ResultPanel } from '../../features/roulette/components/ResultPanel'
 import { buildLayout } from '../../features/roulette/layout'
@@ -112,9 +112,13 @@ describe('Board', () => {
 })
 
 describe('dragPoint', () => {
-  test('75% of the dragged chip sits above the finger: its centre is a quarter chip above the touch point', () => {
-    // Chip spans [centre - CHIP_SIZE/2, centre + CHIP_SIZE/2]; the part above the touch point is 75% of it.
-    expect((DRAG_LIFT + CHIP_SIZE / 2) / CHIP_SIZE).toBeCloseTo(0.75)
+  test('75% of the dragged chip sits above the visible fingertip edge, not the touch point', () => {
+    // The touch point is below the fingertip edge (FINGERTIP_REACH above it). The chip spans
+    // [centre - CHIP_SIZE/2, centre + CHIP_SIZE/2]; the part above the fingertip edge is 75% of it.
+    const above = (DRAG_LIFT - FINGERTIP_REACH + CHIP_SIZE / 2) / CHIP_SIZE
+    expect(above).toBeCloseTo(0.75)
+    // Device feedback bounds the fingertip edge: a chip fully above 33px from the touch point was covered.
+    expect(FINGERTIP_REACH).toBeGreaterThan(33)
     expect(dragPoint({ x: 100, y: 400 })).toEqual({ x: 100, y: 400 - DRAG_LIFT })
   })
 })

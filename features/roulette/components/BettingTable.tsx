@@ -38,10 +38,16 @@ export function fingerInWindow(handleOrigin: Point, rel: Point): Point {
   return { x: handleOrigin.x + rel.x, y: handleOrigin.y + rel.y }
 }
 
-/** Share of the dragged chip that sits above the touch point; the rest overlaps the fingertip. */
+/**
+ * How far the visible fingertip edge reaches above the reported touch point (the touch point is the centre of
+ * the finger's contact patch, well below the tip). Estimated from device testing on a Galaxy S23 Ultra: a chip
+ * whose top was 33px above the touch point was fully covered; one whose bottom was 34px above it was fully visible.
+ */
+export const FINGERTIP_REACH = 34
+/** Share of the dragged chip that shows above the fingertip edge; the rest tucks under the fingertip. */
 const LIFT_SHARE = 0.75
-/** How far the dragged chip's centre sits above the touch point (a quarter chip for 75% above). */
-export const DRAG_LIFT = CHIP_SIZE * LIFT_SHARE - CHIP_SIZE / 2
+/** How far the dragged chip's centre sits above the touch point. */
+export const DRAG_LIFT = FINGERTIP_REACH + CHIP_SIZE * LIFT_SHARE - CHIP_SIZE / 2
 
 /**
  * The point a drag acts on: the finger lifted by DRAG_LIFT. The ghost chip is drawn here, and the highlight and
