@@ -175,3 +175,56 @@ test('setSettings resets the session', () => {
   expect(store().settings).toEqual({ wheel: 'triple', speed: 'fast' })
   expect(store().phase).toBe('betting')
 })
+
+describe('balance notice', () => {
+  const setBalance = (balance: number) =>
+    useProfileStore.setState(s => ({ profiles: [{ ...s.profiles[0], balance }] }))
+
+  test('a chip rejected for balance sets the notice; the next successful placement clears it', () => {
+    setBalance(20)
+    expect(store().placeChip('red', 25)).toBe(false)
+    expect(store().notice).toBe('Not enough balance')
+    expect(store().reason()).toBe('Not enough balance')
+    expect(store().placeChip('red', 10)).toBe(true)
+    expect(store().notice).toBeNull()
+  })
+
+  test('clear, undo and spin clear the notice', () => {
+    setBalance(20)
+    store().placeChip('red', 10)
+    store().placeChip('red', 25)
+    store().undo()
+    expect(store().notice).toBeNull()
+    store().placeChip('red', 25)
+    store().clearBets()
+    expect(store().notice).toBeNull()
+    store().placeChip('red', 10)
+    store().placeChip('red', 25)
+    expect(store().spin(() => 0)).toBe(true)
+    expect(store().notice).toBeNull()
+  })
+
+  test('unknown bet or wrong phase does not set the notice', () => {
+    store().placeChip('nope', 5)
+    expect(store().notice).toBeNull()
+  })
+
+  test('broke profile with no bets sees Not enough balance instead of Place a bet', () => {
+    setBalance(0)
+    expect(store().reason()).toBe('Not enough balance')
+    setBalance(0.5)
+    expect(store().reason()).toBe('Not enough balance')
+    expect(store().spinError()).toBe('Place a bet')
+  })
+
+  test('reason falls back to spinError otherwise', () => {
+    expect(store().reason()).toBe('Place a bet')
+    store().placeChip('red', 5)
+    expect(store().reason()).toBe('Outside bets need $10 each')
+    store().placeChip('red', 5)
+    expect(store().reason()).toBeNull()
+    useProfileStore.setState(s => ({ profiles: [{ ...s.profiles[0], bankrollMode: 'infinite', balance: 0 }] }))
+    store().clearBets()
+    expect(store().reason()).toBe('Place a bet')
+  })
+})

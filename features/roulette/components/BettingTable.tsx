@@ -27,12 +27,31 @@ export function applyDrop(action: DropAction): void {
 
 type Point = { x: number; y: number }
 
+/**
+ * What a drag that just ended does. A gesture that was cancelled or failed (system cancel, rotation, handler
+ * dropped on remount) does nothing, so the chip goes back to where it came from. `origin` is the board's
+ * window position; the absolute finger point is converted to board coordinates before hit-testing.
+ */
+export function dragEndAction(args: {
+  success: boolean
+  layout: BoardLayout | null
+  wheel: RouletteWheel
+  source: DragSource | null
+  origin: Point
+  absX: number
+  absY: number
+}): DropAction {
+  const { success, layout, wheel, source, origin, absX, absY } = args
+  if (!success || !layout || !source) return { type: 'none' }
+  return resolveDrop(layout, wheel, source, absX - origin.x, absY - origin.y)
+}
+
 type HandleProps = {
   source: DragSource
   ghost: { x: SharedValue<number>; y: SharedValue<number>; origin: SharedValue<Point> }
   onBegin(source: DragSource, absX: number, absY: number): void
   onMove(absX: number, absY: number): void
-  onDrop(absX: number, absY: number): void
+  onDrop(success: boolean, absX: number, absY: number): void
   onFinish(): void
   style?: StyleProp<ViewStyle>
   testID?: string
@@ -52,9 +71,11 @@ function DragHandle({ source, ghost, onBegin, onMove, onDrop, onFinish, style, t
       ghost.y.value = e.absoluteY - ghost.origin.value.y
       scheduleOnRN(onMove, e.absoluteX, e.absoluteY)
     })
-    .onEnd(e => {
-      scheduleOnRN(onDrop, e.absoluteX, e.absoluteY)
+    // success is false when an active gesture was cancelled or failed; onDrop then does nothing.
+    .onEnd((e, success) => {
+      scheduleOnRN(onDrop, success, e.absoluteX, e.absoluteY)
     })
+    // Runs on every outcome (end, cancel, fail), so the ghost and highlight are always cleared.
     .onFinalize(() => {
       scheduleOnRN(onFinish)
     })
@@ -78,9 +99,13 @@ export function BettingTable({ wheel, orientation, onSpin }: Props) {
   const bets = useRouletteStore(s => s.bets)
   const marker = useRouletteStore(s => s.marker)
   const spinError = useRouletteStore(s => s.spinError)
+  const reason = useRouletteStore(s => s.reason)
+  // Subscribed so the reason line re-renders when a chip is rejected for balance.
+  useRouletteStore(s => s.notice)
   const undo = useRouletteStore(s => s.undo)
   const clearBets = useRouletteStore(s => s.clearBets)
   const error = spinError()
+  const reasonText = reason()
 
   const [size, setSize] = useState<{ w: number; h: number } | null>(null)
   const layout = useMemo<BoardLayout | null>(
@@ -127,11 +152,8 @@ export function BettingTable({ wheel, orientation, onSpin }: Props) {
     setHighlight(prev => (prev === id ? prev : id))
   }
 
-  function onDrop(absX: number, absY: number) {
-    const source = dragSource.current
-    if (!layout || !source) return
-    const { x, y } = toLocal(absX, absY)
-    applyDrop(resolveDrop(layout, wheel, source, x, y))
+  function onDrop(success: boolean, absX: number, absY: number) {
+    applyDrop(dragEndAction({ success, layout, wheel, source: dragSource.current, origin: boardOrigin.current, absX, absY }))
   }
 
   function onFinish() {
@@ -147,27 +169,30 @@ export function BettingTable({ wheel, orientation, onSpin }: Props) {
 
   return (
     <View ref={rootRef} style={styles.root} onLayout={measure}>
-      <View ref={boardRef} style={styles.boardArea} onLayout={onBoardLayout}>
-        {layout && (
-          <>
-            <Board layout={layout} bets={bets} marker={marker} highlight={highlight} />
-            {Object.keys(bets).map(id => {
-              const a = layout.anchors[id]
-              if (!a) return null
-              return (
-                <DragHandle
-                  key={id}
-                  source={{ type: 'stack', betId: id }}
-                  {...handlers}
-                  style={[styles.stackHandle, { left: a.x - STACK_SIZE / 2, top: a.y - STACK_SIZE / 2 }]}
-                />
-              )
-            })}
-          </>
-        )}
+      {/* The border sits on a wrapper so the measured view's frame is exactly the board drawing area. */}
+      <View style={styles.boardFrame}>
+        <View ref={boardRef} style={styles.boardArea} onLayout={onBoardLayout}>
+          {layout && (
+            <>
+              <Board layout={layout} bets={bets} marker={marker} highlight={highlight} />
+              {Object.keys(bets).map(id => {
+                const a = layout.anchors[id]
+                if (!a) return null
+                return (
+                  <DragHandle
+                    key={id}
+                    source={{ type: 'stack', betId: id }}
+                    {...handlers}
+                    style={[styles.stackHandle, { left: a.x - STACK_SIZE / 2, top: a.y - STACK_SIZE / 2 }]}
+                  />
+                )
+              })}
+            </>
+          )}
+        </View>
       </View>
 
-      <Text style={styles.error}>{error ?? ' '}</Text>
+      <Text style={styles.error}>{reasonText ?? ' '}</Text>
 
       <View style={styles.controls}>
         <TouchableOpacity style={styles.ctrlBtn} onPress={undo}>
@@ -206,7 +231,8 @@ export function BettingTable({ wheel, orientation, onSpin }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#13131f' },
-  boardArea: { flex: 1, margin: 8, backgroundColor: '#0f5132', borderRadius: 6, borderWidth: 1, borderColor: '#2a2a3e' },
+  boardFrame: { flex: 1, margin: 8, backgroundColor: '#0f5132', borderRadius: 6, borderWidth: 1, borderColor: '#2a2a3e' },
+  boardArea: { flex: 1 },
   stackHandle: { position: 'absolute', width: STACK_SIZE, height: STACK_SIZE, borderRadius: STACK_SIZE / 2 },
   error: { color: '#aaa', fontSize: 13, textAlign: 'center', marginTop: 2 },
   controls: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 8 },
