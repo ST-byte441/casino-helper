@@ -19,7 +19,7 @@ import 'react-native-gesture-handler/jestSetup'
 import React from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { render as rtlRender, fireEvent, act } from '@testing-library/react-native'
-import * as ScreenOrientation from 'expo-screen-orientation'
+import { useOrientationStore } from '../../lib/orientation'
 import RouletteScreen from '../../app/roulette'
 import { useRouletteStore } from '../../features/roulette/store'
 import { useProfileStore } from '../../features/profile/store'
@@ -61,6 +61,7 @@ function startTable(): Screen {
 beforeEach(() => {
   mockWindow = { width: 360, height: 640, scale: 2, fontScale: 1 }
   jest.clearAllMocks()
+  useOrientationStore.setState({ rotationRequested: false })
   useProfileStore.setState({
     profiles: [{ id: 'p', name: 'T', bankrollMode: 'finite', balance: 1000, createdAt: 0,
       startingBalance: 1000, trackingSince: 0, refills: [], stats: emptyStats() }],
@@ -75,23 +76,23 @@ afterEach(() => jest.useRealTimers())
 test('shows the setup first; Play opens the board, saves settings and unlocks rotation', () => {
   const screen = render(<RouletteScreen />)
   screen.getByText('Roulette Table')
-  expect(ScreenOrientation.unlockAsync).not.toHaveBeenCalled()
+  expect(useOrientationStore.getState().rotationRequested).toBe(false)
   fireEvent.press(screen.getByText('Triple zero'))
   fireEvent.press(screen.getByText('Play'))
   expect(screen.queryByText('Roulette Table')).toBeNull()
   screen.getByTestId('roulette-spin')
-  expect(ScreenOrientation.unlockAsync).toHaveBeenCalledTimes(1)
+  expect(useOrientationStore.getState().rotationRequested).toBe(true)
   expect(usePreferencesStore.getState().rouletteSettings).toEqual({ wheel: 'triple', speed: 'slow' })
   expect(useRouletteStore.getState().settings).toEqual({ wheel: 'triple', speed: 'slow' })
   screen.getByText('Triple zero · Slow')
   screen.getByText('$1,000')
 })
 
-test('unmounting locks portrait again and abandons the session (settling a spin in flight)', () => {
+test('unmounting withdraws the rotation request and abandons the session (settling a spin in flight)', () => {
   const screen = startTable()
   act(() => useRouletteStore.setState({ bets: { red: 10 }, phase: 'spinning', result: 17 }))
   screen.unmount()
-  expect(ScreenOrientation.lockAsync).toHaveBeenCalledWith(ScreenOrientation.OrientationLock.PORTRAIT_UP)
+  expect(useOrientationStore.getState().rotationRequested).toBe(false)
   // abandon() settled the spin (17 is black, so red loses) and reset the session.
   expect(useProfileStore.getState().profiles[0].balance).toBe(990)
   expect(useRouletteStore.getState().phase).toBe('betting')
