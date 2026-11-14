@@ -27,6 +27,9 @@ export type DropAction =
 // (zero dividers sit between number lines), so a tighter tolerance is used there.
 const TOL = 0.22
 const ZERO_EDGE_TOL = 0.12
+// How far the street edge zone reaches outward over the outside boxes (a near-miss still lands on the street,
+// but most of the neighbouring even-money / dozen box stays its own target).
+const STREET_OUT_TOL = 0.12
 const NULL_BAND = 0.05 // on the zero boundary itself an invalid candidate stays null
 const STRIP = 0.6 // outside strip thickness relative to a grid cell
 
@@ -178,9 +181,9 @@ function valid(wheel: RouletteWheel, kind: RouletteBetKind, pockets: Pocket[]): 
 export function hitTest(layout: BoardLayout, wheel: RouletteWheel, x: number, y: number): string | null {
   const f = frameOf(layout)
   const { u, v } = toUV(f, x, y)
-  // The street edge zone also reaches TOL outward, so a near-miss never lands on an outside box.
+  // The street edge zone also reaches STREET_OUT_TOL outward, so a near-miss still lands on the street.
   const inGrid = u >= 0 && u <= 3 && v >= -f.zd && v < 12
-  const onStreetEdge = u > -TOL && u < 0 && v >= -TOL && v < 12
+  const onStreetEdge = u > -STREET_OUT_TOL && u < 0 && v >= -TOL && v < 12
   if (inGrid || onStreetEdge) return hitGrid(wheel, Math.max(0, u), v)
   const box = layout.cells.find(c =>
     c.betId && x >= c.rect.x && x <= c.rect.x + c.rect.w && y >= c.rect.y && y <= c.rect.y + c.rect.h)

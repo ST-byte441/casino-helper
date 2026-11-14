@@ -165,3 +165,22 @@ describe.each(orientations)('%s triple zero boundary falls through', (o) => {
     expect(hit(intoZero(cell(T, '000'), 0.15, 1))).toBe('split:000-00')
   })
 })
+
+describe.each(orientations)('%s outside boxes beside the street edge', (o) => {
+  const L = make('double', o)
+  const outside = L.cells.filter(c => /^(dozen:|low$|high$|even$|odd$|red$|black$)/.test(c.key))
+  const boxAt = (p: { x: number; y: number }) => outside.find(c =>
+    p.x >= c.rect.x && p.x <= c.rect.x + c.rect.w && p.y >= c.rect.y && p.y <= c.rect.y + c.rect.h)?.betId
+
+  it.each(['low', 'even', 'red', 'black', 'odd', 'high', 'dozen:1', 'dozen:2', 'dozen:3'])(
+    'centre of %s is its own bet', (id) => expect(hitTest(L, 'double', ...Object.values(centre(cell(L, id))) as [number, number])).toBe(id))
+
+  it.each(['4', '7', '19', '34'])('15%% of a cell outward beside %s is the outside box there', (n) => {
+    const r = cell(L, n)
+    const e = streetEdge(o, r)
+    const p = o === 'portrait' ? { x: e.x - 0.15 * r.w, y: e.y } : { x: e.x, y: e.y + 0.15 * r.h }
+    const expected = boxAt(p)
+    expect(expected).toBeTruthy()
+    expect(hitTest(L, 'double', p.x, p.y)).toBe(expected)
+  })
+})
