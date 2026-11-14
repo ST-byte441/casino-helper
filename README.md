@@ -40,6 +40,14 @@ Get the latest APK from the [Releases page](../../releases/latest).
 - **Card squeeze** — reveal every card in real dealing order (P1, B1, P2, B2, then third cards) by dragging up to peel it back, or turn the header **Squeeze ●/○** toggle off for a quick automatic flip. The result waits until you tap **Next Hand**
 - **Sandbox mode** — manually set all four starting cards, pick third cards step-by-step, and see the rule explanation driving each draw decision
 
+### Roulette
+
+- **Three wheels** — Single zero (European), Double zero (American) and Triple zero, chosen on the setup screen along with Slow or Fast spins
+- **Full betting layout** — straight, split, street, corner, six line, basket / first four / first five (where the wheel allows), dozens, columns and the even-money bets; $10 table minimum (inside bets combined, each outside bet)
+- **Drag-and-drop chips** — drag $1 / $5 / $25 / $100 chips from the tray onto the board, drag a stack to move it, or off the board to remove it; Undo and Clear
+- **Animated wheel** — Slow shows the ball dropping into its pocket, Fast stops the wheel quickly; the winning number stays marked on the board and winning bets stay up for the next spin
+- **Follows the phone** — the roulette table rotates between portrait and landscape layouts; the rest of the app stays portrait
+
 ## Games
 
 | Game | Status |
@@ -47,7 +55,7 @@ Get the latest APK from the [Releases page](../../releases/latest).
 | Blackjack | Playable |
 | Craps | Playable |
 | Baccarat | Playable |
-| Roulette | Coming soon |
+| Roulette | Playable |
 | Poker | Coming soon |
 
 ## Tech Stack
@@ -59,6 +67,8 @@ Get the latest APK from the [Releases page](../../releases/latest).
 | Navigation | Expo Router |
 | State | Zustand + AsyncStorage |
 | Media | expo-image-picker + expo-file-system (profile photos) |
+| Graphics | react-native-svg (roulette wheel) |
+| Orientation | expo-screen-orientation (portrait lock, roulette unlocks) |
 | Testing | Jest + React Native Testing Library |
 
 ## Development
