@@ -18,6 +18,7 @@ import { PRESET_PICTURES, pickAndStoreUpload } from '../../features/profile/pict
 import { ProfileList } from '../../features/profile/components/ProfileList'
 import { CreateProfileModal } from '../../features/profile/components/CreateProfileModal'
 import { useProfileStore } from '../../features/profile/store'
+import { GameStatsTabs } from '../../features/profile/components/GameStatsTabs'
 import { emptyStats } from '../../features/profile/stats'
 import type { Profile } from '../../features/profile/types'
 
@@ -99,4 +100,15 @@ test('create profile shows a $ in front of the starting money', () => {
   fireEvent.changeText(getByDisplayValue('1000'), '250')
   fireEvent.press(getByText('Create'))
   expect(useProfileStore.getState().profiles[0]).toMatchObject({ name: 'Dana', balance: 250 })
+})
+
+test('stats tabs render a Roulette tab with Wins / Losses / Pushes', () => {
+  const stats = emptyStats()
+  stats.roulette.wins = 4
+  const { getByText } = render(<GameStatsTabs stats={stats} />)
+  fireEvent.press(getByText('Roulette'))
+  expect(getByText('Wins')).toBeTruthy()
+  expect(getByText('Losses')).toBeTruthy()
+  expect(getByText('Pushes')).toBeTruthy()
+  expect(getByText('4')).toBeTruthy()
 })

@@ -65,7 +65,8 @@ describe('summaries', () => {
   it('gamesNet', () => {
     const s = emptyStats()
     s.blackjack.net = 10; s.baccarat.net = -4; s.craps.net = 7
-    expect(gamesNet(s)).toBe(13)
+    s.roulette.net = -2
+    expect(gamesNet(s)).toBe(11)
   })
   it('refillTotal', () => {
     expect(refillTotal([{ amount: 100, at: 1 }, { amount: 50, at: 2 }])).toBe(150)

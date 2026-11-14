@@ -57,3 +57,12 @@ test('with no active profile the header still opens the Profile tab', () => {
   fireEvent.press(getByTestId('lobby-profile-button'))
   expect(mockNavigate).toHaveBeenCalledWith('/(tabs)/profile')
 })
+
+test('the Roulette tile is available and opens the roulette table', () => {
+  setProfile(undefined)
+  const { getByText, getAllByText } = render(<LobbyScreen />)
+  fireEvent.press(getByText('Roulette'))
+  expect(mockPush).toHaveBeenCalledWith('/roulette')
+  // Only Three Card Poker is still coming soon.
+  expect(getAllByText('Coming Soon')).toHaveLength(1)
+})

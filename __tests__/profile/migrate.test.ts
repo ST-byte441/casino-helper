@@ -45,3 +45,27 @@ test('v0 profiles also get longestRoll', () => {
     { profiles: [{ id: 'a', name: 'A', bankrollMode: 'finite', balance: 5, createdAt: 1 }], activeProfileId: null }, 0, 9)
   expect(out.profiles[0].stats.craps.longestRoll).toBe(0)
 })
+
+test('v2 profiles gain an empty roulette record, other stats untouched', () => {
+  const stats = emptyStats() as any
+  delete stats.roulette
+  stats.blackjack.wins = 3
+  stats.craps.longestRoll = 5
+  const out = migrateProfileState({
+    profiles: [{
+      id: 'a', name: 'A', bankrollMode: 'finite', balance: 50, createdAt: 1,
+      startingBalance: 100, trackingSince: 1, refills: [], stats,
+    }],
+    activeProfileId: 'a',
+  }, 2, 999)
+  const s = out.profiles[0].stats
+  expect(s.roulette).toEqual({ wins: 0, losses: 0, pushes: 0, biggestWin: 0, net: 0 })
+  expect(s.blackjack.wins).toBe(3)
+  expect(s.craps.longestRoll).toBe(5)
+})
+
+test('v0 profiles end up with a roulette record', () => {
+  const out = migrateProfileState(
+    { profiles: [{ id: 'a', name: 'A', bankrollMode: 'finite', balance: 5, createdAt: 1 }], activeProfileId: null }, 0, 9)
+  expect(out.profiles[0].stats.roulette).toEqual({ wins: 0, losses: 0, pushes: 0, biggestWin: 0, net: 0 })
+})

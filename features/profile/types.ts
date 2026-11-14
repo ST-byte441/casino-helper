@@ -2,14 +2,14 @@ import type { RollResolution } from '../../lib/types'
 
 export type BankrollMode = 'finite' | 'infinite'
 
-export type GameId = 'blackjack' | 'baccarat' | 'craps'
+export type GameId = 'blackjack' | 'baccarat' | 'craps' | 'roulette'
 export type HandResult = 'win' | 'loss' | 'push'
 export type HandRecord = { wins: number; losses: number; pushes: number; biggestWin: number; net: number }
 export type CrapsRecord = {
   rolls: number; pointsMade: number; sevenOuts: number; biggestWin: number; net: number
   longestRoll: number // most rolls one shooter survived (with the player betting) before a seven-out
 }
-export type ProfileStats = { blackjack: HandRecord; baccarat: HandRecord; craps: CrapsRecord }
+export type ProfileStats = { blackjack: HandRecord; baccarat: HandRecord; craps: CrapsRecord; roulette: HandRecord }
 export type Refill = { amount: number; at: number }
 export type ProfilePicture = { kind: 'preset'; id: string } | { kind: 'upload'; uri: string }
 

@@ -22,3 +22,6 @@ export const DEFAULT_TABLE_RULES: TableRules = {
 }
 
 export const RED_SUITS: readonly string[] = ['♥', '♦']
+
+export const ROULETTE_CHIPS = [1, 5, 25, 100] as const
+export const ROULETTE_TABLE_MIN = 10
