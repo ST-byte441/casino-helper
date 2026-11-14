@@ -74,7 +74,7 @@ components/
   UpdateModal.tsx # In-app update prompt modal
 assets/
   avatars/        # Bundled 256px profile pictures + default (originals in gitignored assets/profile-pictures/)
-  *-rules.md, blackjack-basic-strategy.md  # Per-game rules references; roulette-rules.md is the cited source of truth for roulette
+  rules-docs/     # Per-game rules references (*-rules.md, blackjack-basic-strategy.md); roulette-rules.md is the cited source of truth for roulette
 __tests__/        # Mirrors the feature folder structure
 ```
 
