@@ -27,6 +27,7 @@ export type DropAction =
 // (zero dividers sit between number lines), so a tighter tolerance is used there.
 const TOL = 0.22
 const ZERO_EDGE_TOL = 0.12
+const NULL_BAND = 0.05 // on the zero boundary itself an invalid candidate stays null
 const STRIP = 0.6 // outside strip thickness relative to a grid cell
 
 const EVEN_MONEY: { id: string; label: string }[] = [
@@ -177,7 +178,10 @@ function valid(wheel: RouletteWheel, kind: RouletteBetKind, pockets: Pocket[]): 
 export function hitTest(layout: BoardLayout, wheel: RouletteWheel, x: number, y: number): string | null {
   const f = frameOf(layout)
   const { u, v } = toUV(f, x, y)
-  if (u >= 0 && u <= 3 && v >= -f.zd && v < 12) return hitGrid(wheel, u, v)
+  // The street edge zone also reaches TOL outward, so a near-miss never lands on an outside box.
+  const inGrid = u >= 0 && u <= 3 && v >= -f.zd && v < 12
+  const onStreetEdge = u > -TOL && u < 0 && v >= -TOL && v < 12
+  if (inGrid || onStreetEdge) return hitGrid(wheel, Math.max(0, u), v)
   const box = layout.cells.find(c =>
     c.betId && x >= c.rect.x && x <= c.rect.x + c.rect.w && y >= c.rect.y && y <= c.rect.y + c.rect.h)
   return box ? box.betId : null
@@ -197,8 +201,7 @@ function hitGrid(wheel: RouletteWheel, u: number, v: number): string | null {
     return 0
   }
 
-  // Zero / grid boundary
-  if (Math.abs(v) < TOL) {
+  const hitZeroBoundary = (): string | null => {
     const nearLine = Math.abs(u - ul) < ZERO_EDGE_TOL && ul <= 2
     if (nearLine && ul === 0) {
       return n === 1 ? valid(wheel, 'firstFour', [...zeros, 1, 2, 3]) : valid(wheel, 'firstFive', [...zeros, 1, 2, 3])
@@ -207,6 +210,13 @@ function hitGrid(wheel: RouletteWheel, u: number, v: number): string | null {
     const d = nearDivider(ZERO_EDGE_TOL)
     if (d) return valid(wheel, 'basket', [zeros[d - 1], zeros[d], c])
     return valid(wheel, 'split', [...zeroAt(u).slice(0, 1), c])
+  }
+
+  // Zero / grid boundary. When the candidate does not exist on this wheel (triple),
+  // fall through to the cell underneath, except right on the line.
+  if (Math.abs(v) < TOL) {
+    const id = hitZeroBoundary()
+    if (id || Math.abs(v) < NULL_BAND) return id
   }
 
   // Zero area

@@ -123,3 +123,45 @@ describe('single wheel zero area', () => {
     expect(a['firstFour:0-1-2-3']).toEqual(corner)
   })
 })
+
+describe.each(orientations)('%s outward near-misses on the street edge', (o) => {
+  // 5px outward from the street edge: left in portrait, down in landscape.
+  const out = (p: { x: number; y: number }) => (o === 'portrait' ? { x: p.x - 5, y: p.y } : { x: p.x, y: p.y + 5 })
+  const L = make('double', o)
+  it('beside row 7-8-9 is still the street', () => {
+    const p = out(streetEdge(o, cell(L, '7')))
+    expect(hitTest(L, 'double', p.x, p.y)).toBe('street:7-8-9')
+  })
+  it('at 7|10 is still the six line', () => {
+    const p = out(L.anchors['sixline:7-8-9-10-11-12'])
+    expect(hitTest(L, 'double', p.x, p.y)).toBe('sixline:7-8-9-10-11-12')
+  })
+  it('first five (double) and first four (single)', () => {
+    const p = out(L.anchors['firstFive:00-0-1-2-3'])
+    expect(hitTest(L, 'double', p.x, p.y)).toBe('firstFive:00-0-1-2-3')
+    const S = make('single', o)
+    const q = out(S.anchors['firstFour:0-1-2-3'])
+    expect(hitTest(S, 'single', q.x, q.y)).toBe('firstFour:0-1-2-3')
+  })
+})
+
+describe.each(orientations)('%s triple zero boundary falls through', (o) => {
+  const T = make('triple', o)
+  const hit = (p: { x: number; y: number }) => hitTest(T, 'triple', p.x, p.y)
+  // A point a fraction `f` of the cell depth inside a number cell (row 1) from the zero boundary.
+  const intoNumber = (r: Rect, f: number, along = 0.5) => o === 'portrait'
+    ? { x: r.x + along * r.w, y: r.y + f * r.h }
+    : { x: r.x + f * r.w, y: r.y + r.h - along * r.h }
+  // Same, inside a zero cell measured from the boundary.
+  const intoZero = (r: Rect, f: number, along = 0.5) => o === 'portrait'
+    ? { x: r.x + along * r.w, y: r.y + r.h - f * r.h }
+    : { x: r.x + r.w - f * r.w, y: r.y + r.h - along * r.h }
+
+  it.each(['1', '2', '3'])('15%% into %s is straight', (n) => expect(hit(intoNumber(cell(T, n), 0.15))).toBe(`straight:${n}`))
+  it.each(['0', '000', '00'])('15%% into %s is straight', (z) => expect(hit(intoZero(cell(T, z), 0.15))).toBe(`straight:${z}`))
+  it('1|2 line near the top of row 1 is split:1-2', () => expect(hit(intoNumber(cell(T, '1'), 0.15, 1))).toBe('split:1-2'))
+  it('lower part of zero dividers still splits', () => {
+    expect(hit(intoZero(cell(T, '0'), 0.15, 1))).toBe('split:000-0')
+    expect(hit(intoZero(cell(T, '000'), 0.15, 1))).toBe('split:000-00')
+  })
+})
