@@ -9,6 +9,7 @@ export const GAME_TABS: { id: GameId; label: string; icon: React.ComponentProps<
   { id: 'blackjack', label: 'Blackjack', icon: 'cards-playing-spade' },
   { id: 'baccarat', label: 'Baccarat', icon: 'cards' },
   { id: 'craps', label: 'Craps', icon: 'dice-5' },
+  { id: 'roulette', label: 'Roulette', icon: 'poker-chip' },
 ]
 
 type StatRow = { label: string; value: string; color?: string }

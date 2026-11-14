@@ -9,6 +9,7 @@ export function emptyStats(): ProfileStats {
   return {
     blackjack: emptyHandRecord(),
     baccarat: emptyHandRecord(),
+    roulette: emptyHandRecord(),
     craps: { rolls: 0, pointsMade: 0, sevenOuts: 0, biggestWin: 0, net: 0, longestRoll: 0 },
   }
 }
@@ -53,7 +54,7 @@ export function winRate(r: HandRecord): number | null {
 }
 
 export function gamesNet(s: ProfileStats): number {
-  return s.blackjack.net + s.baccarat.net + s.craps.net
+  return s.blackjack.net + s.baccarat.net + s.craps.net + s.roulette.net
 }
 
 export function refillTotal(refills: Refill[]): number {

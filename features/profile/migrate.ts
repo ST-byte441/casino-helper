@@ -27,5 +27,12 @@ export function migrateProfileState(
       stats: { ...p.stats, craps: { longestRoll: 0, ...p.stats.craps } },
     }))
   }
+  if (fromVersion < 3) {
+    // v2 -> v3: roulette gained a stats record
+    profiles = profiles.map(p => ({
+      ...p,
+      stats: { ...p.stats, roulette: p.stats.roulette ?? { wins: 0, losses: 0, pushes: 0, biggestWin: 0, net: 0 } },
+    }))
+  }
   return { profiles: profiles as Profile[], activeProfileId }
 }
