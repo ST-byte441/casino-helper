@@ -18,7 +18,7 @@ npx jest <path>   # single file
 npx tsc --noEmit  # type check only
 ```
 
-1310 tests cover the game engines, the shared chip helpers, strategy lookup, roulette and craps felt layouts, roulette wheel maths, screens, profile store and stats, and update utility.
+1344 tests cover the game engines, the shared chip helpers, strategy lookup, roulette and craps felt layouts, roulette wheel maths, screens, profile store and stats, and update utility.
 
 ## Project Structure
 
@@ -50,12 +50,12 @@ features/
   craps/
     engine.ts     # Pure TS: dice, phase helpers, bet validity, odds helpers, payout calc, roll resolution
     strategy.ts   # Pure TS: getBetQuality — rates any bet type as optimal/acceptable/poor/avoid
-    layout.ts     # Pure TS: felt geometry per variant (areas, box stack slots with the ON puck in each box's top-right corner, pucks, `labelRect` label boxes (line labels left of centre with their odds strip to the right; box numbers under the puck row), `diceRect` — the dice + ROLL block at the Pass Line band's right end, the props box running to the felt's right edge — the More bets strip `moreRect` under the props cells for World/Hi-Lo/hop stacks), hitCraps, slotFor, stackSizeFor/puckSizeFor; table chrome (TABLE_CHROME regular/large, tableFeltSize)
+    layout.ts     # Pure TS: felt geometry per variant (areas, box stack slots (Don't Come and the ON puck in a top row, come/place/lay in a bottom row, the number — `boxLabels` text box — where no slot reaches), pucks, `labelRect` label boxes (line labels left of centre with their odds strip to the right; box numbers under the puck row), `diceRect` — the dice + ROLL block at the Pass Line band's right end, the props box running to the felt's right edge — the More bets strip `moreRect` under the props cells for World/Hi-Lo/hop stacks), hitCraps, slotFor, stackSizeFor/puckSizeFor; table chrome (TABLE_CHROME regular/large, tableFeltSize)
     spots.ts      # Pure TS: spotAction/stackTapAction resolve a dropped or tapped spot/stack to a store call
     store.ts      # Session Zustand store (phase, dice, point, bets, roll, assist toggle)
     components/   # UI components (TableSetup, DiceDisplay, BetCategoryPanel, BetRow, OddsRow, HopBetGrid, RollButton, RollResultBanner)
       list/       # CrapsListView — the phone-portrait bet list (panels and rows, its own banner and funds warning); pinned by the phone snapshots
-      table/      # Drawn table pieces (CrapsFelt — presentational felt: areas, chip stacks with BUY/LAY/WORLD/HI-LO/hop-dice tags and odds, the More bets strip (one row of stacks, a "+N" count past what fits), ON/OFF puck, Assist tints; CrapsTable — slim header with the reason line, chip tray column at the left, felt with drag/tap chips (stack first, then area; drag a removable stack off to take it down), dice + ROLL in the dice block at the Pass Line's right end, roll result banner after RollOverlay — ROLL resolves the bets at once, then two large dice tumble over the felt for ~1s (Reanimated; faces start and end on the roll, so the Jest mock shows the final dice) before the banner; a tap skips it; StackMenu — tap a stack with no chip for Take down, Odds ±$1/$5/$25 (each disabled past the cap or the balance; cap from engine `oddsCap`, shared with the store), ON/OFF, and its own notice line; MoreBetsSheet — header "More bets" modal with Buy/Lay, Hi-Lo, World and hops)
+      table/      # Drawn table pieces (CrapsFelt — presentational felt: areas, chip stacks with BUY/LAY/WORLD/HI-LO/hop-dice tags and odds, the More bets strip (one row of stacks, a "+N" count past what fits), ON/OFF puck, Assist tints; CrapsTable — slim header with the reason line, chip tray column at the left, felt with drag/tap chips (stack first, then area; drag a removable stack off to take it down), dice + ROLL in the dice block at the Pass Line's right end, roll result banner after RollOverlay — ROLL resolves the bets at once, then two large dice tumble over the felt for ~1s (Reanimated; faces start and end on the roll, so the Jest mock shows the final dice) before the banner; until they land the felt, dice block and balance show the pre-roll table, chips can't go down and More bets is disabled; a tap skips it; StackMenu — tap a stack with no chip for Take down, Odds ±$1/$5/$25 (each disabled past the cap or the balance; cap from engine `oddsCap`, shared with the store), ON/OFF, and its own notice line; MoreBetsSheet — header "More bets" modal with Buy/Lay, Hi-Lo, World and hops)
   baccarat/
     engine.ts     # Pure TS: deck, scoring, natural/third-card rules, hand resolution
     strategy.ts   # Pure TS: bet quality ratings (player/banker/tie/side bets)
