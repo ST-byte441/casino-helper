@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { nanoid } from 'nanoid/non-secure'
 import { ActiveBet, BetType, CrapsPhase, CrapsTableRules } from '../../lib/types'
-import { resolveRoll, canRemoveBet, minBuyLayAmount, placementRefusal } from './engine'
+import { resolveRoll, canRemoveBet, minBuyLayAmount, placementRefusal, getMaxOdds, getMaxLayOdds } from './engine'
 import { useProfileStore } from '../profile/store'
 
 const DEFAULT_RULES: CrapsTableRules = { variant: 'craps', oddsMultiple: '3-4-5x', fieldPays3on12: false }
@@ -32,6 +32,7 @@ type CrapsActions = {
   toggleWorking(betId: string): void
   toggleAssist(): void
   selectChip(amount: number): void
+  setNotice(notice: string | null): void
 }
 
 const initialState: CrapsState = {
@@ -62,6 +63,10 @@ export const useCrapsStore = create<CrapsState & CrapsActions>((set, get) => ({
 
   toggleAssist() {
     set(s => ({ assistEnabled: !s.assistEnabled }))
+  },
+
+  setNotice(notice) {
+    set({ notice })
   },
 
   selectChip(amount) {
@@ -133,6 +138,26 @@ export const useCrapsStore = create<CrapsState & CrapsActions>((set, get) => ({
   },
 
   addOdds(betId, amount) {
+    if (amount > 0) {
+      const { bets, point, tableRules } = get()
+      const bet = bets.find(b => b.id === betId)
+      if (!bet) return false
+      // Each bet's odds are capped against its own point: the come point for Come / Don't Come.
+      const isCome = bet.type === 'come' || bet.type === 'dont-come'
+      const isLine = isCome || bet.type === 'pass' || bet.type === 'dont-pass'
+      const betPoint = isCome ? bet.comePoint : point
+      if (!isLine || betPoint == null) {
+        set({ notice: 'Odds go on a bet with a point' })
+        return false
+      }
+      const max = bet.type === 'dont-pass' || bet.type === 'dont-come'
+        ? getMaxLayOdds(bet.amount, betPoint, tableRules.oddsMultiple)
+        : getMaxOdds(bet.amount, betPoint, tableRules.oddsMultiple)
+      if ((bet.odds ?? 0) + amount > max) {
+        set({ notice: `Max odds here is $${max}` })
+        return false
+      }
+    }
     if (amount > 0 && !get().canAfford(amount)) {
       set({ notice: 'Not enough balance' })
       return false

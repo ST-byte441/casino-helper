@@ -1,4 +1,4 @@
-import { buildCrapsLayout, hitCraps, slotFor, CrapsLayout, SpotKey } from '../../features/craps/layout'
+import { buildCrapsLayout, hitCraps, slotFor, tableFeltSize, CrapsLayout, SpotKey } from '../../features/craps/layout'
 import { ActiveBet, CrapsVariant } from '../../lib/types'
 
 type R = { x: number; y: number; w: number; h: number }
@@ -14,7 +14,11 @@ const EXPECTED: Record<CrapsVariant, SpotKey[]> = {
 }
 
 const variants: CrapsVariant[] = ['craps', 'crapless', 'easy']
-const sizes: [number, number][] = [[880, 320], [832, 360], [884, 600], [673, 420]]
+// The felts the table view actually produces on a phone in landscape (832x384) and the Fold cover (880x320),
+// plus the raw minimum felt, a large landscape and a large portrait felt.
+const TABLE_SCREENS: [number, number][] = [[832, 384], [880, 320]]
+const TABLE_FELTS = TABLE_SCREENS.map(([w, h]) => { const f = tableFeltSize(w, h); return [f.width, f.height] as [number, number] })
+const sizes: [number, number][] = [...TABLE_FELTS, [880, 320], [832, 360], [884, 600], [673, 420]]
 const cases = variants.flatMap(v => sizes.map(([w, h]) => [v, w, h] as [CrapsVariant, number, number]))
 
 const centre = (r: R) => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 })
@@ -102,5 +106,25 @@ describe.each(cases)('%s at %dx%d', (variant, width, height) => {
     expect(hitCraps(L, -5, -5)).toBeNull()
     expect(hitCraps(L, width + 10, height / 2)).toBeNull()
     expect(hitCraps(L, width / 2, height + 10)).toBeNull()
+  })
+})
+
+describe('table felt sizes', () => {
+  test('the table chrome leaves 764x348 on 832x384 and 812x284 on 880x320', () => {
+    expect(TABLE_FELTS).toEqual([[764, 348], [812, 284]])
+  })
+
+  test.each(variants.flatMap(v => TABLE_FELTS.map(([w, h]) => [v, w, h] as [CrapsVariant, number, number])))(
+    'every %s area is at least 32x32 on the %dx%d table felt', (variant, w, h) => {
+      const L = buildCrapsLayout(variant, w, h)
+      for (const a of L.areas) expect([a.key, a.rect.w >= 32, a.rect.h >= 32]).toEqual([a.key, true, true])
+    })
+
+  test('the props box has at most 5 rows, the four Hardways in one', () => {
+    const L = buildCrapsLayout('craps', 812, 284)
+    const props = L.areas.filter(a => a.tone === 'prop')
+    expect(new Set(props.map(a => Math.round(a.rect.y))).size).toBeLessThanOrEqual(5)
+    const hard = props.filter(a => a.key.startsWith('hard:'))
+    expect(new Set(hard.map(a => a.rect.y)).size).toBe(1)
   })
 })

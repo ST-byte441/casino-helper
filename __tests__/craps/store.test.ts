@@ -55,6 +55,61 @@ describe('odds cap', () => {
     expect(s().bets[0].odds).toBe(30)
   })
 
+  test('pass odds over the cap are refused with the notice', () => {
+    setProfile(10000)
+    pointPhase([passBet(10)]) // point 6, 3-4-5x: max 5x = $50
+    const s = () => useCrapsStore.getState()
+    expect(s().addOdds('b1', 50)).toBe(true)
+    expect(s().addOdds('b1', 1)).toBe(false)
+    expect(s().notice).toBe('Max odds here is $50')
+    expect(s().bets[0].odds).toBe(50)
+  })
+
+  test('come odds are capped against the come point, not the table point', () => {
+    setProfile(10000)
+    pointPhase([{ id: 'c1', type: 'come', amount: 10, working: true, comePoint: 4 }]) // table point 6 (5x)
+    const s = () => useCrapsStore.getState()
+    expect(s().addOdds('c1', 40)).toBe(false) // 4: 3x = $30
+    expect(s().notice).toBe('Max odds here is $30')
+    expect(s().addOdds('c1', 30)).toBe(true)
+  })
+
+  test("don't pass uses the lay cap (6x under 3-4-5x)", () => {
+    setProfile(10000)
+    pointPhase([{ id: 'd1', type: 'dont-pass', amount: 10, working: true }])
+    const s = () => useCrapsStore.getState()
+    expect(s().addOdds('d1', 60)).toBe(true)
+    expect(s().addOdds('d1', 1)).toBe(false)
+    expect(s().notice).toBe('Max odds here is $60')
+  })
+
+  test('odds need a point', () => {
+    setProfile(10000)
+    pointPhase([{ id: 'c1', type: 'come', amount: 10, working: true }])
+    const s = () => useCrapsStore.getState()
+    expect(s().addOdds('c1', 5)).toBe(false)
+    expect(s().notice).toBe('Odds go on a bet with a point')
+    useCrapsStore.setState({ phase: 'come-out', point: null, bets: [passBet(10)] })
+    expect(s().addOdds('b1', 5)).toBe(false)
+    expect(s().notice).toBe('Odds go on a bet with a point')
+  })
+
+  test('removing odds is never refused by the cap', () => {
+    setProfile(10000)
+    pointPhase([{ ...passBet(10), odds: 80 }]) // over the cap already
+    const s = () => useCrapsStore.getState()
+    expect(s().addOdds('b1', -10)).toBe(true)
+    expect(s().bets[0].odds).toBe(70)
+  })
+
+  test('setNotice sets and clears the notice', () => {
+    const s = () => useCrapsStore.getState()
+    s().setNotice('Make a Pass bet first')
+    expect(s().notice).toBe('Make a Pass bet first')
+    s().setNotice(null)
+    expect(s().notice).toBeNull()
+  })
+
   test('canAfford reflects balance minus money at risk; infinite always true', () => {
     setProfile(100)
     pointPhase([{ ...passBet(50), odds: 20 }])

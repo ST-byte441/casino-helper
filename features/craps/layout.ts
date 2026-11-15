@@ -45,7 +45,8 @@ export type CrapsLayout = {
 
 // Widths as fractions of the felt width.
 const LEFT_W = 0.1
-const PROPS_W = 0.16
+// Wide enough for four Hardways in one row at >= 32dp each on the narrowest table felt.
+const PROPS_W = 0.2
 const DICE_W = 0.11
 // Band heights as weights of the felt height. Missing bands go to the Field.
 const BAND = { boxes: 24, come: 19, field: 19, dontPass: 14, pass: 24 }
@@ -65,6 +66,16 @@ const BOX_LABEL: Record<number, string> = { 6: 'SIX', 9: 'NINE' }
 
 const centre = (r: Rect): Pt => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 })
 const contains = (r: Rect, x: number, y: number) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h
+
+/** The table view's chrome around the felt: slim header, chip tray column at the left, frame margin. */
+export const TABLE_HEADER_H = 28
+export const TABLE_TRAY_W = 60
+export const TABLE_MARGIN = 4
+
+/** The felt size the table view gives a screen of w×h (before safe-area insets). */
+export function tableFeltSize(w: number, h: number): { width: number; height: number } {
+  return { width: w - TABLE_TRAY_W - 2 * TABLE_MARGIN, height: h - TABLE_HEADER_H - 2 * TABLE_MARGIN }
+}
 
 export function boxNumbers(variant: CrapsVariant): number[] {
   return variant === 'craps' ? STD_NUMBERS : WIDE_NUMBERS
@@ -145,23 +156,22 @@ export function buildCrapsLayout(variant: CrapsVariant, width: number, height: n
     x: width * PASS_ODDS_X0, y: poY, w: width * (PASS_ODDS_X1 - PASS_ODDS_X0), h: passY + passH - poY - ODDS_PAD,
   }, 'odds')
 
-  // Props box: 7 rows, 2 columns where paired.
-  const rowH = passY / 7
-  const cw = propsW / 2
-  const full = (row: number): Rect => ({ x: propsX, y: row * rowH, w: propsW, h: rowH })
-  const cell = (row: number, col: number): Rect => ({ x: propsX + col * cw, y: row * rowH, w: cw, h: rowH })
-  add('any-7', 'SEVEN', full(0), 'prop')
-  add('hard:6', 'HARD 6', cell(1, 0), 'prop')
-  add('hard:10', 'HARD 10', cell(1, 1), 'prop')
-  add('hard:8', 'HARD 8', cell(2, 0), 'prop')
-  add('hard:4', 'HARD 4', cell(2, 1), 'prop')
-  add('craps-2', '2', cell(3, 0), 'prop')
-  add('craps-3', '3', cell(3, 1), 'prop')
-  add('craps-12', '12', cell(4, 0), 'prop')
-  add('yo-11', '11', cell(4, 1), 'prop')
-  add('any-craps', 'ANY CRAPS', full(5), 'prop')
-  add('ce', 'C&E', cell(6, 0), 'prop')
-  add('horn', 'HORN', cell(6, 1), 'prop')
+  // Props box: 5 rows (so each stays >= 32dp on the shortest felt), split into `cols` cells where paired.
+  const rowH = passY / 5
+  const cell = (row: number, col: number, cols: number): Rect =>
+    ({ x: propsX + col * (propsW / cols), y: row * rowH, w: propsW / cols, h: rowH })
+  add('any-7', 'SEVEN', cell(0, 0, 1), 'prop')
+  add('hard:6', 'HARD 6', cell(1, 0, 4), 'prop')
+  add('hard:10', 'HARD 10', cell(1, 1, 4), 'prop')
+  add('hard:8', 'HARD 8', cell(1, 2, 4), 'prop')
+  add('hard:4', 'HARD 4', cell(1, 3, 4), 'prop')
+  add('craps-2', '2', cell(2, 0, 4), 'prop')
+  add('craps-3', '3', cell(2, 1, 4), 'prop')
+  add('craps-12', '12', cell(2, 2, 4), 'prop')
+  add('yo-11', '11', cell(2, 3, 4), 'prop')
+  add('any-craps', 'ANY CRAPS', cell(3, 0, 1), 'prop')
+  add('ce', 'C&E', cell(4, 0, 2), 'prop')
+  add('horn', 'HORN', cell(4, 1, 2), 'prop')
 
   // Dice column, and the off puck.
   let diceRect: Rect = { x: diceX, y: 0, w: diceW, h: passY }

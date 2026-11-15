@@ -17,7 +17,7 @@ import { render as rtlRender, fireEvent, act } from '@testing-library/react-nati
 import { DRAG_LIFT } from '../../components/chips/chips'
 import { CrapsTable } from '../../features/craps/components/table/CrapsTable'
 import { QUALITY_COLORS, feltStacks } from '../../features/craps/components/table/CrapsFelt'
-import { buildCrapsLayout, SpotKey } from '../../features/craps/layout'
+import { buildCrapsLayout, tableFeltSize, SpotKey } from '../../features/craps/layout'
 import { useCrapsStore } from '../../features/craps/store'
 import { useProfileStore } from '../../features/profile/store'
 import { emptyStats } from '../../features/profile/stats'
@@ -29,9 +29,8 @@ const { fireGestureHandler, getByGestureTestId } = require('react-native-gesture
 const render: typeof rtlRender = (ui, options) => rtlRender(ui, { wrapper: GestureHandlerRootView, ...options })
 const flush = () => act(async () => { await new Promise(r => setTimeout(r, 0)) })
 
-// The felt's share of PHONE_LANDSCAPE (832×384) once the slim header, reason line and tray are taken.
-const FELT_W = 832
-const FELT_H = 280
+// The felt's share of PHONE_LANDSCAPE (832×384) once the slim header and the tray column are taken.
+const { width: FELT_W, height: FELT_H } = tableFeltSize(832, 384)
 const L = buildCrapsLayout('craps', FELT_W, FELT_H)
 const STANDARD: CrapsTableRules = { variant: 'craps', oddsMultiple: '3-4-5x', fieldPays3on12: false }
 
@@ -129,6 +128,31 @@ describe('CrapsTable taps', () => {
     expect(getByTestId('craps-reason').props.children).toBe('Line bets are made on the come-out')
   })
 
+  test('a chip on pass odds with no Pass bet explains why', async () => {
+    seed({ phase: 'point', point: 6 })
+    const { getByTestId } = await mount()
+    await tap('tap-chip-5')
+    await tap('tap-board', anchor('pass-odds'))
+    expect(getByTestId('craps-reason').props.children).toBe('Make a Pass bet first')
+  })
+
+  test("a chip on don't pass odds with no Don't Pass bet explains why", async () => {
+    seed({ phase: 'point', point: 6 })
+    const { getByTestId } = await mount()
+    await tap('tap-chip-5')
+    await tap('tap-board', anchor('dont-pass-odds'))
+    expect(getByTestId('craps-reason').props.children).toBe("Make a Don't Pass bet first")
+  })
+
+  test('come odds past the cap are refused on the table', async () => {
+    seed({ phase: 'point', point: 6, bets: [bet('come', 5, { comePoint: 4, odds: 15 })] }) // 4: 3x = $15
+    const { getByTestId } = await mount()
+    await tap('tap-chip-5')
+    await tap('tap-board', stackAt('come-5-4'))
+    expect(store().bets[0].odds).toBe(15)
+    expect(getByTestId('craps-reason').props.children).toBe('Max odds here is $15')
+  })
+
   test('tap a stack with no chip selected: onStackMenu is called with the bet', async () => {
     const field = bet('field', 5)
     seed({ bets: [field] })
@@ -182,6 +206,16 @@ describe('CrapsTable drags', () => {
 })
 
 describe('CrapsTable chrome', () => {
+  test('ROLL shows the result banner', async () => {
+    seed({ bets: [bet('pass', 5)] })
+    jest.spyOn(Math, 'random').mockReturnValueOnce(2.5 / 6).mockReturnValueOnce(3.5 / 6) // 3 + 4: natural
+    const { getByText, queryByText } = await mount({ onRoll: () => store().roll() })
+    expect(queryByText('Natural!')).toBeNull()
+    fireEvent.press(getByText('ROLL'))
+    expect(getByText('Natural!')).toBeTruthy()
+    jest.restoreAllMocks()
+  })
+
   test('ROLL calls onRoll', async () => {
     seed({ bets: [bet('pass', 5)] })
     const { getByText, onRoll } = await mount()

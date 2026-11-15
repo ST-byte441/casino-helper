@@ -14,12 +14,13 @@ import { TableSize } from '../../../../lib/tableSize'
 import { useProfileStore } from '../../../profile/store'
 import { formatMoney } from '../../../profile/format'
 import { getMaxLayOdds, getMaxOdds } from '../../engine'
-import { CrapsLayout, SpotKey, buildCrapsLayout, hitCraps } from '../../layout'
+import { CrapsLayout, SpotKey, TABLE_HEADER_H, TABLE_MARGIN, TABLE_TRAY_W, buildCrapsLayout, hitCraps } from '../../layout'
 import { SpotAction, spotAction, stackTapAction } from '../../spots'
 import { getBetQuality } from '../../strategy'
 import { useCrapsStore } from '../../store'
 import { DiceDisplay } from '../DiceDisplay'
 import { RollButton } from '../RollButton'
+import { RollResultBanner } from '../RollResultBanner'
 import { CrapsFelt, feltStacks } from './CrapsFelt'
 
 export const CRAPS_CHIPS = [1, 5, 25, 100] as const
@@ -83,13 +84,23 @@ function actionFor(target: TableTarget, bets: ActiveBet[], point: number | null)
   return spotAction(target.key, bets, point)
 }
 
-/** Applies a chip of `chip` dollars to the store; the store sets the notice when it refuses. */
-function applyChip(action: SpotAction, chip: number): boolean {
+const NO_LINE_BET: Partial<Record<SpotKey, string>> = {
+  'pass-odds': 'Make a Pass bet first',
+  'dont-pass-odds': "Make a Don't Pass bet first",
+}
+
+/** Applies a chip of `chip` dollars on `target` to the store; the store sets the notice when it refuses. */
+function applyChip(target: TableTarget, chip: number): boolean {
   const s = useCrapsStore.getState()
+  const action = actionFor(target, s.bets, s.point)
   switch (action.kind) {
     case 'place': return s.placeBet(action.type, chip * (action.units ?? 1), action.number, action.hopDice)
     case 'odds': return s.addOdds(action.betId, chip)
-    case 'none': return false
+    case 'none': {
+      const why = target.kind === 'spot' ? NO_LINE_BET[target.key] : undefined
+      if (why) s.setNotice(why)
+      return false
+    }
   }
 }
 
@@ -117,6 +128,9 @@ export function CrapsTable({ onRoll, onStackMenu }: Props) {
   const bets = useCrapsStore(s => s.bets)
   const point = useCrapsStore(s => s.point)
   const dice = useCrapsStore(s => s.dice)
+  const lastRoll = useCrapsStore(s => s.lastRoll)
+  const lastDelta = useCrapsStore(s => s.lastDelta)
+  const [showBanner, setShowBanner] = useState(false)
   const notice = useCrapsStore(s => s.notice)
   const tableRules = useCrapsStore(s => s.tableRules)
   const assistEnabled = useCrapsStore(s => s.assistEnabled)
@@ -142,7 +156,7 @@ export function CrapsTable({ onRoll, onStackMenu }: Props) {
         return
       }
       const t = decode(target, s.bets)
-      if (t) applyChip(actionFor(t, s.bets, s.point), source.amount)
+      if (t) applyChip(t, source.amount)
     },
     onTapPoint(x, y) {
       const s = useCrapsStore.getState()
@@ -152,7 +166,7 @@ export function CrapsTable({ onRoll, onStackMenu }: Props) {
         if (t.kind === 'stack') onStackMenu?.(t.bet)
         return
       }
-      if (applyChip(actionFor(t, s.bets, s.point), s.selectedChip) && layout) {
+      if (applyChip(t, s.selectedChip) && layout) {
         const key = t.kind === 'spot' ? t.key : hitCraps(layout, x, y)
         if (key) table.flash(key)
       }
@@ -174,14 +188,20 @@ export function CrapsTable({ onRoll, onStackMenu }: Props) {
     return lineQuality(a.type, a.number)
   }
 
-  // As the list's getQuality: line bets are optimal once their odds reach the table's cap.
+  // As the list's getQuality: line bets are optimal once their odds reach the cap at their own point.
   function lineQuality(type: BetType, number?: number): BetQuality {
     const bet = bets.find(b => b.type === type && (number == null || b.number === number))
     const hasOdds = (bet?.odds ?? 0) > 0
-    const maxOdds = !point || !bet ? 0
-      : type === 'dont-pass' ? getMaxLayOdds(bet.amount, point, tableRules.oddsMultiple)
-      : getMaxOdds(bet.amount, point, tableRules.oddsMultiple)
+    const betPoint = type === 'come' || type === 'dont-come' ? bet?.comePoint : point
+    const maxOdds = !betPoint || !bet ? 0
+      : type === 'dont-pass' || type === 'dont-come' ? getMaxLayOdds(bet.amount, betPoint, tableRules.oddsMultiple)
+      : getMaxOdds(bet.amount, betPoint, tableRules.oddsMultiple)
     return getBetQuality(type, hasOdds, hasOdds && (bet?.odds ?? 0) >= maxOdds, number)
+  }
+
+  function handleRoll() {
+    onRoll()
+    setShowBanner(true)
   }
 
   const lit = highlight && !highlight.startsWith(STACK_PREFIX) ? (highlight as SpotKey) : null
@@ -193,11 +213,17 @@ export function CrapsTable({ onRoll, onStackMenu }: Props) {
           <Text style={styles.back}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.title} numberOfLines={1}>CRAPS · {tableRules.oddsMultiple}</Text>
+        {/* The reason line lives in the slim header so the felt keeps its height. */}
+        <Text testID="craps-reason" style={styles.reason} numberOfLines={1}>{notice ?? ' '}</Text>
         <TouchableOpacity onPress={toggleAssist} hitSlop={8}>
           <Text style={[styles.assist, assistEnabled && styles.assistOn]}>Assist {assistEnabled ? '●' : '○'}</Text>
         </TouchableOpacity>
         <Text style={styles.balance}>{balance}</Text>
       </View>
+
+      <View style={styles.body}>
+      <ChipTray chips={CRAPS_CHIPS} selected={selectedChip} onSelect={selectChip} handlers={handlers}
+        direction="column" style={styles.tray} />
 
       <View style={styles.boardFrame}>
         <GestureDetector gesture={boardTap}>
@@ -230,15 +256,15 @@ export function CrapsTable({ onRoll, onStackMenu }: Props) {
             <FitWidth width={layout.diceRect.w}>
               <DiceDisplay dice={dice} point={point} />
             </FitWidth>
-            <RollButton onRoll={onRoll} disabled={bets.length === 0} />
+            <RollButton onRoll={handleRoll} disabled={bets.length === 0} />
           </View>
         )}
       </View>
+      </View>
 
-      <Text testID="craps-reason" style={styles.reason} numberOfLines={1}>{notice ?? ' '}</Text>
-
-      <ChipTray chips={CRAPS_CHIPS} selected={selectedChip} onSelect={selectChip} handlers={handlers}
-        style={styles.tray} />
+      {showBanner && (
+        <RollResultBanner resolution={lastRoll} delta={lastDelta} onDismiss={() => setShowBanner(false)} />
+      )}
 
       {dragAmount !== null && (
         <Animated.View pointerEvents="none" style={[styles.ghost, ghostStyle]}>
@@ -251,20 +277,21 @@ export function CrapsTable({ onRoll, onStackMenu }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#13131f' },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingVertical: 4,
+  header: { height: TABLE_HEADER_H, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12,
     borderBottomWidth: 1, borderColor: '#2a2a3e' },
   back: { color: '#aaa', fontSize: 14 },
-  title: { flex: 1, color: '#FFD700', fontWeight: '700', fontSize: 14 },
+  title: { color: '#FFD700', fontWeight: '700', fontSize: 14 },
+  reason: { flex: 1, color: '#aaa', fontSize: 13, textAlign: 'center' },
   assist: { color: '#aaa', fontSize: 13 },
   assistOn: { color: '#FFD700' },
   balance: { color: '#fff', fontWeight: '700', fontSize: 13 },
-  boardFrame: { flex: 1, marginHorizontal: 8, marginTop: 4 },
+  body: { flex: 1, flexDirection: 'row' },
+  boardFrame: { flex: 1, margin: TABLE_MARGIN },
   board: { flex: 1 },
   stackHandle: { position: 'absolute' },
   dice: { position: 'absolute', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   fitInner: { alignSelf: 'center' },
-  reason: { color: '#aaa', fontSize: 13, textAlign: 'center', marginTop: 2 },
-  tray: { paddingVertical: 6 },
+  tray: { width: TABLE_TRAY_W, paddingHorizontal: 0 },
   // Slightly see-through so the highlighted area shows through the chip.
   ghost: { position: 'absolute', left: 0, top: 0, opacity: 0.8 },
 })
