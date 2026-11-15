@@ -8,6 +8,11 @@ jest.mock('zustand/middleware', () => {
   return { ...actual, persist: (config: any) => config, createJSONStorage: () => undefined }
 })
 jest.mock('expo-router', () => ({ useRouter: () => ({ back: jest.fn() }) }))
+let mockWindow = { width: 384, height: 832, scale: 3, fontScale: 1 }
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
+  __esModule: true,
+  default: () => mockWindow,
+}))
 import 'react-native-gesture-handler/jestSetup'
 
 import React from 'react'
@@ -30,8 +35,81 @@ function dealWith(mode: 'squeeze' | 'flip') {
   useBaccaratStore.getState().deal(mode)
 }
 
-beforeEach(() => jest.useFakeTimers())
+type Win = { width: number; height: number }
+export const PHONE: Win = { width: 384, height: 832 }
+const COMPACT: Win = { width: 320, height: 700 }
+const LARGE_PORTRAIT: Win = { width: 673, height: 884 }
+const LARGE_LANDSCAPE: Win = { width: 884, height: 673 }
+function setWindow(w: Win) {
+  mockWindow = { ...w, scale: 3, fontScale: 1 }
+}
+// Player K,K (0) and Banker K,K (0) both draw: a 5 each, so both hands end with 3 cards.
+const THIRD_CARDS: Card[] = [c('K'), c('K'), c('K'), c('K'), c('5'), c('5'), ...Array.from({ length: 10 }, () => c('K'))]
+
+function seedProfile(balance = 1000) {
+  const { useProfileStore } = require('../../features/profile/store')
+  const { emptyStats } = require('../../features/profile/stats')
+  useProfileStore.setState({
+    profiles: [{ id: 'p', name: 'T', bankrollMode: 'finite', balance, createdAt: 0,
+      startingBalance: balance, trackingSince: 0, refills: [], stats: emptyStats() }],
+    activeProfileId: 'p',
+  })
+}
+
+function dealDeck(cards: Card[], mode: 'squeeze' | 'flip') {
+  useBaccaratStore.getState().newHand()
+  useBaccaratStore.setState({ deck: [...cards] })
+  useBaccaratStore.getState().placeBet('player', 15)
+  useBaccaratStore.getState().deal(mode)
+}
+
+function revealAll() {
+  while (useBaccaratStore.getState().phase === 'revealing') useBaccaratStore.getState().revealNext()
+}
+
+beforeEach(() => {
+  jest.useFakeTimers()
+  setWindow(PHONE)
+})
 afterEach(() => jest.useRealTimers())
+
+describe('phone layout (must not change)', () => {
+  beforeEach(() => seedProfile())
+
+  test('betting, empty', () => {
+    useBaccaratStore.getState().newHand()
+    expect(render(<BaccaratScreen />).toJSON()).toMatchSnapshot()
+  })
+
+  test('betting, $15 on Player', () => {
+    useBaccaratStore.getState().newHand()
+    useBaccaratStore.getState().placeBet('player', 15)
+    expect(render(<BaccaratScreen />).toJSON()).toMatchSnapshot()
+  })
+
+  test('squeeze, first card', () => {
+    dealDeck(THIRD_CARDS, 'squeeze')
+    expect(render(<BaccaratScreen />).toJSON()).toMatchSnapshot()
+  })
+
+  test('flip, first card', () => {
+    dealDeck(THIRD_CARDS, 'flip')
+    expect(render(<BaccaratScreen />).toJSON()).toMatchSnapshot()
+  })
+
+  test('result, three cards each', () => {
+    dealDeck(THIRD_CARDS, 'flip')
+    revealAll()
+    expect(useBaccaratStore.getState().phase).toBe('result')
+    expect(render(<BaccaratScreen />).toJSON()).toMatchSnapshot()
+  })
+
+  test('compact 320×700, betting', () => {
+    setWindow(COMPACT)
+    useBaccaratStore.getState().newHand()
+    expect(render(<BaccaratScreen />).toJSON()).toMatchSnapshot()
+  })
+})
 
 test('table does not bounce while squeezing', () => {
   dealWith('squeeze')
