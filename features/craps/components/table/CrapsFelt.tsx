@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native'
 import { Text } from '../../../../components/Text'
 import { CHIP_COLORS, stackChip } from '../../../../components/chips/chips'
 import { ActiveBet, BetQuality } from '../../../../lib/types'
-import { Area, CrapsLayout, Pt, SpotKey, slotFor } from '../../layout'
+import { Area, CrapsLayout, Pt, Rect, SpotKey, slotFor } from '../../layout'
 
 /*
  * The drawn craps felt: areas, chip stacks and the puck. Purely presentational (no gestures, no store);
@@ -57,8 +57,8 @@ const fit = (chars: number, w: number, h: number, share: number, max = 40) =>
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi)
 
-function AreaView({ area, lit, tint, fieldPays3on12 }: {
-  area: Area; lit: boolean; tint: string | null; fieldPays3on12: boolean
+function AreaView({ area, labelBox, lit, tint, fieldPays3on12 }: {
+  area: Area; labelBox?: Rect; lit: boolean; tint: string | null; fieldPays3on12: boolean
 }) {
   const { x, y, w, h } = area.rect
   const border = lit ? { borderColor: YELLOW, borderWidth: 2 } : tint ? { borderColor: tint, borderWidth: 2 } : null
@@ -69,13 +69,20 @@ function AreaView({ area, lit, tint, fieldPays3on12 }: {
       style={[styles.area, { left: x, top: y, width: w, height: h },
         { backgroundColor: area.tone === 'odds' ? ODDS_FELT : FELT }, border, lit && { backgroundColor: LIT_BG }]}
     >
-      <Label area={area} fieldPays3on12={fieldPays3on12} />
+      {labelBox ? (
+        // Its own label box (line bands: left of centre, clear of the odds strip).
+        <View testID={`label-${area.key}`} style={[styles.labelBox, {
+          left: labelBox.x - x, top: labelBox.y - y, width: labelBox.w, height: labelBox.h,
+        }]}>
+          <Label area={area} box={labelBox} fieldPays3on12={fieldPays3on12} />
+        </View>
+      ) : <Label area={area} box={area.rect} fieldPays3on12={fieldPays3on12} />}
     </View>
   )
 }
 
-function Label({ area, fieldPays3on12 }: { area: Area; fieldPays3on12: boolean }) {
-  const { w, h } = area.rect
+function Label({ area, box, fieldPays3on12 }: { area: Area; box: Rect; fieldPays3on12: boolean }) {
+  const { w, h } = box
   const one = (text: string, size: number, color = '#fff') => (
     <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.label, { fontSize: size, color }]}>{text}</Text>
   )
@@ -106,7 +113,10 @@ function Label({ area, fieldPays3on12 }: { area: Area; fieldPays3on12: boolean }
     case 'box': return one(area.label, fit(area.label.length, w, h, 0.36), YELLOW)
     case 'prop': return one(area.label, fit(area.label.length, w, h, 0.45, 22), YELLOW)
     case 'odds': return one(area.label, fit(area.label.length, w, h, 0.4, 14))
-    default: return one(area.label, fit(area.label.length, w, h, area.key === 'pass' ? 0.3 : 0.36, 30))
+    default: {
+      const share = area.key === 'pass' ? 0.32 : area.key === 'dont-pass' ? 0.4 : 0.36
+      return one(area.label, fit(area.label.length, w, h, share, 30))
+    }
   }
 }
 
@@ -231,7 +241,7 @@ export function CrapsFelt({ layout, bets, point, highlight, quality, fieldPays3o
       {areas.map(a => {
         const q = quality?.(a.key) ?? null
         return (
-          <AreaView key={a.key} area={a} lit={highlight === a.key} tint={q ? QUALITY_COLORS[q] : null}
+          <AreaView key={a.key} area={a} labelBox={layout.labels[a.key]} lit={highlight === a.key} tint={q ? QUALITY_COLORS[q] : null}
             fieldPays3on12={fieldPays3on12} />
         )
       })}
@@ -263,6 +273,7 @@ const styles = StyleSheet.create({
   area: { position: 'absolute', borderWidth: 1, borderColor: LINE, alignItems: 'center', justifyContent: 'center',
     overflow: 'hidden', paddingHorizontal: 2 },
   label: { fontWeight: '800', textAlign: 'center', letterSpacing: 0.5 },
+  labelBox: { position: 'absolute', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   fieldRow: { flexDirection: 'row', alignSelf: 'stretch', justifyContent: 'space-between', paddingHorizontal: 6 },
   stack: { position: 'absolute', borderStyle: 'dashed', borderColor: YELLOW, alignItems: 'center',
     justifyContent: 'center' },

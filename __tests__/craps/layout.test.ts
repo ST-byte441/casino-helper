@@ -1,4 +1,5 @@
-import { buildCrapsLayout, hitCraps, slotFor, tableFeltSize, CrapsLayout, SpotKey } from '../../features/craps/layout'
+import { buildCrapsLayout, hitCraps, labelRect, slotFor, tableFeltSize, CrapsLayout, SpotKey } from '../../features/craps/layout'
+import { feltStacks } from '../../features/craps/components/table/CrapsFelt'
 import { ActiveBet, CrapsVariant } from '../../lib/types'
 
 type R = { x: number; y: number; w: number; h: number }
@@ -31,6 +32,13 @@ const overlap = (a: R, b: R) => {
   return a.x < b.x + b.w - eps && b.x < a.x + a.w - eps && a.y < b.y + b.h - eps && b.y < a.y + a.h - eps
 }
 const bet = (b: Partial<ActiveBet> & Pick<ActiveBet, 'type'>): ActiveBet => ({ id: 'b', amount: 5, working: true, ...b })
+const within = (a: R, b: R) => a.x >= b.x - 1e-6 && a.y >= b.y - 1e-6 && a.x + a.w <= b.x + b.w + 1e-6 && a.y + a.h <= b.y + b.h + 1e-6
+/** A circle of radius r at c against a rect: true when they share any point beyond a hair. */
+const circleHits = (c: { x: number; y: number }, r: number, b: R) => {
+  const dx = c.x - Math.min(Math.max(c.x, b.x), b.x + b.w)
+  const dy = c.y - Math.min(Math.max(c.y, b.y), b.y + b.h)
+  return Math.hypot(dx, dy) < r - 1e-6
+}
 
 describe.each(cases)('%s at %dx%d', (variant, width, height) => {
   let L: CrapsLayout
@@ -85,6 +93,25 @@ describe.each(cases)('%s at %dx%d', (variant, width, height) => {
     for (const a of L.areas.filter(a => ['come', 'dont-pass', variant === 'easy' ? 'high-field' : 'field'].includes(a.key)))
       expect([a.key, a.rect.x + a.rect.w]).toEqual([a.key, expect.closeTo(propsX, 5)])
     expect(L.moreRect.x + L.moreRect.w).toBeCloseTo(width)
+  })
+
+  it('the line labels sit left of centre with their odds area to the right, never under the label', () => {
+    const lines: [SpotKey, SpotKey][] = [['pass', 'pass-odds'], ['dont-pass', 'dont-pass-odds']]
+    for (const [line, odds] of lines) {
+      const area = L.areas.find(a => a.key === line)
+      const oddsArea = L.areas.find(a => a.key === odds)
+      if (!area || !oddsArea) continue
+      const label = labelRect(L, line)
+      expect([line, within(label, area.rect)]).toEqual([line, true])
+      expect([line, label.w >= 32, label.h >= 20]).toEqual([line, true, true])
+      expect(centre(label).x).toBeLessThan(centre(area.rect).x)
+      expect([odds, overlap(oddsArea.rect, label)]).toEqual([odds, false])
+      expect(oddsArea.rect.x).toBeGreaterThanOrEqual(label.x + label.w)
+      // The drawn stacks: the flat bet and its odds stay off the label.
+      const flat = bet({ id: line, type: line as ActiveBet['type'], odds: 10 })
+      for (const s of feltStacks(L, [flat], 6))
+        expect([s.key, circleHits(s.at, s.size / 2, label)]).toEqual([s.key, false])
+    }
   })
 
   it('hitCraps at each area centre returns its key', () => {

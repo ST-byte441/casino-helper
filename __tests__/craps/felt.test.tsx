@@ -2,7 +2,7 @@ import React from 'react'
 import { StyleSheet } from 'react-native'
 import { render } from '@testing-library/react-native'
 import { CrapsFelt } from '../../features/craps/components/table/CrapsFelt'
-import { buildCrapsLayout, CrapsLayout, Rect } from '../../features/craps/layout'
+import { buildCrapsLayout, labelRect, CrapsLayout, Rect } from '../../features/craps/layout'
 import { ActiveBet, CrapsVariant } from '../../lib/types'
 
 const bet = (b: Partial<ActiveBet> & Pick<ActiveBet, 'type' | 'id'>): ActiveBet => ({ amount: 5, working: true, ...b })
@@ -28,6 +28,18 @@ describe.each(cases)('%s at %dx%d', (variant, width, height) => {
     for (const a of L.areas) {
       const b = boxOf(getByTestId(`area-${a.key}`))
       expect(b).toMatchObject({ left: a.rect.x, top: a.rect.y, width: a.rect.w, height: a.rect.h })
+    }
+  })
+
+  it('draws the line labels in their own label box', () => {
+    const { getByTestId } = draw(L, { point: 6 })
+    for (const key of ['pass', 'dont-pass'] as const) {
+      const area = L.areas.find(a => a.key === key)
+      if (!area) continue
+      const lb = labelRect(L, key)
+      expect(boxOf(getByTestId(`label-${key}`))).toMatchObject({
+        left: lb.x - area.rect.x, top: lb.y - area.rect.y, width: lb.w, height: lb.h,
+      })
     }
   })
 

@@ -16,7 +16,8 @@ import type { TableSize } from '../../lib/tableSize'
  * their height to the Field. The props box runs from the top down to the bottom band.
  *
  * Odds areas ("behind the line") are smaller strips inside their line band, so `hitCraps` (smallest area wins)
- * resolves them; the line's own centre stays outside its odds strip.
+ * resolves them; the line's own centre stays outside its odds strip. The line's label sits left of centre in its
+ * own box (`labelRect`) and the odds strip to the right of it, so odds chips never cover the label.
  *
  * More bets strip: a thin band at the bottom of the props box (`moreRect`, not an area: it takes no chip) where the
  * More bets panel's World, Hi-Lo and Hop stacks are drawn, so they never sit on a props cell.
@@ -46,6 +47,8 @@ export type CrapsLayout = {
   /** The More bets strip under the props cells (World, Hi-Lo, Hops). */
   moreRect: Rect
   boxSlots: Record<number, BoxSlots>
+  /** Where an area's label is drawn when that isn't the whole area (see `labelRect`). */
+  labels: Partial<Record<SpotKey, Rect>>
   offPuck: Pt
   anchors: Record<SpotKey, Pt>
 }
@@ -58,11 +61,14 @@ const PROPS_W = 0.2
 const DICE_W = 0.28
 // Band heights as weights of the felt height. Missing bands go to the Field.
 const BAND = { boxes: 24, come: 19, field: 19, dontPass: 14, pass: 24 }
-// Behind-the-line strips.
-const PASS_ODDS_X0 = 0.55
-const PASS_ODDS_X1 = 0.75
-const PASS_ODDS_TOP = 0.45 // fraction of the Pass band where its odds strip starts
-const DP_ODDS_W = 0.14
+// Line bands, as fractions of the band's width: the label's box (left of centre), then the odds strip to its right.
+// The flat bet sits at the band's centre, between the two. Pass stops short of its right end for the off puck.
+const LINE_LABEL_X0 = 0.03
+const LINE_LABEL_X1 = 0.44
+const PASS_ODDS_X0 = 0.56
+const PASS_ODDS_X1 = 0.84
+const DP_ODDS_X0 = 0.58
+const DP_ODDS_X1 = 0.94
 const ODDS_PAD = 2
 // Without Don't Come the off puck sits at this fraction of the Pass Line's width (past its odds).
 const OFF_PUCK_X = 0.92
@@ -137,6 +143,7 @@ export function buildCrapsLayout(variant: CrapsVariant, width: number, height: n
   const easyField = isValidBetForVariant('low-field', variant)
 
   const areas: Area[] = []
+  const labels: CrapsLayout['labels'] = {}
   const add = (key: SpotKey, label: string, rect: Rect, tone: Area['tone']) => areas.push({ key, label, rect, tone })
 
   // Vertical bands.
@@ -193,17 +200,19 @@ export function buildCrapsLayout(variant: CrapsVariant, width: number, height: n
   } else {
     add('field', 'FIELD', { x: midX, y: fieldY, w: midW, h: fieldH }, 'field')
   }
+  // A line band: its label's box left of centre, its odds strip (fractions x0..x1 of the band) right of the label.
+  const line = (key: SpotKey, label: string, r: Rect, odds: SpotKey, oddsLabel: string, x0: number, x1: number) => {
+    add(key, label, r, 'line')
+    const at = (f: number) => r.x + f * r.w
+    labels[key] = { x: at(LINE_LABEL_X0), y: r.y + ODDS_PAD, w: at(LINE_LABEL_X1) - at(LINE_LABEL_X0), h: r.h - 2 * ODDS_PAD }
+    add(odds, oddsLabel, { x: at(x0), y: r.y + ODDS_PAD, w: at(x1) - at(x0), h: r.h - 2 * ODDS_PAD }, 'odds')
+  }
   if (hasDP) {
-    add('dont-pass', "DON'T PASS BAR 12", { x: midX, y: dpY, w: midW, h: dpH }, 'line')
-    const ow = width * DP_ODDS_W
-    add('dont-pass-odds', 'LAY ODDS', { x: propsX - ow, y: dpY + ODDS_PAD, w: ow - ODDS_PAD, h: dpH - 2 * ODDS_PAD }, 'odds')
+    line('dont-pass', "DON'T PASS BAR 12", { x: midX, y: dpY, w: midW, h: dpH }, 'dont-pass-odds', 'LAY ODDS',
+      DP_ODDS_X0, DP_ODDS_X1)
   }
   const passW = diceX
-  add('pass', 'PASS LINE', { x: 0, y: passY, w: passW, h: passH }, 'line')
-  const poY = passY + passH * PASS_ODDS_TOP
-  add('pass-odds', 'ODDS', {
-    x: passW * PASS_ODDS_X0, y: poY, w: passW * (PASS_ODDS_X1 - PASS_ODDS_X0), h: passY + passH - poY - ODDS_PAD,
-  }, 'odds')
+  line('pass', 'PASS LINE', { x: 0, y: passY, w: passW, h: passH }, 'pass-odds', 'ODDS', PASS_ODDS_X0, PASS_ODDS_X1)
 
   // Props box: 5 rows (so each stays >= 32dp on the shortest felt), split into `cols` cells where paired, over the
   // More bets strip.
@@ -233,7 +242,16 @@ export function buildCrapsLayout(variant: CrapsVariant, width: number, height: n
   const anchors = {} as Record<SpotKey, Pt>
   for (const a of areas) anchors[a.key] = a.tone === 'box' ? boxSlots[Number(a.key.slice(4))].place : centre(a.rect)
 
-  return { width, height, areas, diceRect, moreRect, boxSlots, offPuck, anchors }
+  return { width, height, areas, diceRect, moreRect, boxSlots, labels, offPuck, anchors }
+}
+
+/** The box an area's label is drawn in: its own label box where it has one, else the whole area. */
+export function labelRect(layout: CrapsLayout, key: SpotKey): Rect {
+  const own = layout.labels[key]
+  if (own) return own
+  const a = layout.areas.find(x => x.key === key)
+  if (!a) throw new Error(`no area ${key}`)
+  return a.rect
 }
 
 /** The smallest area containing the point, or null off every area. */
