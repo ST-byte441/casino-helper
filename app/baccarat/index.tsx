@@ -118,6 +118,12 @@ export default function BaccaratScreen() {
       // The squeeze card's pan blocks this scroll (see SqueezeCard scrollRef), so a drag on
       // the card peels it while the rest of the table still scrolls on short screens.
       bounces={!isSqueezing}
+      // Large screens: the stacked big hands plus the 280dp squeeze card can be taller than the felt, and
+      // the card's bottom edge (where the peel starts) and Flip it would sit below the fold. Scroll to the
+      // card whenever the reveal content grows. Phones fit, and keep the original felt (no handler).
+      {...(size === 'large' && isRevealing
+        ? { onContentSizeChange: () => tableRef.current?.scrollToEnd({ animated: true }) }
+        : {})}
     >
       {isBetting ? (
         <Text style={size === 'large' ? [styles.waiting, styles.waitingLarge] : styles.waiting}>Place your bets</Text>

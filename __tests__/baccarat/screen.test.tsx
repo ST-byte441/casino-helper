@@ -314,3 +314,38 @@ describe('large landscape', () => {
     expect(UNSAFE_root.findAll((n: any) => n.type === ScrollView && n.props.testID === 'bac-panel')).toHaveLength(1)
   })
 })
+
+describe('the squeeze card is scrolled into view on large screens', () => {
+  const { fireEvent: fire } = require('@testing-library/react-native')
+  const { ScrollView } = require('react-native')
+  beforeEach(() => seedProfile())
+
+  const feltScroll = (root: any) =>
+    root.findAll((n: any) => n.type === ScrollView && n.props.testID === 'baccarat-table')[0]
+
+  test.each([['portrait', LARGE_PORTRAIT], ['landscape', LARGE_LANDSCAPE]])(
+    'large %s: when the reveal content grows, the felt scrolls to the end so the card bottom and Flip it show',
+    (_name, win) => {
+      setWindow(win as Win)
+      dealDeck(THIRD_CARDS, 'squeeze')
+      const screen = render(<BaccaratScreen />)
+      const scroll = feltScroll(screen.UNSAFE_root)
+      const spy = jest.spyOn(scroll.instance, 'scrollToEnd')
+      fire(screen.getByTestId('baccarat-table'), 'contentSizeChange', 600, 920)
+      expect(spy).toHaveBeenCalled()
+    })
+
+  test('betting on a large screen does not auto-scroll', () => {
+    setWindow(LARGE_PORTRAIT)
+    useBaccaratStore.getState().newHand()
+    const screen = render(<BaccaratScreen />)
+    expect(screen.getByTestId('baccarat-table').props.onContentSizeChange).toBeUndefined()
+  })
+
+  test('phones keep the original felt (no auto-scroll handler)', () => {
+    setWindow(PHONE)
+    dealDeck(THIRD_CARDS, 'squeeze')
+    const screen = render(<BaccaratScreen />)
+    expect(screen.getByTestId('baccarat-table').props.onContentSizeChange).toBeUndefined()
+  })
+})
