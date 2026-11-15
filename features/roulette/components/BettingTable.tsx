@@ -16,6 +16,8 @@ type Props = { wheel: RouletteWheel; orientation: BoardOrientation; onSpin(): vo
 export const CHIP_SIZE = 44
 /** How long a tap-placed bet's spot stays lit. */
 const TAP_FLASH_MS = 400
+/** A deliberate press still counts as a tap; the 500ms default silently dropped slow taps. */
+const TAP_MAX_MS = 1500
 
 /** Applies a resolved drop to the roulette store. */
 export function applyDrop(action: DropAction): void {
@@ -134,7 +136,7 @@ function DragHandle({ source, ghost, onBegin, onMove, onDrop, onFinish, onTap, s
     })
   // Raced against the pan: a finger that moves 2px+ drags, one that lifts without moving taps.
   const gesture = onTap
-    ? Gesture.Race(pan, Gesture.Tap().withTestId(`tap-${testID ?? source.type}`).onEnd((_e, success) => {
+    ? Gesture.Race(pan, Gesture.Tap().maxDuration(TAP_MAX_MS).withTestId(`tap-${testID ?? source.type}`).onEnd((_e, success) => {
         if (success) scheduleOnRN(onTap)
       }))
     : pan
@@ -232,7 +234,7 @@ export function BettingTable({ wheel, orientation, onSpin }: Props) {
   }
 
   // Board-local point: the tap's detector is on the measured board view itself.
-  const boardTap = Gesture.Tap().withTestId('tap-board').onEnd((e, success) => {
+  const boardTap = Gesture.Tap().maxDuration(TAP_MAX_MS).withTestId('tap-board').onEnd((e, success) => {
     if (success) scheduleOnRN(onBoardTap, e.x, e.y)
   })
 

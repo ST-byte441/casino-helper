@@ -405,6 +405,12 @@ describe('tap to place', () => {
     expect(utils.getByText('Not enough balance')).toBeTruthy()
   })
 
+  test('a slow, deliberate press still counts as a tap (up to 1.5s)', async () => {
+    await mount()
+    expect(getByGestureTestId('tap-chip-5').config.maxDurationMs).toBeGreaterThanOrEqual(1500)
+    expect(getByGestureTestId('tap-board').config.maxDurationMs).toBeGreaterThanOrEqual(1500)
+  })
+
   test('tapping a tray chip does not start a drag ghost', async () => {
     const utils = await mount()
     const chips = () => utils.UNSAFE_root.findAll((n: any) => n.type === 'Text' && /^\$\d+$/.test(String(n.props.children?.join?.('') ?? n.props.children))).length
