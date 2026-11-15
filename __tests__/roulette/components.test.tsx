@@ -57,7 +57,7 @@ describe('RouletteSetup', () => {
     expect(getByText('0 · 2.70% house edge')).toBeTruthy()
     fireEvent.press(getByText('Triple zero'))
     expect(getByText('0, 00, 000 · 7.69% house edge')).toBeTruthy()
-    expect(getByText('Slow shows the ball animation')).toBeTruthy()
+    expect(getByText('Fast plays the same spin in 1.5s')).toBeTruthy()
   })
 })
 

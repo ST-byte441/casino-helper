@@ -59,7 +59,7 @@ export function RouletteSetup({ initial, onStart }: Props) {
           value={settings.wheel} onChange={wheel => setSettings(s => ({ ...s, wheel }))}
         />
         <RuleRow<RouletteSpeed>
-          label="Spin" note="Slow shows the ball animation"
+          label="Spin" note="Fast plays the same spin in 1.5s"
           options={[{ label: 'Slow', value: 'slow' }, { label: 'Fast', value: 'fast' }]}
           value={settings.speed} onChange={speed => setSettings(s => ({ ...s, speed }))}
         />
