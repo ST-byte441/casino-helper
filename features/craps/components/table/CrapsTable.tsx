@@ -24,6 +24,7 @@ import { RollResultBanner } from '../RollResultBanner'
 import { CrapsFelt, feltStacks } from './CrapsFelt'
 import { StackMenu } from './StackMenu'
 import { MoreBetsSheet } from './MoreBetsSheet'
+import { RollOverlay } from './RollOverlay'
 
 export const CRAPS_CHIPS = [1, 5, 25, 100] as const
 
@@ -140,6 +141,8 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
   const lastRoll = useCrapsStore(s => s.lastRoll)
   const lastDelta = useCrapsStore(s => s.lastDelta)
   const [showBanner, setShowBanner] = useState(false)
+  // The dice tumbling over the felt after ROLL (the store has already rolled); the banner follows.
+  const [rolling, setRolling] = useState<[number, number] | null>(null)
   const [menuBet, setMenuBet] = useState<ActiveBet | null>(null)
   const [moreOpen, setMoreOpen] = useState(false)
   const phase = useCrapsStore(s => s.phase)
@@ -215,7 +218,15 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
   }
 
   function handleRoll() {
+    setShowBanner(false)
     onRoll()
+    const rolled = useCrapsStore.getState().dice
+    if (rolled) setRolling(rolled)
+    else setShowBanner(true)
+  }
+
+  function rollShown() {
+    setRolling(null)
     setShowBanner(true)
   }
 
@@ -258,8 +269,11 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
             <FitBox width={Math.max(0, layout.diceRect.w - ROLL_W - 3 * DICE_GAP)} height={layout.diceRect.h - 2 * DICE_GAP}>
               <DiceDisplay dice={dice} point={point} compact />
             </FitBox>
-            <RollButton testID="craps-roll" onRoll={handleRoll} disabled={bets.length === 0} style={styles.roll} />
+            <RollButton testID="craps-roll" onRoll={handleRoll} disabled={bets.length === 0 || rolling !== null} style={styles.roll} />
           </View>
+        )}
+        {layout && rolling && (
+          <RollOverlay dice={rolling} size={Math.round(Math.min(layout.height * 0.32, 120))} onDone={rollShown} />
         )}
       </View>
   )

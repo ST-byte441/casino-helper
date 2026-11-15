@@ -103,6 +103,19 @@ describe('phone portrait list (must not change)', () => {
   })
 })
 
+describe('phone portrait list roll', () => {
+  test('shows its result banner at once, with no rolling overlay', () => {
+    const { fireEvent } = require('@testing-library/react-native')
+    seedTable({ bets: [bet('pass', 5)] })
+    jest.spyOn(Math, 'random').mockReturnValueOnce(2.5 / 6).mockReturnValueOnce(3.5 / 6) // 3 + 4: natural
+    const { getByText, queryByTestId } = render(<CrapsScreen />)
+    fireEvent.press(getByText('ROLL'))
+    expect(getByText('Natural!')).toBeTruthy()
+    expect(queryByTestId('craps-roll-overlay')).toBeNull()
+    jest.restoreAllMocks()
+  })
+})
+
 // ---- View switching, rotation and large sizes ----
 const { createGestureController, getByGestureTestId } = require('react-native-gesture-handler/jest-utils')
 const { act } = require('@testing-library/react-native')

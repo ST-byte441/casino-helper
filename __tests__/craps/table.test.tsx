@@ -239,14 +239,50 @@ describe('CrapsTable drags', () => {
 })
 
 describe('CrapsTable chrome', () => {
-  test('ROLL shows the result banner', async () => {
-    seed({ bets: [bet('pass', 5)] })
-    jest.spyOn(Math, 'random').mockReturnValueOnce(2.5 / 6).mockReturnValueOnce(3.5 / 6) // 3 + 4: natural
-    const { getByText, queryByText } = await mount({ onRoll: () => store().roll() })
+  /** The face a rolling die shows (the one face layer at full opacity). */
+  const shownFace = (getByTestId: (id: string) => any, die: number) =>
+    [1, 2, 3, 4, 5, 6].filter(f => StyleSheet.flatten(getByTestId(`roll-die-${die}-face-${f}`).props.style).opacity === 1)
+
+  async function rollNatural() {
+    // The place bet (off on the come-out) stays up after the roll, so ROLL stays enabled for a bet.
+    seed({ bets: [bet('pass', 5), bet('place', 6, { number: 6, working: false })] })
+    const utils = await mount({ onRoll: () => store().roll() })
+    jest.useFakeTimers()
+    // 3 + 4: natural. The store rolls first, then the overlay picks its tumbling faces.
+    jest.spyOn(Math, 'random').mockReturnValueOnce(2.5 / 6).mockReturnValueOnce(3.5 / 6)
+    fireEvent.press(utils.getByText('ROLL'))
+    return utils
+  }
+  afterEach(() => { jest.useRealTimers(); jest.restoreAllMocks() })
+
+  test('ROLL resolves the bets at once and shows the rolling dice overlay, landing on the roll', async () => {
+    const { getByTestId, queryByText } = await rollNatural()
+    expect(store().dice).toEqual([3, 4])
+    expect(store().lastRoll?.phaseChange).toBe('natural')
+    expect(getByTestId('craps-roll-overlay')).toBeTruthy()
+    expect(shownFace(getByTestId, 0)).toEqual([3])
+    expect(shownFace(getByTestId, 1)).toEqual([4])
     expect(queryByText('Natural!')).toBeNull()
-    fireEvent.press(getByText('ROLL'))
+    expect(getByTestId('craps-roll')).toBeDisabled()
+  })
+
+  test('after about a second the overlay gives way to the result banner', async () => {
+    const { queryByTestId, getByText, queryByText, getByTestId } = await rollNatural()
+    act(() => { jest.advanceTimersByTime(900) })
+    expect(queryByTestId('craps-roll-overlay')).toBeTruthy()
+    expect(queryByText('Natural!')).toBeNull()
+    act(() => { jest.advanceTimersByTime(200) })
+    expect(queryByTestId('craps-roll-overlay')).toBeNull()
     expect(getByText('Natural!')).toBeTruthy()
-    jest.restoreAllMocks()
+    expect(store().bets.length).toBeGreaterThan(0)
+    expect(getByTestId('craps-roll')).not.toBeDisabled()
+  })
+
+  test('tapping the overlay skips to the result', async () => {
+    const { getByTestId, queryByTestId, getByText } = await rollNatural()
+    fireEvent.press(getByTestId('craps-roll-overlay'))
+    expect(queryByTestId('craps-roll-overlay')).toBeNull()
+    expect(getByText('Natural!')).toBeTruthy()
   })
 
   test('the dice and ROLL sit in the dice block at the Pass Line\'s right end, ROLL at least 44dp tall', async () => {

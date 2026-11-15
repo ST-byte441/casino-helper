@@ -6,7 +6,7 @@ const DIE_SIZE = 52
 const DOT = 9
 
 // [xPct, yPct] — dot centre as fraction of die size, matching real die layouts
-const FACES: Record<number, Array<[number, number]>> = {
+export const FACES: Record<number, Array<[number, number]>> = {
   1: [[0.50, 0.50]],
   2: [[0.75, 0.25], [0.25, 0.75]],
   3: [[0.75, 0.25], [0.50, 0.50], [0.25, 0.75]],
