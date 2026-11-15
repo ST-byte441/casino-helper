@@ -326,3 +326,26 @@ describe('More bets sheet', () => {
     expect(getByTestId('more-bets-notice').props.children).not.toBe(' ')
   })
 })
+
+describe('Large table', () => {
+  const { dragLift } = require('../../components/chips/chips')
+  const LG = tableFeltSize(884, 673, 'large')
+  const LL = buildCrapsLayout('craps', LG.width, LG.height)
+
+  test('a dragged 55dp chip is lifted by its own size and lands where it is drawn', async () => {
+    const utils = render(<CrapsTable size="large" onRoll={jest.fn()} />)
+    fireEvent(utils.getByTestId('craps-board'), 'layout', { nativeEvent: { layout: { x: 0, y: 0, width: LG.width, height: LG.height } } })
+    await flush()
+    // 1dp above the Field's bottom edge: the 44dp lift (2.75dp less) would drop it on Don't Pass below.
+    const f = LL.areas.find(a => a.key === 'field')!.rect
+    const p = { x: f.x + f.w / 2, y: f.y + f.h - 1 }
+    const rel = { x: p.x, y: p.y + dragLift(55) }
+    fireGestureHandler(getByGestureTestId('drag-chip-5'), [
+      { state: State.BEGAN, x: 5, y: 5 },
+      { state: State.ACTIVE, x: rel.x, y: rel.y },
+      { state: State.END, x: rel.x, y: rel.y },
+    ])
+    await flush()
+    expect(store().bets).toEqual([expect.objectContaining({ type: 'field', amount: 5 })])
+  })
+})

@@ -18,6 +18,8 @@ type Options = {
   onTapPoint(x: number, y: number): void
   /** A stack's current total, for the dragged ghost chip. */
   stackAmount(id: string): number
+  /** The chip size the table draws (and drags) its chips at; defaults to CHIP_SIZE. */
+  chipSize?: number
 }
 
 /**
@@ -26,7 +28,7 @@ type Options = {
  * board-local points before `hit` and `onDrop`. Put `rootRef`/`onRootLayout` on the view the ghost is drawn in
  * and `boardRef`/`onBoardLayout` on the board drawing area (with `boardTap`'s detector on it).
  */
-export function useChipTable({ hit, onDrop, onTapPoint, stackAmount }: Options) {
+export function useChipTable({ hit, onDrop, onTapPoint, stackAmount, chipSize = CHIP_SIZE }: Options) {
   const [boardSize, setBoardSize] = useState<{ w: number; h: number } | null>(null)
   const rootRef = useRef<React.ComponentRef<typeof View>>(null)
   const boardRef = useRef<React.ComponentRef<typeof View>>(null)
@@ -97,9 +99,9 @@ export function useChipTable({ hit, onDrop, onTapPoint, stackAmount }: Options) 
     setHighlight(null)
   }
 
-  const handlers: ChipHandlers = { ghost, onBegin, onMove, onDrop: onDropAt, onFinish }
+  const handlers: ChipHandlers = { ghost, onBegin, onMove, onDrop: onDropAt, onFinish, chipSize }
   const ghostStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: ghost.x.value - CHIP_SIZE / 2 }, { translateY: ghost.y.value - CHIP_SIZE / 2 }],
+    transform: [{ translateX: ghost.x.value - chipSize / 2 }, { translateY: ghost.y.value - chipSize / 2 }],
   }))
 
   return {

@@ -45,14 +45,18 @@ export function fingerInWindow(handleOrigin: Point, rel: Point): Point {
 export const FINGERTIP_REACH = 34
 /** Share of the dragged chip that shows above the fingertip edge; the rest tucks under the fingertip. */
 const LIFT_SHARE = 0.75
-/** How far the dragged chip's centre sits above the touch point. */
-export const DRAG_LIFT = FINGERTIP_REACH + CHIP_SIZE * LIFT_SHARE - CHIP_SIZE / 2
+/** How far the centre of a dragged chip of `chipSize` sits above the touch point. */
+export function dragLift(chipSize: number): number {
+  return FINGERTIP_REACH + chipSize * LIFT_SHARE - chipSize / 2
+}
+/** How far the dragged chip's centre sits above the touch point (at CHIP_SIZE). */
+export const DRAG_LIFT = dragLift(CHIP_SIZE)
 
 /**
- * The point a drag acts on: the finger lifted by DRAG_LIFT. The ghost chip is drawn here, and the highlight and
+ * The point a drag acts on: the finger lifted by `lift` (DRAG_LIFT, or dragLift of a scaled chip). The ghost chip is drawn here, and the highlight and
  * the drop use it too, so a chip lands exactly where it is shown.
  */
-export function dragPoint(finger: Point): Point {
+export function dragPoint(finger: Point, lift: number = DRAG_LIFT): Point {
   'worklet'
-  return { x: finger.x, y: finger.y - DRAG_LIFT }
+  return { x: finger.x, y: finger.y - lift }
 }

@@ -17,8 +17,11 @@ const variants: CrapsVariant[] = ['craps', 'crapless', 'easy']
 // The felts the table view actually produces on a phone in landscape (832x384) and the Fold cover (880x320),
 // plus the raw minimum felt, a large landscape and a large portrait felt.
 const TABLE_SCREENS: [number, number][] = [[832, 384], [880, 320]]
+// Large screens (Fold inner, landscape and portrait) with the large chrome.
+const LARGE_SCREENS: [number, number][] = [[884, 673], [673, 884]]
 const TABLE_FELTS = TABLE_SCREENS.map(([w, h]) => { const f = tableFeltSize(w, h); return [f.width, f.height] as [number, number] })
-const sizes: [number, number][] = [...TABLE_FELTS, [880, 320], [832, 360], [884, 600], [673, 420]]
+const LARGE_FELTS = LARGE_SCREENS.map(([w, h]) => { const f = tableFeltSize(w, h, 'large'); return [f.width, f.height] as [number, number] })
+const sizes: [number, number][] = [...TABLE_FELTS, ...LARGE_FELTS, [880, 320], [832, 360], [884, 600], [673, 420]]
 const cases = variants.flatMap(v => sizes.map(([w, h]) => [v, w, h] as [CrapsVariant, number, number]))
 
 const centre = (r: R) => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 })
@@ -126,5 +129,20 @@ describe('table felt sizes', () => {
     expect(new Set(props.map(a => Math.round(a.rect.y))).size).toBeLessThanOrEqual(5)
     const hard = props.filter(a => a.key.startsWith('hard:'))
     expect(new Set(hard.map(a => a.rect.y)).size).toBe(1)
+  })
+})
+
+describe('tableFeltSize', () => {
+  test('regular: the tray column and slim header come off the screen', () => {
+    expect(tableFeltSize(832, 384)).toEqual({ width: 832 - 60 - 8, height: 384 - 28 - 8 })
+  })
+  test('large landscape: a wider tray column (55dp chips) and a taller header', () => {
+    expect(tableFeltSize(884, 673, 'large')).toEqual({ width: 884 - 75 - 8, height: 673 - 36 - 8 })
+  })
+  test('large portrait: the felt at full width, landscape-shaped, with room below for the reason line and tray', () => {
+    const f = tableFeltSize(673, 884, 'large')
+    expect(f.width).toBe(673 - 8)
+    expect(f.height).toBeCloseTo((673 - 8) * 0.625)
+    expect(36 + 8 + f.height + 32 + 76).toBeLessThanOrEqual(884)
   })
 })

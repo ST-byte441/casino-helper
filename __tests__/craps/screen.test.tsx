@@ -102,3 +102,118 @@ describe('phone portrait list (must not change)', () => {
     expect(render(<CrapsScreen />).toJSON()).toMatchSnapshot()
   })
 })
+
+// ---- View switching, rotation and large sizes ----
+const { createGestureController, getByGestureTestId } = require('react-native-gesture-handler/jest-utils')
+const { act } = require('@testing-library/react-native')
+const { pickCrapsView } = require('../../app/craps')
+const { useOrientationStore } = require('../../lib/orientation')
+
+function seedFresh(state: Parameters<typeof seedTable>[0]) {
+  seedTable(state)
+  useCrapsStore.setState({ notice: null, selectedChip: null, assistEnabled: false })
+}
+
+/** The drawn width of the $5 tray chip (the ChipFace inside its drag handle). */
+function chipWidth(getByTestId: (id: string) => any): number {
+  const { StyleSheet } = require('react-native')
+  const [face] = getByTestId('chip-5').findAll((n: any) => n !== undefined && typeof n.type === 'string'
+    && StyleSheet.flatten(n.props.style)?.width != null)
+  return StyleSheet.flatten(face.props.style).width
+}
+
+describe('pickCrapsView', () => {
+  test.each([
+    ['compact', 'portrait', 'list'],
+    ['regular', 'portrait', 'list'],
+    ['compact', 'landscape', 'table'],
+    ['regular', 'landscape', 'table'],
+    ['large', 'portrait', 'table'],
+    ['large', 'landscape', 'table'],
+  ])('%s %s → %s', (sizeClass, orientation, view) => {
+    expect(pickCrapsView(sizeClass, orientation)).toBe(view)
+  })
+})
+
+describe('view switching', () => {
+  test('PHONE shows the list', () => {
+    seedFresh({})
+    const { queryByTestId } = render(<CrapsScreen />)
+    expect(queryByTestId('craps-rotate-hint')).toBeTruthy()
+    expect(queryByTestId('craps-board')).toBeNull()
+  })
+
+  test.each([
+    ['PHONE_LANDSCAPE', PHONE_LANDSCAPE],
+    ['FOLD_COVER_LANDSCAPE', FOLD_COVER_LANDSCAPE],
+    ['LARGE_PORTRAIT', LARGE_PORTRAIT],
+    ['LARGE_LANDSCAPE', LARGE_LANDSCAPE],
+  ])('%s shows the table', (_name, win) => {
+    setWindow(win)
+    seedFresh({})
+    const { queryByTestId } = render(<CrapsScreen />)
+    expect(queryByTestId('craps-board')).toBeTruthy()
+    expect(queryByTestId('craps-rotate-hint')).toBeNull()
+  })
+
+  test('LARGE_PORTRAIT puts the tray and the reason line below the felt, with large chips', () => {
+    setWindow(LARGE_PORTRAIT)
+    seedFresh({})
+    const { getByTestId } = render(<CrapsScreen />)
+    expect(getByTestId('craps-table-below')).toBeTruthy()
+    expect(getByTestId('craps-reason')).toBeTruthy()
+    expect(chipWidth(getByTestId)).toBe(55)
+  })
+
+  test('LARGE_LANDSCAPE uses large chips; PHONE_LANDSCAPE keeps 44', () => {
+    setWindow(LARGE_LANDSCAPE)
+    seedFresh({})
+    const large = render(<CrapsScreen />)
+    expect(chipWidth(large.getByTestId)).toBe(55)
+    large.unmount()
+    setWindow(PHONE_LANDSCAPE)
+    seedFresh({})
+    const phone = render(<CrapsScreen />)
+    expect(chipWidth(phone.getByTestId)).toBe(44)
+  })
+})
+
+describe('rotation', () => {
+  test('requests rotation once setup is done, withdraws it on unmount', () => {
+    useOrientationStore.setState({ rotationRequested: false })
+    useCrapsStore.setState({ phase: 'setup' })
+    const utils = render(<CrapsScreen />)
+    expect(useOrientationStore.getState().rotationRequested).toBe(false)
+    act(() => { seedFresh({}) })
+    expect(useOrientationStore.getState().rotationRequested).toBe(true)
+    utils.unmount()
+    expect(useOrientationStore.getState().rotationRequested).toBe(false)
+  })
+
+  test('PHONE → PHONE_LANDSCAPE → PHONE keeps bets and point, and leaves no ghost chip', () => {
+    seedFresh({
+      phase: 'point', point: 6,
+      bets: [bet('pass', 10, { odds: 20 }), bet('come', 5, { comePoint: 8, odds: 10 }), bet('place', 12, { number: 5 })],
+    })
+    const before = { bets: useCrapsStore.getState().bets, point: useCrapsStore.getState().point }
+    const utils = render(<CrapsScreen />)
+    setWindow(PHONE_LANDSCAPE)
+    utils.rerender(<CrapsScreen />)
+    expect(utils.queryByTestId('craps-board')).toBeTruthy()
+    // A drag under way when the phone rotates back.
+    const pan = createGestureController(getByGestureTestId('drag-chip-25'))
+    act(() => {
+      pan.begin({ x: 5, y: 5 })
+      pan.activate({ x: 40, y: 40 })
+      pan.update({ x: 60, y: 60 })
+    })
+    act(() => { jest.runOnlyPendingTimers() })
+    expect(utils.queryByTestId('chip-ghost')).toBeTruthy()
+    setWindow(PHONE)
+    utils.rerender(<CrapsScreen />)
+    expect(utils.queryByTestId('craps-rotate-hint')).toBeTruthy()
+    expect(utils.queryByTestId('chip-ghost')).toBeNull()
+    expect(useCrapsStore.getState().bets).toEqual(before.bets)
+    expect(useCrapsStore.getState().point).toBe(before.point)
+  })
+})

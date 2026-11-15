@@ -4,17 +4,17 @@ import { GestureDetector } from 'react-native-gesture-handler'
 import Animated from 'react-native-reanimated'
 import { useRouter } from 'expo-router'
 import { Text } from '../../../../components/Text'
-import { CHIP_SIZE } from '../../../../components/chips/chips'
 import { ChipFace } from '../../../../components/chips/ChipFace'
 import { ChipTray } from '../../../../components/chips/ChipTray'
 import { DragHandle } from '../../../../components/chips/DragHandle'
 import { useChipTable } from '../../../../components/chips/useChipTable'
 import { ActiveBet, BetQuality, BetType } from '../../../../lib/types'
-import { TableSize } from '../../../../lib/tableSize'
+import { TableSize, sizedStyles } from '../../../../lib/tableSize'
+import { Orientation } from '../../../../lib/screenClass'
 import { useProfileStore } from '../../../profile/store'
 import { formatMoney } from '../../../profile/format'
 import { getMaxLayOdds, getMaxOdds } from '../../engine'
-import { CrapsLayout, SpotKey, TABLE_HEADER_H, TABLE_MARGIN, TABLE_TRAY_W, buildCrapsLayout, hitCraps } from '../../layout'
+import { CrapsLayout, PORTRAIT_FELT_RATIO, SpotKey, TABLE_CHROME, TableChrome, buildCrapsLayout, hitCraps } from '../../layout'
 import { SpotAction, spotAction, stackTapAction } from '../../spots'
 import { getBetQuality } from '../../strategy'
 import { useCrapsStore } from '../../store'
@@ -28,8 +28,10 @@ import { MoreBetsSheet } from './MoreBetsSheet'
 export const CRAPS_CHIPS = [1, 5, 25, 100] as const
 
 type Props = {
-  /** Chip scaling for large screens comes later; accepted now so the screen can pass it. */
+  /** 'large' scales the chips (×1.25), the tray and the header text. */
   size: TableSize
+  /** Large portrait puts the felt at full width with the reason line and tray row below it. */
+  orientation?: Orientation
   onRoll(): void
   /** A tap on a stack with no chip selected (the stack menu). */
   onStackMenu?(bet: ActiveBet): void
@@ -116,7 +118,7 @@ function FitWidth({ width, children }: { width: number; children: React.ReactNod
   const scale = natural ? Math.min(1, width / natural.w) : 1
   return (
     <View style={{ width, height: natural ? natural.h * scale : undefined, alignItems: 'center' }}>
-      <View onLayout={onLayout} style={[styles.fitInner, natural && {
+      <View onLayout={onLayout} style={[SHEETS.regular.fitInner, natural && {
         transform: [{ translateY: -(natural.h * (1 - scale)) / 2 }, { scale }],
       }]}>
         {children}
@@ -125,7 +127,10 @@ function FitWidth({ width, children }: { width: number; children: React.ReactNod
   )
 }
 
-export function CrapsTable({ onRoll, onStackMenu }: Props) {
+export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMenu }: Props) {
+  const styles = SHEETS[size]
+  const chip = TABLE_CHROME[size].chip
+  const portrait = size === 'large' && orientation === 'portrait'
   const router = useRouter()
   const bets = useCrapsStore(s => s.bets)
   const point = useCrapsStore(s => s.point)
@@ -144,6 +149,7 @@ export function CrapsTable({ onRoll, onStackMenu }: Props) {
   const selectChip = useCrapsStore(s => s.selectChip)
   const active = useProfileStore(s => s.profiles.find(p => p.id === s.activeProfileId))
   const balance = active ? (active.bankrollMode === 'infinite' ? '∞' : formatMoney(active.balance)) : '—'
+  const isNegative = !!active && active.bankrollMode !== 'infinite' && active.balance < 0
 
   const targetAt = (x: number, y: number) => {
     const s = useCrapsStore.getState()
@@ -177,6 +183,7 @@ export function CrapsTable({ onRoll, onStackMenu }: Props) {
       }
     },
     stackAmount: id => useCrapsStore.getState().bets.find(b => b.id === id)?.amount ?? 0,
+    chipSize: chip,
   })
   const { rootRef, boardRef, onRootLayout, onBoardLayout, boardSize, handlers, ghostStyle, dragAmount,
     highlight, boardTap } = table
@@ -211,29 +218,13 @@ export function CrapsTable({ onRoll, onStackMenu }: Props) {
 
   const lit = highlight && !highlight.startsWith(STACK_PREFIX) ? (highlight as SpotKey) : null
 
-  return (
-    <View ref={rootRef} style={styles.root} onLayout={onRootLayout}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
-          <Text style={styles.back}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.title} numberOfLines={1}>CRAPS · {tableRules.oddsMultiple}</Text>
-        {/* The reason line lives in the slim header so the felt keeps its height. */}
-        <Text testID="craps-reason" style={styles.reason} numberOfLines={1}>{notice ?? ' '}</Text>
-        <TouchableOpacity testID="craps-more-bets" onPress={() => setMoreOpen(true)} hitSlop={8}>
-          <Text style={styles.assist}>More bets</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={toggleAssist} hitSlop={8}>
-          <Text style={[styles.assist, assistEnabled && styles.assistOn]}>Assist {assistEnabled ? '●' : '○'}</Text>
-        </TouchableOpacity>
-        <Text style={styles.balance}>{balance}</Text>
-      </View>
-
-      <View style={styles.body}>
-      <ChipTray chips={CRAPS_CHIPS} selected={selectedChip} onSelect={selectChip} handlers={handlers}
-        direction="column" style={styles.tray} />
-
-      <View style={styles.boardFrame}>
+  const reason = <Text testID="craps-reason" style={styles.reason} numberOfLines={1}>{notice ?? ' '}</Text>
+  const tray = (
+    <ChipTray chips={CRAPS_CHIPS} selected={selectedChip} onSelect={selectChip} handlers={handlers} size={chip}
+      direction={portrait ? 'row' : 'column'} style={portrait ? styles.trayRow : styles.tray} />
+  )
+  const boardFrame = (
+      <View style={portrait ? styles.boardFramePortrait : styles.boardFrame}>
         <GestureDetector gesture={boardTap}>
           <View ref={boardRef} testID="craps-board" style={styles.board} onLayout={onBoardLayout}>
             {layout && (
@@ -268,7 +259,41 @@ export function CrapsTable({ onRoll, onStackMenu }: Props) {
           </View>
         )}
       </View>
+  )
+
+  return (
+    <View ref={rootRef} style={styles.root} onLayout={onRootLayout}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
+          <Text style={styles.back}>← Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.title} numberOfLines={1}>CRAPS · {tableRules.oddsMultiple}</Text>
+        {/* In landscape the reason line lives in the slim header so the felt keeps its height. */}
+        {portrait ? <View style={styles.spacer} /> : reason}
+        <TouchableOpacity testID="craps-more-bets" onPress={() => setMoreOpen(true)} hitSlop={8}>
+          <Text style={styles.assist}>More bets</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={toggleAssist} hitSlop={8}>
+          <Text style={[styles.assist, assistEnabled && styles.assistOn]}>Assist {assistEnabled ? '●' : '○'}</Text>
+        </TouchableOpacity>
+        <Text style={[styles.balance, isNegative && styles.negative]}>{balance}</Text>
       </View>
+
+      {portrait ? (
+        <>
+          {boardFrame}
+          {/* Large portrait: the felt keeps its landscape shape at full width; the reason line and tray go below. */}
+          <View testID="craps-table-below" style={styles.below}>
+            <View style={styles.reasonRow}>{reason}</View>
+            {tray}
+          </View>
+        </>
+      ) : (
+        <View style={styles.body}>
+          {tray}
+          {boardFrame}
+        </View>
+      )}
 
       {showBanner && (
         <RollResultBanner resolution={lastRoll} delta={lastDelta} onDismiss={() => setShowBanner(false)} />
@@ -280,31 +305,53 @@ export function CrapsTable({ onRoll, onStackMenu }: Props) {
       <MoreBetsSheet visible={moreOpen} onClose={() => setMoreOpen(false)} />
 
       {dragAmount !== null && (
-        <Animated.View pointerEvents="none" style={[styles.ghost, ghostStyle]}>
-          <ChipFace amount={dragAmount} size={CHIP_SIZE} />
+        <Animated.View testID="chip-ghost" pointerEvents="none" style={[styles.ghost, ghostStyle]}>
+          <ChipFace amount={dragAmount} size={chip} />
         </Animated.View>
       )}
     </View>
   )
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#13131f' },
-  header: { height: TABLE_HEADER_H, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12,
-    borderBottomWidth: 1, borderColor: '#2a2a3e' },
-  back: { color: '#aaa', fontSize: 14 },
-  title: { color: '#FFD700', fontWeight: '700', fontSize: 14 },
-  reason: { flex: 1, color: '#aaa', fontSize: 13, textAlign: 'center' },
-  assist: { color: '#aaa', fontSize: 13 },
-  assistOn: { color: '#FFD700' },
-  balance: { color: '#fff', fontWeight: '700', fontSize: 13 },
-  body: { flex: 1, flexDirection: 'row' },
-  boardFrame: { flex: 1, margin: TABLE_MARGIN },
-  board: { flex: 1 },
-  stackHandle: { position: 'absolute' },
-  dice: { position: 'absolute', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  fitInner: { alignSelf: 'center' },
-  tray: { width: TABLE_TRAY_W, paddingHorizontal: 0 },
-  // Slightly see-through so the highlighted area shows through the chip.
-  ghost: { position: 'absolute', left: 0, top: 0, opacity: 0.8 },
-})
+function makeSheets(c: Record<TableSize, TableChrome>) {
+  const regular = {
+    root: { flex: 1, backgroundColor: '#13131f' },
+    header: { height: c.regular.headerH, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12,
+      borderBottomWidth: 1, borderColor: '#2a2a3e' },
+    back: { color: '#aaa', fontSize: 14 },
+    title: { color: '#FFD700', fontWeight: '700', fontSize: 14 },
+    reason: { flex: 1, color: '#aaa', fontSize: 13, textAlign: 'center' },
+    spacer: { flex: 1 },
+    assist: { color: '#aaa', fontSize: 13 },
+    assistOn: { color: '#FFD700' },
+    balance: { color: '#fff', fontWeight: '700', fontSize: 13 },
+    negative: { color: '#ff5555' },
+    body: { flex: 1, flexDirection: 'row' },
+    boardFrame: { flex: 1, margin: c.regular.margin },
+    // Large portrait: full width, landscape-shaped (tableFeltSize gives the same felt).
+    boardFramePortrait: { margin: c.regular.margin, aspectRatio: 1 / PORTRAIT_FELT_RATIO },
+    board: { flex: 1 },
+    stackHandle: { position: 'absolute' },
+    dice: { position: 'absolute', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+    fitInner: { alignSelf: 'center' },
+    tray: { width: c.regular.trayW, paddingHorizontal: 0 },
+    below: { flex: 1 },
+    reasonRow: { height: c.regular.reasonH, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12 },
+    trayRow: { height: c.regular.trayRowH, paddingVertical: 0 },
+    // Slightly see-through so the highlighted area shows through the chip.
+    ghost: { position: 'absolute', left: 0, top: 0, opacity: 0.8 },
+  } as const
+  return sizedStyles(StyleSheet.create(regular), {
+    header: { height: c.large.headerH, gap: 16, paddingHorizontal: 16 },
+    back: { fontSize: 17 },
+    title: { fontSize: 17 },
+    reason: { fontSize: 15 },
+    assist: { fontSize: 15 },
+    balance: { fontSize: 16 },
+    tray: { width: c.large.trayW, paddingHorizontal: 0 },
+    reasonRow: { height: c.large.reasonH },
+    trayRow: { height: c.large.trayRowH, paddingVertical: 0 },
+  })
+}
+
+const SHEETS = makeSheets(TABLE_CHROME)

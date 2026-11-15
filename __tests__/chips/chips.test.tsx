@@ -5,7 +5,7 @@ import 'react-native-gesture-handler/jestSetup'
 import React, { useState } from 'react'
 import { GestureHandlerRootView, State } from 'react-native-gesture-handler'
 import { render as rtlRender, act } from '@testing-library/react-native'
-import { CHIP_SIZE, DRAG_LIFT, FINGERTIP_REACH, dragPoint, fingerInWindow, stackChip } from '../../components/chips/chips'
+import { CHIP_SIZE, DRAG_LIFT, FINGERTIP_REACH, dragLift, dragPoint, fingerInWindow, stackChip } from '../../components/chips/chips'
 import { ChipTray } from '../../components/chips/ChipTray'
 import { ChipHandlers } from '../../components/chips/DragHandle'
 
@@ -44,6 +44,12 @@ describe('chip helpers', () => {
   test('dragPoint lifts the finger point by DRAG_LIFT', () => {
     expect(dragPoint({ x: 10, y: 200 })).toEqual({ x: 10, y: 200 - DRAG_LIFT })
     expect(DRAG_LIFT).toBe(FINGERTIP_REACH + CHIP_SIZE * 0.75 - CHIP_SIZE / 2)
+  })
+
+  test('a scaled chip is lifted by its own size; DRAG_LIFT is the CHIP_SIZE lift', () => {
+    expect(dragLift(CHIP_SIZE)).toBe(DRAG_LIFT)
+    expect(dragLift(55)).toBe(FINGERTIP_REACH + 55 * 0.75 - 55 / 2)
+    expect(dragPoint({ x: 10, y: 200 }, dragLift(55))).toEqual({ x: 10, y: 200 - dragLift(55) })
   })
 
   test('fingerInWindow adds the handle origin to the handle-relative point', () => {

@@ -3,7 +3,7 @@ import { View, StyleProp, ViewStyle } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { SharedValue, useSharedValue } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
-import { ChipSource, Point, TAP_MAX_MS, dragPoint, fingerInWindow } from './chips'
+import { CHIP_SIZE, ChipSource, Point, TAP_MAX_MS, dragLift, dragPoint, fingerInWindow } from './chips'
 
 export type ChipGhost = { x: SharedValue<number>; y: SharedValue<number>; origin: SharedValue<Point> }
 
@@ -14,6 +14,8 @@ export type ChipHandlers = {
   onMove(absX: number, absY: number): void
   onDrop(success: boolean, absX: number, absY: number): void
   onFinish(): void
+  /** The dragged chip's size (CHIP_SIZE unless the table scales its chips); sets how far it is lifted. */
+  chipSize?: number
 }
 
 export type DragHandleProps = ChipHandlers & {
@@ -26,7 +28,8 @@ export type DragHandleProps = ChipHandlers & {
   children?: React.ReactNode
 }
 
-export function DragHandle({ source, ghost, onBegin, onMove, onDrop, onFinish, onTap, selected, style, testID, children }: DragHandleProps) {
+export function DragHandle({ source, ghost, onBegin, onMove, onDrop, onFinish, chipSize = CHIP_SIZE, onTap, selected, style, testID, children }: DragHandleProps) {
+  const lift = dragLift(chipSize)
   const selfRef = useRef<React.ComponentRef<typeof View>>(null)
   // This handle's window origin, in the same measureInWindow frame as the board and root origins.
   const self = useSharedValue<Point>({ x: 0, y: 0 })
@@ -42,20 +45,20 @@ export function DragHandle({ source, ghost, onBegin, onMove, onDrop, onFinish, o
       scheduleOnRN(measureSelf)
     })
     .onStart(e => {
-      const p = dragPoint(fingerInWindow(self.value, { x: e.x, y: e.y }))
+      const p = dragPoint(fingerInWindow(self.value, { x: e.x, y: e.y }), lift)
       ghost.x.value = p.x - ghost.origin.value.x
       ghost.y.value = p.y - ghost.origin.value.y
       scheduleOnRN(onBegin, source, p.x, p.y)
     })
     .onUpdate(e => {
-      const p = dragPoint(fingerInWindow(self.value, { x: e.x, y: e.y }))
+      const p = dragPoint(fingerInWindow(self.value, { x: e.x, y: e.y }), lift)
       ghost.x.value = p.x - ghost.origin.value.x
       ghost.y.value = p.y - ghost.origin.value.y
       scheduleOnRN(onMove, p.x, p.y)
     })
     // success is false when an active gesture was cancelled or failed; onDrop then does nothing.
     .onEnd((e, success) => {
-      const p = dragPoint(fingerInWindow(self.value, { x: e.x, y: e.y }))
+      const p = dragPoint(fingerInWindow(self.value, { x: e.x, y: e.y }), lift)
       scheduleOnRN(onDrop, success, p.x, p.y)
     })
     // Runs on every outcome (end, cancel, fail), so the ghost and highlight are always cleared.

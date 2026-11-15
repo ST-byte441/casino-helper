@@ -1,5 +1,7 @@
 import { ActiveBet, CrapsVariant } from '../../lib/types'
 import { isValidBetForVariant } from './engine'
+import { CHIP_SIZE } from '../../components/chips/chips'
+import type { TableSize } from '../../lib/tableSize'
 
 /*
  * Pure geometry for the drawn craps felt (one end of a Vegas table, the right-hand end). No React.
@@ -72,9 +74,45 @@ export const TABLE_HEADER_H = 28
 export const TABLE_TRAY_W = 60
 export const TABLE_MARGIN = 4
 
+/** Chips on large screens are this much bigger (fixed, so a tablet never gets giant chips): 44 → 55dp. */
+export const LARGE_CHIP_SCALE = 1.25
+
+export type TableChrome = {
+  headerH: number
+  /** The tray column's width (landscape), sized for `chip`. */
+  trayW: number
+  margin: number
+  chip: number
+  /** Large portrait only: the reason line and the tray row under the felt. */
+  reasonH: number
+  trayRowH: number
+}
+
+/** Regular is the phone-landscape chrome; large scales the chips (and the tray and header with them). */
+export const TABLE_CHROME: Record<TableSize, TableChrome> = {
+  regular: { headerH: TABLE_HEADER_H, trayW: TABLE_TRAY_W, margin: TABLE_MARGIN, chip: CHIP_SIZE,
+    reasonH: 28, trayRowH: CHIP_SIZE + 21 },
+  large: { headerH: 36, trayW: Math.round(TABLE_TRAY_W * LARGE_CHIP_SCALE), margin: TABLE_MARGIN,
+    chip: Math.round(CHIP_SIZE * LARGE_CHIP_SCALE), reasonH: 32, trayRowH: Math.round(CHIP_SIZE * LARGE_CHIP_SCALE) + 21 },
+}
+
+/** Large portrait: the felt keeps a landscape shape at the full width (height = width × this). */
+export const PORTRAIT_FELT_RATIO = 0.625
+
+/** Large portrait puts the tray and reason line under a full-width felt; every other table view uses the column. */
+export function isTablePortrait(size: TableSize, w: number, h: number): boolean {
+  return size === 'large' && h > w
+}
+
 /** The felt size the table view gives a screen of w×h (before safe-area insets). */
-export function tableFeltSize(w: number, h: number): { width: number; height: number } {
-  return { width: w - TABLE_TRAY_W - 2 * TABLE_MARGIN, height: h - TABLE_HEADER_H - 2 * TABLE_MARGIN }
+export function tableFeltSize(w: number, h: number, size: TableSize = 'regular'): { width: number; height: number } {
+  const c = TABLE_CHROME[size]
+  if (isTablePortrait(size, w, h)) {
+    const width = w - 2 * c.margin
+    const room = h - c.headerH - c.reasonH - c.trayRowH - 2 * c.margin
+    return { width, height: Math.min(width * PORTRAIT_FELT_RATIO, room) }
+  }
+  return { width: w - c.trayW - 2 * c.margin, height: h - c.headerH - 2 * c.margin }
 }
 
 export function boxNumbers(variant: CrapsVariant): number[] {
