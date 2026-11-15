@@ -1,4 +1,4 @@
-import { Pocket, RouletteBetKind, RouletteWheel } from '../../lib/types'
+import { PlacedBets, Pocket, RouletteBetKind, RouletteWheel } from '../../lib/types'
 import { allBets, betById, makeBetId, pocketColor, pocketLabel, zeroPockets } from './engine'
 
 export type BoardOrientation = 'portrait' | 'landscape'
@@ -243,6 +243,26 @@ function hitGrid(wheel: RouletteWheel, u: number, v: number): string | null {
   if (nearCol) return valid(wheel, 'split', [num(r, ul), num(r, ul + 1)])
   if (nearRow) return valid(wheel, 'split', [num(vl, c), num(vl + 1, c)])
   return valid(wheel, 'straight', [num(r, c)])
+}
+
+/**
+ * What a tap at board point (x, y) bets on. A stack already on the board wins when the tap lands on it (within
+ * `stackRadius` of its anchor, nearest first), so tapping the rim of a split chip adds to the split rather than
+ * the cell under the rim. Otherwise the tap uses the same targets as a drop. Off the board is null.
+ */
+export function tapTarget(
+  layout: BoardLayout, wheel: RouletteWheel, bets: PlacedBets, x: number, y: number, stackRadius: number,
+): string | null {
+  if (x < 0 || x > layout.width || y < 0 || y > layout.height) return null
+  let best: string | null = null
+  let bestDist = stackRadius
+  for (const id of Object.keys(bets)) {
+    const a = layout.anchors[id]
+    if (!a) continue
+    const dist = Math.hypot(x - a.x, y - a.y)
+    if (dist <= bestDist) { best = id; bestDist = dist }
+  }
+  return best ?? hitTest(layout, wheel, x, y)
 }
 
 export function resolveDrop(layout: BoardLayout, wheel: RouletteWheel, source: DragSource, x: number, y: number): DropAction {
