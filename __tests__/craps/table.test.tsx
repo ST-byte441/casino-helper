@@ -16,6 +16,7 @@ import { GestureHandlerRootView, State } from 'react-native-gesture-handler'
 import { render as rtlRender, fireEvent, act } from '@testing-library/react-native'
 import { DRAG_LIFT } from '../../components/chips/chips'
 import { CrapsTable } from '../../features/craps/components/table/CrapsTable'
+import { placeFromSheet } from '../../features/craps/components/table/MoreBetsSheet'
 import { QUALITY_COLORS, feltStacks } from '../../features/craps/components/table/CrapsFelt'
 import { buildCrapsLayout, tableFeltSize, SpotKey } from '../../features/craps/layout'
 import { useCrapsStore } from '../../features/craps/store'
@@ -236,5 +237,92 @@ describe('CrapsTable chrome', () => {
     const { getByText } = await mount()
     expect(getByText('CRAPS · 3-4-5x')).toBeTruthy()
     expect(getByText('$1,000')).toBeTruthy()
+  })
+})
+
+describe('Stack menu', () => {
+  async function openMenu(b: ActiveBet) {
+    const utils = await mount()
+    await tap('tap-board', stackAt(b.id))
+    return utils
+  }
+
+  test('pass after the point: no Take down, has Odds', async () => {
+    const pass = bet('pass', 10)
+    seed({ phase: 'point', point: 6, bets: [pass] })
+    const { queryByTestId, getByTestId } = await openMenu(pass)
+    expect(getByTestId('stack-menu-title').props.children).toBe('Pass $10')
+    expect(queryByTestId('stack-take-down')).toBeNull()
+    expect(getByTestId('stack-odds-plus')).toBeTruthy()
+  })
+
+  test('Odds + steps the selected chip up to the cap, then is disabled', async () => {
+    const pass = bet('pass', 5)
+    seed({ phase: 'point', point: 4, bets: [pass] }) // 3x at 4 = $15
+    const { getByTestId } = await mount()
+    await tap('tap-board', stackAt(pass.id))
+    await act(async () => { useCrapsStore.setState({ selectedChip: 5 }) })
+    for (let i = 0; i < 3; i++) fireEvent.press(getByTestId('stack-odds-plus'))
+    expect(store().bets[0].odds).toBe(15)
+    expect(getByTestId('stack-odds-plus').props.accessibilityState?.disabled).toBe(true)
+    fireEvent.press(getByTestId('stack-odds-plus'))
+    expect(store().bets[0].odds).toBe(15)
+    fireEvent.press(getByTestId('stack-odds-minus'))
+    expect(store().bets[0].odds).toBe(10)
+  })
+
+  test('Off on a place bet sets working false', async () => {
+    const place = bet('place', 6, { number: 6 })
+    seed({ phase: 'point', point: 5, bets: [place] })
+    const { getAllByText } = await openMenu(place)
+    fireEvent.press(getAllByText('ON').slice(-1)[0]) // the menu's toggle renders last
+    expect(store().bets[0].working).toBe(false)
+  })
+
+  test('Take down removes a place bet and closes the menu', async () => {
+    const place = bet('place', 6, { number: 6 })
+    seed({ phase: 'point', point: 5, bets: [place] })
+    const { getByTestId, queryByTestId } = await openMenu(place)
+    fireEvent.press(getByTestId('stack-take-down'))
+    expect(store().bets).toEqual([])
+    expect(queryByTestId('stack-menu-title')).toBeNull()
+  })
+
+  test('a come point caps its odds against its own comePoint', async () => {
+    const come = bet('come', 5, { comePoint: 4, odds: 10 }) // point 6 would allow $25; 4 allows $15
+    seed({ phase: 'point', point: 6, bets: [come] })
+    const { getByTestId } = await openMenu(come)
+    fireEvent.press(getByTestId('stack-odds-plus'))
+    expect(store().bets[0].odds).toBe(11)
+    await act(async () => { useCrapsStore.setState({ bets: [{ ...come, odds: 15 }] }) })
+    expect(getByTestId('stack-odds-plus').props.accessibilityState?.disabled).toBe(true)
+  })
+})
+
+describe('More bets sheet', () => {
+  async function openSheet() {
+    const utils = await mount()
+    fireEvent.press(utils.getByTestId('craps-more-bets'))
+    return utils
+  }
+
+  test('places Buy 6 at the $20 minimum and a hop', async () => {
+    seed({ phase: 'point', point: 5 })
+    const { getByText, getAllByText } = await openSheet()
+    fireEvent.press(getAllByText('+$20')[2]) // Buy 4, Buy 5, Buy 6
+    expect(store().bets).toEqual([expect.objectContaining({ type: 'buy', number: 6, amount: 20 })])
+    fireEvent.press(getByText('1-2'))
+    expect(store().bets[1]).toEqual(expect.objectContaining({ type: 'hop-easy', amount: 1, hopDice: [1, 2] }))
+  })
+
+  test('World refuses $3 with a notice shown in the sheet', async () => {
+    const { getByTestId } = await openSheet()
+    let placed = true
+    await act(async () => { placed = placeFromSheet('world', 3) })
+    expect(placed).toBe(false)
+    expect(store().bets).toEqual([])
+    await flush()
+    expect(getByTestId('more-bets-notice').props.children).toBeTruthy()
+    expect(getByTestId('more-bets-notice').props.children).not.toBe(' ')
   })
 })

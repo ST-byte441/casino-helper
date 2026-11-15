@@ -22,6 +22,8 @@ import { DiceDisplay } from '../DiceDisplay'
 import { RollButton } from '../RollButton'
 import { RollResultBanner } from '../RollResultBanner'
 import { CrapsFelt, feltStacks } from './CrapsFelt'
+import { StackMenu } from './StackMenu'
+import { MoreBetsSheet } from './MoreBetsSheet'
 
 export const CRAPS_CHIPS = [1, 5, 25, 100] as const
 
@@ -131,6 +133,9 @@ export function CrapsTable({ onRoll, onStackMenu }: Props) {
   const lastRoll = useCrapsStore(s => s.lastRoll)
   const lastDelta = useCrapsStore(s => s.lastDelta)
   const [showBanner, setShowBanner] = useState(false)
+  const [menuBet, setMenuBet] = useState<ActiveBet | null>(null)
+  const [moreOpen, setMoreOpen] = useState(false)
+  const phase = useCrapsStore(s => s.phase)
   const notice = useCrapsStore(s => s.notice)
   const tableRules = useCrapsStore(s => s.tableRules)
   const assistEnabled = useCrapsStore(s => s.assistEnabled)
@@ -163,7 +168,7 @@ export function CrapsTable({ onRoll, onStackMenu }: Props) {
       const t = targetAt(x, y)
       if (!t) return
       if (s.selectedChip === null) {
-        if (t.kind === 'stack') onStackMenu?.(t.bet)
+        if (t.kind === 'stack') { setMenuBet(t.bet); onStackMenu?.(t.bet) }
         return
       }
       if (applyChip(t, s.selectedChip) && layout) {
@@ -215,6 +220,9 @@ export function CrapsTable({ onRoll, onStackMenu }: Props) {
         <Text style={styles.title} numberOfLines={1}>CRAPS · {tableRules.oddsMultiple}</Text>
         {/* The reason line lives in the slim header so the felt keeps its height. */}
         <Text testID="craps-reason" style={styles.reason} numberOfLines={1}>{notice ?? ' '}</Text>
+        <TouchableOpacity testID="craps-more-bets" onPress={() => setMoreOpen(true)} hitSlop={8}>
+          <Text style={styles.assist}>More bets</Text>
+        </TouchableOpacity>
         <TouchableOpacity onPress={toggleAssist} hitSlop={8}>
           <Text style={[styles.assist, assistEnabled && styles.assistOn]}>Assist {assistEnabled ? '●' : '○'}</Text>
         </TouchableOpacity>
@@ -265,6 +273,11 @@ export function CrapsTable({ onRoll, onStackMenu }: Props) {
       {showBanner && (
         <RollResultBanner resolution={lastRoll} delta={lastDelta} onDismiss={() => setShowBanner(false)} />
       )}
+
+      {menuBet && (
+        <StackMenu bet={menuBet} phase={phase} point={point} rules={tableRules} onClose={() => setMenuBet(null)} />
+      )}
+      <MoreBetsSheet visible={moreOpen} onClose={() => setMoreOpen(false)} />
 
       {dragAmount !== null && (
         <Animated.View pointerEvents="none" style={[styles.ghost, ghostStyle]}>
