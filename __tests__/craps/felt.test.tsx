@@ -31,9 +31,9 @@ describe.each(cases)('%s at %dx%d', (variant, width, height) => {
     }
   })
 
-  it('draws the line labels in their own label box', () => {
+  it('draws the line and number-box labels in their own label boxes', () => {
     const { getByTestId } = draw(L, { point: 6 })
-    for (const key of ['pass', 'dont-pass'] as const) {
+    for (const key of ['pass', 'dont-pass', 'box:6', 'box:8'] as const) {
       const area = L.areas.find(a => a.key === key)
       if (!area) continue
       const lb = labelRect(L, key)

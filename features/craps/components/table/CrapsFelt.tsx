@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native'
 import { Text } from '../../../../components/Text'
 import { CHIP_COLORS, stackChip } from '../../../../components/chips/chips'
 import { ActiveBet, BetQuality } from '../../../../lib/types'
-import { Area, CrapsLayout, Pt, Rect, SpotKey, slotFor } from '../../layout'
+import { Area, CrapsLayout, Pt, Rect, SpotKey, puckSizeFor, slotFor, stackSizeFor } from '../../layout'
 
 /*
  * The drawn craps felt: areas, chip stacks and the puck. Purely presentational (no gestures, no store);
@@ -39,17 +39,9 @@ const FIELD_NUMBERS = '2 · 3 · 4 · 9 · 10 · 11 · 12'
 const LOW_NUMBERS = '2 · 3 · 4'
 const HIGH_NUMBERS = '10 · 11 · 12'
 
-// Roulette's 28dp stack at the 320dp minimum felt height, growing with the felt but capped for tablets, and
-// never wider than ~44% of a number box so its come / place / lay slots stay readable.
-const BASE_STACK = 28
-const MAX_SCALE = 1.4
 const ODDS_SHARE = 0.7
 
-export function stackSizeFor(layout: CrapsLayout): number {
-  const scale = Math.min(Math.max(layout.height / 320, 1), MAX_SCALE)
-  const boxW = Math.min(...layout.areas.filter(a => a.tone === 'box').map(a => a.rect.w))
-  return Math.round(Math.max(20, Math.min(BASE_STACK * scale, boxW * 0.44)))
-}
+export { stackSizeFor }
 
 /** A font size that fits `chars` characters on one line in w×h (bold caps are about 0.62em wide). */
 const fit = (chars: number, w: number, h: number, share: number, max = 40) =>
@@ -110,7 +102,7 @@ function Label({ area, box, fieldPays3on12 }: { area: Area; box: Rect; fieldPays
     )
   }
   switch (area.tone) {
-    case 'box': return one(area.label, fit(area.label.length, w, h, 0.36), YELLOW)
+    case 'box': return one(area.label, fit(area.label.length, w, h, 0.8), YELLOW) // its label box, under the puck row
     case 'prop': return one(area.label, fit(area.label.length, w, h, 0.45, 22), YELLOW)
     case 'odds': return one(area.label, fit(area.label.length, w, h, 0.4, 14))
     default: {
@@ -232,7 +224,7 @@ export function CrapsFelt({ layout, bets, point, highlight, quality, fieldPays3o
   const size = stackSizeFor(layout)
   const areas = point == null ? layout.areas.filter(a => a.tone !== 'odds') : layout.areas
   const puckSlot = point != null ? layout.boxSlots[point]?.puck : undefined
-  const puckSize = Math.round(size * 0.95)
+  const puckSize = puckSizeFor(layout)
   const m = layout.moreRect
   const overflow = moreBetsRow(layout, bets).overflow
 

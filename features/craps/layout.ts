@@ -19,6 +19,9 @@ import type { TableSize } from '../../lib/tableSize'
  * resolves them; the line's own centre stays outside its odds strip. The line's label sits left of centre in its
  * own box (`labelRect`) and the odds strip to the right of it, so odds chips never cover the label.
  *
+ * Number boxes: the ON puck sits in the top-right corner, the number's label below the puck row (`labelRect`), so
+ * the puck never hides the number.
+ *
  * More bets strip: a thin band at the bottom of the props box (`moreRect`, not an area: it takes no chip) where the
  * More bets panel's World, Hi-Lo and Hop stacks are drawn, so they never sit on a props cell.
  *
@@ -77,6 +80,9 @@ const OFF_PUCK_X = 0.92
 const MORE_STRIP = 0.17
 const MORE_STRIP_MIN = 34
 const MORE_STRIP_MAX = 64
+
+// Number boxes: how far the puck and the Don't Come slot sit in from the box's corner.
+const SLOT_INSET = 2
 
 const STD_NUMBERS = [4, 5, 6, 8, 9, 10]
 const WIDE_NUMBERS = [2, 3, 4, 5, 6, 8, 9, 10, 11, 12]
@@ -177,16 +183,22 @@ export function buildCrapsLayout(variant: CrapsVariant, width: number, height: n
   const rowX = hasDC ? midX : 0
   const boxW = (propsX - rowX) / nums.length
   const boxSlots: Record<number, BoxSlots> = {}
+  // Each box: a top row with the Don't Come slot at the left and the ON puck in the top-right corner, then the
+  // number's label below it (clear of the puck); come and lay sit under the top row, place at the bottom centre.
+  const stack = stackSize(height, boxW)
+  const puckR = Math.round(stack * PUCK_SHARE) / 2
+  const topRow = 2 * puckR + 2 * SLOT_INSET + 1
   nums.forEach((n, i) => {
     const r = { x: rowX + i * boxW, y: 0, w: boxW, h: boxesH }
     add(`box:${n}`, BOX_LABEL[n] ?? String(n), r, 'box')
-    const at = (fx: number, fy: number): Pt => ({ x: r.x + fx * r.w, y: r.y + fy * r.h })
+    labels[`box:${n}`] = { x: r.x + SLOT_INSET, y: r.y + topRow, w: r.w - 2 * SLOT_INSET, h: r.h - topRow - SLOT_INSET }
+    const midY = r.y + Math.max(0.45 * r.h, topRow + stack / 2)
     boxSlots[n] = {
-      dontCome: at(0.5, 0.14), // the box's upper strip
-      come: at(0.25, 0.45),
-      puck: at(0.5, 0.45),
-      lay: at(0.75, 0.45),
-      place: at(0.5, 0.78), // bottom centre
+      dontCome: { x: r.x + stack / 2 + SLOT_INSET, y: r.y + stack / 2 + SLOT_INSET },
+      puck: { x: r.x + r.w - puckR - SLOT_INSET, y: r.y + puckR + SLOT_INSET },
+      come: { x: r.x + 0.25 * r.w, y: midY },
+      lay: { x: r.x + 0.75 * r.w, y: midY },
+      place: { x: r.x + 0.5 * r.w, y: r.y + 0.78 * r.h }, // bottom centre
     }
   })
 
@@ -252,6 +264,27 @@ export function labelRect(layout: CrapsLayout, key: SpotKey): Rect {
   const a = layout.areas.find(x => x.key === key)
   if (!a) throw new Error(`no area ${key}`)
   return a.rect
+}
+
+// Chip stacks: roulette's 28dp at the 320dp minimum felt height, growing with the felt but capped for tablets, and
+// never wider than ~44% of a number box so its come / place / lay slots stay readable. The puck is a touch smaller.
+const BASE_STACK = 28
+const MAX_STACK_SCALE = 1.4
+const PUCK_SHARE = 0.95
+
+function stackSize(height: number, boxW: number): number {
+  const scale = Math.min(Math.max(height / 320, 1), MAX_STACK_SCALE)
+  return Math.round(Math.max(20, Math.min(BASE_STACK * scale, boxW * 0.44)))
+}
+
+/** The drawn size of a bet's chip stack on this felt. */
+export function stackSizeFor(layout: CrapsLayout): number {
+  return stackSize(layout.height, Math.min(...layout.areas.filter(a => a.tone === 'box').map(a => a.rect.w)))
+}
+
+/** The drawn size (diameter) of the ON / OFF puck. */
+export function puckSizeFor(layout: CrapsLayout): number {
+  return Math.round(stackSizeFor(layout) * PUCK_SHARE)
 }
 
 /** The smallest area containing the point, or null off every area. */

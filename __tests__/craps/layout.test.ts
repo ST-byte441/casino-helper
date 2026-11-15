@@ -1,4 +1,4 @@
-import { buildCrapsLayout, hitCraps, labelRect, slotFor, tableFeltSize, CrapsLayout, SpotKey } from '../../features/craps/layout'
+import { buildCrapsLayout, hitCraps, labelRect, puckSizeFor, stackSizeFor, slotFor, tableFeltSize, CrapsLayout, SpotKey } from '../../features/craps/layout'
 import { feltStacks } from '../../features/craps/components/table/CrapsFelt'
 import { ActiveBet, CrapsVariant } from '../../lib/types'
 
@@ -130,6 +130,28 @@ describe.each(cases)('%s at %dx%d', (variant, width, height) => {
       const n = Number(a.key.slice(4))
       const s = L.boxSlots[n]
       for (const p of [s.place, s.come, s.dontCome, s.lay, s.puck]) expect([a.key, inside(p, a.rect)]).toEqual([a.key, true])
+    }
+  })
+
+  it('the ON puck sits in each box\'s top-right corner, clear of the box label and the other slots', () => {
+    const r = puckSizeFor(L) / 2
+    const stackR = stackSizeFor(L) / 2
+    const hasDC = L.areas.some(a => a.key === 'dont-come')
+    for (const a of L.areas.filter(a => a.tone === 'box')) {
+      const s = L.boxSlots[Number(a.key.slice(4))]
+      const p = s.puck
+      // Inside the box, whole circle.
+      expect([a.key, p.x - r >= a.rect.x, p.x + r <= a.rect.x + a.rect.w, p.y - r >= a.rect.y, p.y + r <= a.rect.y + a.rect.h])
+        .toEqual([a.key, true, true, true, true])
+      expect([a.key, p.x > centre(a.rect).x, p.y < centre(a.rect).y]).toEqual([a.key, true, true])
+      const label = labelRect(L, a.key)
+      expect([a.key, within(label, a.rect), label.h >= 20, label.w >= 32]).toEqual([a.key, true, true, true])
+      expect([a.key, circleHits(p, r, label)]).toEqual([a.key, false])
+      const others: [string, { x: number; y: number }][] = [['come', s.come], ['lay', s.lay], ['place', s.place]]
+      if (hasDC) others.push(['dontCome', s.dontCome])
+      for (const [name, q] of others)
+        expect([a.key, name, Math.hypot(q.x - p.x, q.y - p.y) >= r + stackR - 1e-6]).toEqual([a.key, name, true])
+      expect([a.key, Math.hypot(s.dontCome.x - p.x, s.dontCome.y - p.y) > r]).toEqual([a.key, true])
     }
   })
 
