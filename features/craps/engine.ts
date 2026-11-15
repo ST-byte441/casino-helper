@@ -81,6 +81,34 @@ export function getMaxLayOdds(flatAmount: number, point: number, oddsMultiple: O
 }
 
 /**
+ * Why `amount` on `type` (on top of any `existing` bet) can't be placed, or null when it can. Pure; the store adds
+ * its own balance check.
+ */
+export function placementRefusal(
+  type: BetType,
+  amount: number,
+  number: number | undefined,
+  phase: CrapsPhase,
+  variant: CrapsVariant,
+  existing: ActiveBet | undefined,
+): string | null {
+  if (!isValidBetForVariant(type, variant)) return 'Not offered in this game'
+  if (!isValidBetForPhase(type, phase)) {
+    return type === 'come' || type === 'dont-come'
+      ? 'Come bets open once a point is set'
+      : 'Line bets are made on the come-out'
+  }
+  const total = (existing?.amount ?? 0) + amount
+  if (type === 'buy' || type === 'lay') {
+    const min = minBuyLayAmount(type, number ?? 4)
+    if (total < min) return `Minimum ${type} is $${min}`
+  }
+  if (type === 'horn' && total % 4 !== 0) return 'Horn bets go in $4 units'
+  if (type === 'world' && total % 5 !== 0) return 'World bets go in $5 units'
+  return null
+}
+
+/**
  * Smallest Buy or Lay the table takes, so the $1 minimum vig never eats the whole win (rules doc: some casinos
  * require a $20 buy, or a lay that wins at least $20). Buy: $20. Lay: enough to win $20 at reverse true odds.
  */
