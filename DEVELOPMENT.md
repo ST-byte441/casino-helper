@@ -18,7 +18,7 @@ npx jest <path>   # single file
 npx tsc --noEmit  # type check only
 ```
 
-890 tests cover the game engines, the shared chip helpers, strategy lookup, roulette and craps felt layouts, roulette wheel maths, screens, profile store and stats, and update utility.
+936 tests cover the game engines, the shared chip helpers, strategy lookup, roulette and craps felt layouts, roulette wheel maths, screens, profile store and stats, and update utility.
 
 ## Project Structure
 
@@ -54,6 +54,7 @@ features/
     spots.ts      # Pure TS: spotAction/stackTapAction resolve a dropped or tapped spot/stack to a store call
     store.ts      # Session Zustand store (phase, dice, point, bets, roll, assist toggle)
     components/   # UI components (TableSetup, DiceDisplay, BetCategoryPanel, BetRow, OddsRow, HopBetGrid, RollButton, RollResultBanner)
+      table/      # Drawn table pieces (CrapsFelt — presentational felt: areas, chip stacks with BUY/LAY tags and odds, ON/OFF puck, Assist tints)
   baccarat/
     engine.ts     # Pure TS: deck, scoring, natural/third-card rules, hand resolution
     strategy.ts   # Pure TS: bet quality ratings (player/banker/tie/side bets)
