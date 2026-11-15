@@ -43,6 +43,16 @@ describe.each(cases)('%s at %dx%d', (variant, width, height) => {
     }
   })
 
+  it('draws each box number with the text and font size the layout keeps chips off', () => {
+    const { getByTestId } = draw(L, { point: 6 })
+    for (const a of L.areas.filter(a => a.tone === 'box')) {
+      const t = L.boxLabels[Number(a.key.slice(4))]
+      const text = getByTestId(`label-${a.key}`).findAll((n: any) => typeof n.type === 'string' && n.props.children === t.text)
+      expect([a.key, text.length > 0]).toEqual([a.key, true])
+      expect([a.key, StyleSheet.flatten(text[0].props.style).fontSize]).toEqual([a.key, t.fontSize])
+    }
+  })
+
   it('puts the ON puck over box:6 when the point is 6', () => {
     const { getByTestId, queryByTestId } = draw(L, { point: 6 })
     expect(queryByTestId('puck-off')).toBeNull()
@@ -147,7 +157,9 @@ describe('CrapsFelt labels and tints', () => {
 
   it('shows the felt labels', () => {
     const { getByText } = draw(L, { point: 6 })
-    for (const t of ['PASS LINE', "DON'T PASS BAR 12", 'COME', "DON'T COME", 'BIG 6', 'BIG 8', 'SIX', 'NINE', '4',
+    // The boxes spell SIX / NINE only where NINE fits at a readable size (digits on this felt).
+    expect([L.boxLabels[6].text, L.boxLabels[9].text]).toEqual(['6', '9'])
+    for (const t of ['PASS LINE', "DON'T PASS BAR 12", 'COME', "DON'T COME", 'BIG 6', 'BIG 8', '6', '9', '4',
       'SEVEN', 'HARD 4', 'ANY CRAPS', 'C&E', 'HORN']) expect(getByText(t)).toBeTruthy()
   })
 

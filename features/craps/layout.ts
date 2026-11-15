@@ -19,8 +19,8 @@ import type { TableSize } from '../../lib/tableSize'
  * resolves them; the line's own centre stays outside its odds strip. The line's label sits left of centre in its
  * own box (`labelRect`) and the odds strip to the right of it, so odds chips never cover the label.
  *
- * Number boxes: the ON puck sits in the top-right corner, the number's label below the puck row (`labelRect`), so
- * the puck never hides the number.
+ * Number boxes: Don't Come and the ON puck in a top row, come / place / lay in a bottom row, and the number
+ * (`labelRect`, `boxLabels`) where no slot reaches: between Don't Come and the puck, or between the rows.
  *
  * More bets strip: a thin band at the bottom of the props box (`moreRect`, not an area: it takes no chip) where the
  * More bets panel's World, Hi-Lo and Hop stacks are drawn, so they never sit on a props cell.
@@ -40,7 +40,10 @@ export type SpotKey =
 
 export type Area = { key: SpotKey; label: string; rect: Rect; tone: 'line' | 'field' | 'box' | 'prop' | 'odds' }
 
-export type BoxSlots = { place: Pt; come: Pt; dontCome: Pt; lay: Pt; puck: Pt }
+export type BoxSlots = { place: Pt; come: Pt; dontCome: Pt; lay: Pt; puck: Pt; comeOdds: Pt; dontComeOdds: Pt }
+
+/** A number box's label as the felt draws it: the text, its font size, and the box the text takes up. */
+export type BoxLabel = { text: string; fontSize: number; box: Rect }
 
 export type CrapsLayout = {
   width: number
@@ -52,6 +55,8 @@ export type CrapsLayout = {
   boxSlots: Record<number, BoxSlots>
   /** Where an area's label is drawn when that isn't the whole area (see `labelRect`). */
   labels: Partial<Record<SpotKey, Rect>>
+  /** Each number box's label text (by number). No chip slot or puck enters its `box`. */
+  boxLabels: Record<number, BoxLabel>
   offPuck: Pt
   anchors: Record<SpotKey, Pt>
 }
@@ -83,10 +88,22 @@ const MORE_STRIP_MAX = 64
 
 // Number boxes: how far the puck and the Don't Come slot sit in from the box's corner.
 const SLOT_INSET = 2
+// SIX / NINE are spelled out only while they still read at this size; else the digit.
+const MIN_WORD_FONT = 15
 
 const STD_NUMBERS = [4, 5, 6, 8, 9, 10]
 const WIDE_NUMBERS = [2, 3, 4, 5, 6, 8, 9, 10, 11, 12]
 const BOX_LABEL: Record<number, string> = { 6: 'SIX', 9: 'NINE' }
+
+/** A font size that fits `chars` characters on one line in w×h (bold caps are about 0.62em wide). */
+export const fit = (chars: number, w: number, h: number, share: number, max = 40) =>
+  Math.max(7, Math.min(h * share, (w * 0.9) / (Math.max(chars, 1) * 0.62), max))
+
+/** The text box of `text` at `fontSize`, centred in `r` (0.62em per char, 1.2em tall). */
+const textBox = (text: string, fontSize: number, r: Rect): Rect => {
+  const w = text.length * 0.62 * fontSize, h = fontSize * 1.2
+  return { x: r.x + (r.w - w) / 2, y: r.y + (r.h - h) / 2, w, h }
+}
 
 const centre = (r: Rect): Pt => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 })
 const contains = (r: Rect, x: number, y: number) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h
@@ -183,22 +200,49 @@ export function buildCrapsLayout(variant: CrapsVariant, width: number, height: n
   const rowX = hasDC ? midX : 0
   const boxW = (propsX - rowX) / nums.length
   const boxSlots: Record<number, BoxSlots> = {}
-  // Each box: a top row with the Don't Come slot at the left and the ON puck in the top-right corner, then the
-  // number's label below it (clear of the puck); come and lay sit under the top row, place at the bottom centre.
+  const boxLabels: Record<number, BoxLabel> = {}
+  // Each box has a top row (the Don't Come slot at the left, the ON puck in the top-right corner) and a bottom row
+  // (come at the left, place in the middle, lay at the right). The number takes whichever gives it the bigger font:
+  // the top row between Don't Come and the puck (short boxes), or the band between the two rows (tall boxes).
+  // No slot circle enters that band, so no chip or puck ever covers the number.
   const stack = stackSize(height, boxW)
-  const puckR = Math.round(stack * PUCK_SHARE) / 2
-  const topRow = 2 * puckR + 2 * SLOT_INSET + 1
+  const puckD = Math.round(stack * PUCK_SHARE)
+  const I = SLOT_INSET
+  const topRow = Math.max(stack, puckD) + 2 * I
+  const bottomRow = stack + 2 * I
+  const leftUsed = hasDC ? stack + 2 * I : I
+  const inTop = { dx: leftUsed, dy: I, w: boxW - leftUsed - puckD - 2 * I, h: topRow - 2 * I }
+  const inMiddle = { dx: I, dy: topRow, w: boxW - 2 * I, h: boxesH - topRow - bottomRow }
+  const fontIn = (b: { w: number; h: number }, chars: number) => (b.w > 0 && b.h > 0 ? fit(chars, b.w, b.h, 0.8) : 0)
+  // Judged on the widest number ("10"), so every box uses the same place.
+  const middle = fontIn(inMiddle, 2) >= fontIn(inTop, 2)
+  const band = middle ? inMiddle : inTop
+  // SIX / NINE when NINE (the longer word) still reads at MIN_WORD_FONT, else digits on every box.
+  const words = fontIn(band, 'NINE'.length) >= MIN_WORD_FONT
   nums.forEach((n, i) => {
     const r = { x: rowX + i * boxW, y: 0, w: boxW, h: boxesH }
     add(`box:${n}`, BOX_LABEL[n] ?? String(n), r, 'box')
-    labels[`box:${n}`] = { x: r.x + SLOT_INSET, y: r.y + topRow, w: r.w - 2 * SLOT_INSET, h: r.h - topRow - SLOT_INSET }
-    const midY = r.y + Math.max(0.45 * r.h, topRow + stack / 2)
+    const lb = { x: r.x + band.dx, y: r.y + band.dy, w: band.w, h: band.h }
+    labels[`box:${n}`] = lb
+    const text = (words && BOX_LABEL[n]) || String(n)
+    const fontSize = fit(text.length, lb.w, lb.h, 0.8)
+    boxLabels[n] = { text, fontSize, box: textBox(text, fontSize, lb) }
+    const top = r.y + stack / 2 + I
+    const bottom = r.y + r.h - stack / 2 - I
+    const come = { x: r.x + stack / 2 + I, y: bottom }
+    // Without a Don't Come bet there's nothing at the top-left; keep the unused slot off the number anyway.
+    const dontCome = hasDC || middle ? { x: r.x + stack / 2 + I, y: top } : come
     boxSlots[n] = {
-      dontCome: { x: r.x + stack / 2 + SLOT_INSET, y: r.y + stack / 2 + SLOT_INSET },
-      puck: { x: r.x + r.w - puckR - SLOT_INSET, y: r.y + puckR + SLOT_INSET },
-      come: { x: r.x + 0.25 * r.w, y: midY },
-      lay: { x: r.x + 0.75 * r.w, y: midY },
-      place: { x: r.x + 0.5 * r.w, y: r.y + 0.78 * r.h }, // bottom centre
+      dontCome,
+      puck: { x: r.x + r.w - puckD / 2 - I, y: r.y + puckD / 2 + I },
+      come,
+      lay: { x: r.x + r.w - stack / 2 - I, y: bottom },
+      place: { x: r.x + r.w / 2, y: bottom },
+      // Odds sit offset on their flat bet: beside it in its row, or (Don't Come with the number in the top row)
+      // just under it, short of the number.
+      comeOdds: { x: come.x + 0.55 * stack, y: come.y },
+      dontComeOdds: middle ? { x: dontCome.x + 0.55 * stack, y: dontCome.y }
+        : { x: dontCome.x + 0.15 * stack, y: dontCome.y + 0.5 * stack },
     }
   })
 
@@ -254,7 +298,7 @@ export function buildCrapsLayout(variant: CrapsVariant, width: number, height: n
   const anchors = {} as Record<SpotKey, Pt>
   for (const a of areas) anchors[a.key] = a.tone === 'box' ? boxSlots[Number(a.key.slice(4))].place : centre(a.rect)
 
-  return { width, height, areas, diceRect, moreRect, boxSlots, labels, offPuck, anchors }
+  return { width, height, areas, diceRect, moreRect, boxSlots, labels, boxLabels, offPuck, anchors }
 }
 
 /** The box an area's label is drawn in: its own label box where it has one, else the whole area. */

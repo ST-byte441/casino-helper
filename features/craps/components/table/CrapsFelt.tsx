@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native'
 import { Text } from '../../../../components/Text'
 import { CHIP_COLORS, stackChip } from '../../../../components/chips/chips'
 import { ActiveBet, BetQuality } from '../../../../lib/types'
-import { Area, CrapsLayout, Pt, Rect, SpotKey, puckSizeFor, slotFor, stackSizeFor } from '../../layout'
+import { Area, BoxLabel, CrapsLayout, Pt, Rect, SpotKey, fit, puckSizeFor, slotFor, stackSizeFor } from '../../layout'
 
 /*
  * The drawn craps felt: areas, chip stacks and the puck. Purely presentational (no gestures, no store);
@@ -43,14 +43,10 @@ const ODDS_SHARE = 0.7
 
 export { stackSizeFor }
 
-/** A font size that fits `chars` characters on one line in w×h (bold caps are about 0.62em wide). */
-const fit = (chars: number, w: number, h: number, share: number, max = 40) =>
-  Math.max(7, Math.min(h * share, (w * 0.9) / (Math.max(chars, 1) * 0.62), max))
-
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi)
 
-function AreaView({ area, labelBox, lit, tint, fieldPays3on12 }: {
-  area: Area; labelBox?: Rect; lit: boolean; tint: string | null; fieldPays3on12: boolean
+function AreaView({ area, labelBox, boxLabel, lit, tint, fieldPays3on12 }: {
+  area: Area; labelBox?: Rect; boxLabel?: BoxLabel; lit: boolean; tint: string | null; fieldPays3on12: boolean
 }) {
   const { x, y, w, h } = area.rect
   const border = lit ? { borderColor: YELLOW, borderWidth: 2 } : tint ? { borderColor: tint, borderWidth: 2 } : null
@@ -66,7 +62,9 @@ function AreaView({ area, labelBox, lit, tint, fieldPays3on12 }: {
         <View testID={`label-${area.key}`} style={[styles.labelBox, {
           left: labelBox.x - x, top: labelBox.y - y, width: labelBox.w, height: labelBox.h,
         }]}>
-          <Label area={area} box={labelBox} fieldPays3on12={fieldPays3on12} />
+          {boxLabel
+            ? <Text numberOfLines={1} style={[styles.label, { fontSize: boxLabel.fontSize, color: YELLOW }]}>{boxLabel.text}</Text>
+            : <Label area={area} box={labelBox} fieldPays3on12={fieldPays3on12} />}
         </View>
       ) : <Label area={area} box={area.rect} fieldPays3on12={fieldPays3on12} />}
     </View>
@@ -102,7 +100,6 @@ function Label({ area, box, fieldPays3on12 }: { area: Area; box: Rect; fieldPays
     )
   }
   switch (area.tone) {
-    case 'box': return one(area.label, fit(area.label.length, w, h, 0.8), YELLOW) // its label box, under the puck row
     case 'prop': return one(area.label, fit(area.label.length, w, h, 0.45, 22), YELLOW)
     case 'odds': return one(area.label, fit(area.label.length, w, h, 0.4, 14))
     default: {
@@ -211,9 +208,10 @@ export function feltStacks(layout: CrapsLayout, bets: ActiveBet[], point: number
     let oddsAt: Pt | null = null
     if (b.type === 'pass' && point != null && layout.anchors['pass-odds']) oddsAt = layout.anchors['pass-odds']
     else if (b.type === 'dont-pass' && point != null && layout.anchors['dont-pass-odds']) oddsAt = layout.anchors['dont-pass-odds']
-    else if ((b.type === 'come' || b.type === 'dont-come') && b.comePoint != null) {
-      // Beside its come point, toward the box's middle, slightly lower (odds sit offset on the flat bet).
-      oddsAt = { x: at.x + size * 0.5, y: at.y + size * 0.4 }
+    else if ((b.type === 'come' || b.type === 'dont-come') && b.comePoint != null && layout.boxSlots[b.comePoint]) {
+      // Offset on the flat bet, where the layout keeps it off the box's number.
+      const s = layout.boxSlots[b.comePoint]
+      oddsAt = b.type === 'come' ? s.comeOdds : s.dontComeOdds
     }
     if (oddsAt) out.push({ key: `${b.id}-odds`, amount: b.odds, at: keep(oddsAt, small), size: small, dim: !b.working })
   }
@@ -233,7 +231,8 @@ export function CrapsFelt({ layout, bets, point, highlight, quality, fieldPays3o
       {areas.map(a => {
         const q = quality?.(a.key) ?? null
         return (
-          <AreaView key={a.key} area={a} labelBox={layout.labels[a.key]} lit={highlight === a.key} tint={q ? QUALITY_COLORS[q] : null}
+          <AreaView key={a.key} area={a} labelBox={layout.labels[a.key]}
+            boxLabel={a.tone === 'box' ? layout.boxLabels[Number(a.key.slice(4))] : undefined} lit={highlight === a.key} tint={q ? QUALITY_COLORS[q] : null}
             fieldPays3on12={fieldPays3on12} />
         )
       })}

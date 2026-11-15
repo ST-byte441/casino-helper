@@ -145,13 +145,43 @@ describe.each(cases)('%s at %dx%d', (variant, width, height) => {
         .toEqual([a.key, true, true, true, true])
       expect([a.key, p.x > centre(a.rect).x, p.y < centre(a.rect).y]).toEqual([a.key, true, true])
       const label = labelRect(L, a.key)
-      expect([a.key, within(label, a.rect), label.h >= 20, label.w >= 32]).toEqual([a.key, true, true, true])
+      expect([a.key, within(label, a.rect)]).toEqual([a.key, true])
       expect([a.key, circleHits(p, r, label)]).toEqual([a.key, false])
       const others: [string, { x: number; y: number }][] = [['come', s.come], ['lay', s.lay], ['place', s.place]]
       if (hasDC) others.push(['dontCome', s.dontCome])
       for (const [name, q] of others)
         expect([a.key, name, Math.hypot(q.x - p.x, q.y - p.y) >= r + stackR - 1e-6]).toEqual([a.key, name, true])
       expect([a.key, Math.hypot(s.dontCome.x - p.x, s.dontCome.y - p.y) > r]).toEqual([a.key, true])
+    }
+  })
+
+  it('no chip slot or puck enters a box number\'s text, and the number stays readable', () => {
+    const r = puckSizeFor(L) / 2
+    const stackR = stackSizeFor(L) / 2
+    const hasDC = L.areas.some(a => a.key === 'dont-come')
+    const hasCome = L.areas.some(a => a.key === 'come')
+    for (const a of L.areas.filter(a => a.tone === 'box')) {
+      const n = Number(a.key.slice(4))
+      const t = L.boxLabels[n]
+      // The text box is what the felt draws: ~0.62em per bold caps char, 1.2em tall, inside the label box.
+      expect([a.key, within(t.box, labelRect(L, a.key)), within(t.box, a.rect)]).toEqual([a.key, true, true])
+      expect(t.box.w).toBeCloseTo(t.text.length * 0.62 * t.fontSize)
+      expect(t.box.h).toBeCloseTo(t.fontSize * 1.2)
+      expect([a.key, t.fontSize >= 14]).toEqual([a.key, true])
+      expect([String(n), n === 6 ? 'SIX' : n === 9 ? 'NINE' : String(n)]).toContain(t.text)
+      const s = L.boxSlots[n]
+      const circles: [string, { x: number; y: number }, number][] = [
+        ['puck', s.puck, r], ['place', s.place, stackR], ['come', s.come, stackR], ['lay', s.lay, stackR],
+        ['dontCome', s.dontCome, stackR],
+      ]
+      for (const [name, c, rad] of circles) expect([a.key, name, circleHits(c, rad, t.box)]).toEqual([a.key, name, false])
+      // Come / Don't Come bets that travelled here, with odds: every drawn stack misses the number too.
+      const travelled: ActiveBet[] = []
+      if (hasCome) travelled.push(bet({ id: 'c', type: 'come', comePoint: n, odds: 10 }))
+      if (hasDC) travelled.push(bet({ id: 'd', type: 'dont-come', comePoint: n, odds: 10 }))
+      travelled.push(bet({ id: 'p', type: 'place', number: n }))
+      for (const st of feltStacks(L, travelled, null))
+        expect([a.key, st.key, circleHits(st.at, st.size / 2, t.box)]).toEqual([a.key, st.key, false])
     }
   })
 
