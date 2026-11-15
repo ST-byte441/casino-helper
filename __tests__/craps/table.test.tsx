@@ -249,6 +249,16 @@ describe('CrapsTable chrome', () => {
     jest.restoreAllMocks()
   })
 
+  test('the dice and ROLL sit in the dice block at the Pass Line\'s right end, ROLL at least 44dp tall', async () => {
+    const { getByTestId } = await mount()
+    const box = StyleSheet.flatten(getByTestId('craps-dice').props.style)
+    expect(box).toMatchObject({ left: L.diceRect.x, top: L.diceRect.y, width: L.diceRect.w, height: L.diceRect.h,
+      flexDirection: 'row' })
+    const roll = StyleSheet.flatten(getByTestId('craps-roll').props.style)
+    expect(roll.minHeight).toBeGreaterThanOrEqual(44)
+    expect(roll.margin ?? 0).toBe(0)
+  })
+
   test('ROLL calls onRoll', async () => {
     seed({ bets: [bet('pass', 5)] })
     const { getByText, onRoll } = await mount()

@@ -63,6 +63,30 @@ describe.each(cases)('%s at %dx%d', (variant, width, height) => {
     for (const a of L.areas) expect([a.key, overlap(a.rect, d)]).toEqual([a.key, false])
   })
 
+  it('dice + ROLL sit at the right end of the Pass Line band, the Pass Line ending where they start', () => {
+    const d = L.diceRect
+    const pass = L.areas.find(a => a.key === 'pass')!.rect
+    expect(d.y).toBeCloseTo(pass.y)
+    expect(d.h).toBeCloseTo(pass.h)
+    expect(d.x + d.w).toBeCloseTo(width)
+    expect(pass.x).toBe(0)
+    expect(pass.x + pass.w).toBeCloseTo(d.x)
+    // Room for the dice beside a ROLL button with a 44dp touch target.
+    expect(d.h).toBeGreaterThanOrEqual(56)
+    expect(d.w).toBeGreaterThanOrEqual(150)
+  })
+
+  it('the props box runs to the felt\'s right edge; the number boxes and middle bands end where it starts', () => {
+    const props = L.areas.filter(a => a.tone === 'prop')
+    const propsX = Math.min(...props.map(a => a.rect.x))
+    expect(Math.max(...props.map(a => a.rect.x + a.rect.w))).toBeCloseTo(width)
+    const boxes = L.areas.filter(a => a.tone === 'box')
+    expect(Math.max(...boxes.map(a => a.rect.x + a.rect.w))).toBeCloseTo(propsX)
+    for (const a of L.areas.filter(a => ['come', 'dont-pass', variant === 'easy' ? 'high-field' : 'field'].includes(a.key)))
+      expect([a.key, a.rect.x + a.rect.w]).toEqual([a.key, expect.closeTo(propsX, 5)])
+    expect(L.moreRect.x + L.moreRect.w).toBeCloseTo(width)
+  })
+
   it('hitCraps at each area centre returns its key', () => {
     for (const a of L.areas) {
       const c = centre(a.rect)

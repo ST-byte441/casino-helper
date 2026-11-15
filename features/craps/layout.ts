@@ -7,13 +7,13 @@ import type { TableSize } from '../../lib/tableSize'
  * Pure geometry for the drawn craps felt (one end of a Vegas table, the right-hand end). No React.
  *
  * Columns, left to right:
- *   [left end: DON'T COME over BIG 6 / BIG 8]  [middle bands]  [props box]  [dice column]
+ *   [left end: DON'T COME over BIG 6 / BIG 8]  [middle bands]  [props box, to the right edge]
  * The left end exists only when Big 6/8 do (craps, crapless). Without Don't Come (crapless) the number row
  * runs over the left end. Without a left end (easy) the middle bands start at x = 0.
  *
- * Rows of the middle, top to bottom: number boxes, COME, FIELD, DON'T PASS, then PASS LINE across the full
- * width (under the props box and dice too). Bands a variant lacks give their height to the Field.
- * The props box and the dice column run from the top down to the Pass Line.
+ * Rows of the middle, top to bottom: number boxes, COME, FIELD, DON'T PASS, then the bottom band: PASS LINE from
+ * the left edge to the dice block (`diceRect`: the dice and ROLL) at its right end. Bands a variant lacks give
+ * their height to the Field. The props box runs from the top down to the bottom band.
  *
  * Odds areas ("behind the line") are smaller strips inside their line band, so `hitCraps` (smallest area wins)
  * resolves them; the line's own centre stays outside its odds strip.
@@ -21,8 +21,8 @@ import type { TableSize } from '../../lib/tableSize'
  * More bets strip: a thin band at the bottom of the props box (`moreRect`, not an area: it takes no chip) where the
  * More bets panel's World, Hi-Lo and Hop stacks are drawn, so they never sit on a props cell.
  *
- * Off puck: in the Don't Come box. Without Don't Come (crapless, easy) it sits in a strip at the top of the
- * dice column, above `diceRect`.
+ * Off puck: in the Don't Come box. Without Don't Come (crapless, easy) it sits at the Pass Line's right end, past
+ * its odds.
  */
 
 export type Rect = { x: number; y: number; w: number; h: number }
@@ -54,7 +54,8 @@ export type CrapsLayout = {
 const LEFT_W = 0.1
 // Wide enough for four Hardways in one row at >= 32dp each on the narrowest table felt.
 const PROPS_W = 0.2
-const DICE_W = 0.11
+// The dice block at the right end of the Pass Line band: wide enough for the dice beside a ROLL button.
+const DICE_W = 0.28
 // Band heights as weights of the felt height. Missing bands go to the Field.
 const BAND = { boxes: 24, come: 19, field: 19, dontPass: 14, pass: 24 }
 // Behind-the-line strips.
@@ -63,9 +64,8 @@ const PASS_ODDS_X1 = 0.75
 const PASS_ODDS_TOP = 0.45 // fraction of the Pass band where its odds strip starts
 const DP_ODDS_W = 0.14
 const ODDS_PAD = 2
-// Off-puck strip at the top of the dice column, as a fraction of the column height (capped).
-const PUCK_STRIP = 0.2
-const PUCK_STRIP_MAX = 48
+// Without Don't Come the off puck sits at this fraction of the Pass Line's width (past its odds).
+const OFF_PUCK_X = 0.92
 // More bets strip at the bottom of the props box, as a fraction of the props box height, clamped so it holds one
 // row of stacks and the five props rows above it keep >= 32dp on the shortest felt.
 const MORE_STRIP = 0.17
@@ -152,8 +152,8 @@ export function buildCrapsLayout(variant: CrapsVariant, width: number, height: n
   const leftW = hasBig ? width * LEFT_W : 0
   const diceW = width * DICE_W
   const propsW = width * PROPS_W
-  const propsX = width - diceW - propsW
-  const diceX = propsX + propsW
+  const propsX = width - propsW
+  const diceX = width - diceW
   const midX = leftW
   const midW = propsX - midX
 
@@ -198,10 +198,11 @@ export function buildCrapsLayout(variant: CrapsVariant, width: number, height: n
     const ow = width * DP_ODDS_W
     add('dont-pass-odds', 'LAY ODDS', { x: propsX - ow, y: dpY + ODDS_PAD, w: ow - ODDS_PAD, h: dpH - 2 * ODDS_PAD }, 'odds')
   }
-  add('pass', 'PASS LINE', { x: 0, y: passY, w: width, h: passH }, 'line')
+  const passW = diceX
+  add('pass', 'PASS LINE', { x: 0, y: passY, w: passW, h: passH }, 'line')
   const poY = passY + passH * PASS_ODDS_TOP
   add('pass-odds', 'ODDS', {
-    x: width * PASS_ODDS_X0, y: poY, w: width * (PASS_ODDS_X1 - PASS_ODDS_X0), h: passY + passH - poY - ODDS_PAD,
+    x: passW * PASS_ODDS_X0, y: poY, w: passW * (PASS_ODDS_X1 - PASS_ODDS_X0), h: passY + passH - poY - ODDS_PAD,
   }, 'odds')
 
   // Props box: 5 rows (so each stays >= 32dp on the shortest felt), split into `cols` cells where paired, over the
@@ -224,17 +225,10 @@ export function buildCrapsLayout(variant: CrapsVariant, width: number, height: n
   add('ce', 'C&E', cell(4, 0, 2), 'prop')
   add('horn', 'HORN', cell(4, 1, 2), 'prop')
 
-  // Dice column, and the off puck.
-  let diceRect: Rect = { x: diceX, y: 0, w: diceW, h: passY }
-  let offPuck: Pt
+  // Dice block at the Pass Line's right end, and the off puck.
+  const diceRect: Rect = { x: diceX, y: passY, w: diceW, h: passH }
   const dc = areas.find(a => a.key === 'dont-come')
-  if (dc) {
-    offPuck = centre(dc.rect)
-  } else {
-    const strip = Math.min(passY * PUCK_STRIP, PUCK_STRIP_MAX)
-    offPuck = { x: diceX + diceW / 2, y: strip / 2 }
-    diceRect = { x: diceX, y: strip, w: diceW, h: passY - strip }
-  }
+  const offPuck: Pt = dc ? centre(dc.rect) : { x: passW * OFF_PUCK_X, y: passY + passH / 2 }
 
   const anchors = {} as Record<SpotKey, Pt>
   for (const a of areas) anchors[a.key] = a.tone === 'box' ? boxSlots[Number(a.key.slice(4))].place : centre(a.rect)

@@ -108,24 +108,26 @@ function applyChip(target: TableTarget, chip: number): boolean {
   }
 }
 
-/** Natural size of DiceDisplay is wider than the dice column; scale it down to fit. */
-function FitWidth({ width, children }: { width: number; children: React.ReactNode }) {
+/** DiceDisplay at its natural size, scaled down (never up) to fit width × height. */
+function FitBox({ width, height, children }: { width: number; height: number; children: React.ReactNode }) {
   const [natural, setNatural] = useState<{ w: number; h: number } | null>(null)
   const onLayout = (e: LayoutChangeEvent) => {
     const { width: w, height: h } = e.nativeEvent.layout
     if (!natural || natural.w !== w || natural.h !== h) setNatural({ w, h })
   }
-  const scale = natural ? Math.min(1, width / natural.w) : 1
+  const scale = natural ? Math.min(1, width / natural.w, height / natural.h) : 1
   return (
-    <View style={{ width, height: natural ? natural.h * scale : undefined, alignItems: 'center' }}>
-      <View onLayout={onLayout} style={[SHEETS.regular.fitInner, natural && {
-        transform: [{ translateY: -(natural.h * (1 - scale)) / 2 }, { scale }],
-      }]}>
+    <View style={{ width, height, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+      <View onLayout={onLayout} style={[SHEETS.regular.fitInner, natural && { transform: [{ scale }] }]}>
         {children}
       </View>
     </View>
   )
 }
+
+/** The dice block: the dice beside ROLL, inside the Pass Line band's right end. */
+const ROLL_W = 76
+const DICE_GAP = 6
 
 export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMenu }: Props) {
   const styles = SHEETS[size]
@@ -250,13 +252,13 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
         </GestureDetector>
         {/* A sibling of the board, not inside its tap detector, so ROLL is an ordinary button. */}
         {layout && (
-          <View style={[styles.dice, {
+          <View testID="craps-dice" style={[styles.dice, {
             left: layout.diceRect.x, top: layout.diceRect.y, width: layout.diceRect.w, height: layout.diceRect.h,
           }]}>
-            <FitWidth width={layout.diceRect.w}>
-              <DiceDisplay dice={dice} point={point} />
-            </FitWidth>
-            <RollButton onRoll={handleRoll} disabled={bets.length === 0} />
+            <FitBox width={Math.max(0, layout.diceRect.w - ROLL_W - 3 * DICE_GAP)} height={layout.diceRect.h - 2 * DICE_GAP}>
+              <DiceDisplay dice={dice} point={point} compact />
+            </FitBox>
+            <RollButton testID="craps-roll" onRoll={handleRoll} disabled={bets.length === 0} style={styles.roll} />
           </View>
         )}
       </View>
@@ -333,7 +335,10 @@ function makeSheets(c: Record<TableSize, TableChrome>) {
     boardFramePortrait: { margin: c.regular.margin, aspectRatio: 1 / PORTRAIT_FELT_RATIO },
     board: { flex: 1 },
     stackHandle: { position: 'absolute' },
-    dice: { position: 'absolute', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+    dice: { position: 'absolute', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-evenly',
+      overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.85)', backgroundColor: '#0b3d26' },
+    // A 44dp touch target that fits the shortest Pass Line band (68dp on the Fold cover).
+    roll: { margin: 0, width: ROLL_W, minHeight: 44, paddingVertical: 10, paddingHorizontal: 0, justifyContent: 'center' },
     fitInner: { alignSelf: 'center' },
     tray: { width: c.regular.trayW, paddingHorizontal: 0 },
     below: { flex: 1 },
