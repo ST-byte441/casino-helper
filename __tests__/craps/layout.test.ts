@@ -105,6 +105,23 @@ describe.each(cases)('%s at %dx%d', (variant, width, height) => {
     expect(slotFor(L, bet({ type: 'field' }))).toEqual(L.anchors.field)
   })
 
+  it('the More bets strip sits under the props cells, clear of every area and the dice, at least 32x32', () => {
+    const m = L.moreRect
+    expect(m.w >= 32 && m.h >= 32).toBe(true)
+    expect(m.x >= 0 && m.y >= 0 && m.x + m.w <= width + 1e-6 && m.y + m.h <= height + 1e-6).toBe(true)
+    for (const a of L.areas) expect([a.key, overlap(a.rect, m)]).toEqual([a.key, false])
+    expect(overlap(L.diceRect, m)).toBe(false)
+    const props = L.areas.filter(a => a.tone === 'prop')
+    expect(m.x).toBeCloseTo(Math.min(...props.map(a => a.rect.x)))
+    for (const a of props) expect(a.rect.y + a.rect.h).toBeLessThanOrEqual(m.y + 1e-6)
+  })
+
+  it('slotFor puts World, Hi-Lo and hops in the More bets strip', () => {
+    for (const b of [bet({ type: 'world' }), bet({ type: 'hi-lo' }), bet({ type: 'hop-easy', hopDice: [2, 5] })]) {
+      expect([b.type, inside(slotFor(L, b), L.moreRect)]).toEqual([b.type, true])
+    }
+  })
+
   it('a point outside the felt gives null', () => {
     expect(hitCraps(L, -5, -5)).toBeNull()
     expect(hitCraps(L, width + 10, height / 2)).toBeNull()

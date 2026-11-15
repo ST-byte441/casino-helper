@@ -18,6 +18,9 @@ import type { TableSize } from '../../lib/tableSize'
  * Odds areas ("behind the line") are smaller strips inside their line band, so `hitCraps` (smallest area wins)
  * resolves them; the line's own centre stays outside its odds strip.
  *
+ * More bets strip: a thin band at the bottom of the props box (`moreRect`, not an area: it takes no chip) where the
+ * More bets panel's World, Hi-Lo and Hop stacks are drawn, so they never sit on a props cell.
+ *
  * Off puck: in the Don't Come box. Without Don't Come (crapless, easy) it sits in a strip at the top of the
  * dice column, above `diceRect`.
  */
@@ -40,6 +43,8 @@ export type CrapsLayout = {
   height: number
   areas: Area[]
   diceRect: Rect
+  /** The More bets strip under the props cells (World, Hi-Lo, Hops). */
+  moreRect: Rect
   boxSlots: Record<number, BoxSlots>
   offPuck: Pt
   anchors: Record<SpotKey, Pt>
@@ -61,6 +66,11 @@ const ODDS_PAD = 2
 // Off-puck strip at the top of the dice column, as a fraction of the column height (capped).
 const PUCK_STRIP = 0.2
 const PUCK_STRIP_MAX = 48
+// More bets strip at the bottom of the props box, as a fraction of the props box height, clamped so it holds one
+// row of stacks and the five props rows above it keep >= 32dp on the shortest felt.
+const MORE_STRIP = 0.17
+const MORE_STRIP_MIN = 34
+const MORE_STRIP_MAX = 64
 
 const STD_NUMBERS = [4, 5, 6, 8, 9, 10]
 const WIDE_NUMBERS = [2, 3, 4, 5, 6, 8, 9, 10, 11, 12]
@@ -194,8 +204,11 @@ export function buildCrapsLayout(variant: CrapsVariant, width: number, height: n
     x: width * PASS_ODDS_X0, y: poY, w: width * (PASS_ODDS_X1 - PASS_ODDS_X0), h: passY + passH - poY - ODDS_PAD,
   }, 'odds')
 
-  // Props box: 5 rows (so each stays >= 32dp on the shortest felt), split into `cols` cells where paired.
-  const rowH = passY / 5
+  // Props box: 5 rows (so each stays >= 32dp on the shortest felt), split into `cols` cells where paired, over the
+  // More bets strip.
+  const moreH = Math.min(Math.max(passY * MORE_STRIP, MORE_STRIP_MIN), MORE_STRIP_MAX)
+  const moreRect: Rect = { x: propsX, y: passY - moreH, w: propsW, h: moreH }
+  const rowH = (passY - moreH) / 5
   const cell = (row: number, col: number, cols: number): Rect =>
     ({ x: propsX + col * (propsW / cols), y: row * rowH, w: propsW / cols, h: rowH })
   add('any-7', 'SEVEN', cell(0, 0, 1), 'prop')
@@ -226,7 +239,7 @@ export function buildCrapsLayout(variant: CrapsVariant, width: number, height: n
   const anchors = {} as Record<SpotKey, Pt>
   for (const a of areas) anchors[a.key] = a.tone === 'box' ? boxSlots[Number(a.key.slice(4))].place : centre(a.rect)
 
-  return { width, height, areas, diceRect, boxSlots, offPuck, anchors }
+  return { width, height, areas, diceRect, moreRect, boxSlots, offPuck, anchors }
 }
 
 /** The smallest area containing the point, or null off every area. */
@@ -249,8 +262,8 @@ const DIRECT: Partial<Record<ActiveBet['type'], SpotKey>> = {
 /**
  * Where a bet's chip stack is drawn. Come / Don't Come bets that moved to a number go to that box's come /
  * dontCome slot; place and buy to the place slot; lay to the lay slot; the rest to their area's anchor.
- * Bets with no felt area (hi-lo, world, hops; or an area missing in this variant) fall back to the props box
- * centre.
+ * Bets with no felt area (hi-lo, world, hops; or an area missing in this variant) go to the More bets strip's
+ * centre (the felt spreads them along it).
  */
 export function slotFor(layout: CrapsLayout, bet: ActiveBet): Pt {
   const n = bet.comePoint ?? bet.number
@@ -261,6 +274,5 @@ export function slotFor(layout: CrapsLayout, bet: ActiveBet): Pt {
   if (bet.type === 'lay' && n != null && layout.boxSlots[n]) return layout.boxSlots[n].lay
   const key: SpotKey | undefined = bet.type === 'hardway' ? (`hard:${bet.number}` as SpotKey) : DIRECT[bet.type]
   if (key && layout.anchors[key]) return layout.anchors[key]
-  const top = layout.anchors['any-7'], bottom = layout.anchors['any-craps']
-  return { x: (top.x + bottom.x) / 2, y: (top.y + bottom.y) / 2 }
+  return centre(layout.moreRect)
 }

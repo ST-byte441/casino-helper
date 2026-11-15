@@ -150,18 +150,44 @@ function Puck({ on, at, size }: { on: boolean; at: Pt; size: number }) {
   )
 }
 
-const TAGS: Partial<Record<ActiveBet['type'], string>> = { buy: 'BUY', lay: 'LAY' }
+const TAGS: Partial<Record<ActiveBet['type'], string>> = { buy: 'BUY', lay: 'LAY', world: 'WORLD', 'hi-lo': 'HI-LO' }
+
+const tagFor = (b: ActiveBet): string | undefined =>
+  (b.type === 'hop-easy' || b.type === 'hop-hard') && b.hopDice ? `${b.hopDice[0]}-${b.hopDice[1]}` : TAGS[b.type]
 
 type Drawn = { key: string; amount: number; at: Pt; size: number; tag?: string; dim?: boolean }
+
+/** Room left for a chip's tag under it in the More bets strip. */
+const STRIP_PAD = 2
+
+/**
+ * The More bets strip's row: the bets with no felt area of their own (World, Hi-Lo, Hops), one slot each, side by
+ * side. When more are down than the strip holds, the last slot shows a "+N" count of the rest instead (they stay
+ * in the More bets panel).
+ */
+export function moreBetsRow(layout: CrapsLayout, bets: ActiveBet[]): {
+  slots: Map<string, Pt>; overflow: { count: number; at: Pt; size: number } | null
+} {
+  const size = stackSizeFor(layout)
+  const m = layout.moreRect
+  const home = { x: m.x + m.w / 2, y: m.y + m.h / 2 }
+  const row = bets.filter(b => { const p = slotFor(layout, b); return p.x === home.x && p.y === home.y })
+  const pitch = size + STRIP_PAD
+  const fits = Math.max(1, Math.floor((m.w - STRIP_PAD * 2) / pitch))
+  const shown = row.length > fits ? row.slice(0, fits - 1) : row
+  const n = row.length > fits ? fits : row.length
+  const y = m.y + Math.min(m.h / 2, size / 2 + STRIP_PAD)
+  const at = (i: number): Pt => ({ x: m.x + (m.w - n * pitch) / 2 + pitch * (i + 0.5), y })
+  const slots = new Map(shown.map((b, i) => [b.id, at(i)] as [string, Pt]))
+  const overflow = row.length > fits ? { count: row.length - shown.length, at: at(fits - 1), size } : null
+  return { slots, overflow }
+}
 
 /** Every stack to draw: each bet at its slot, plus its odds as a smaller stack beside it or behind the line. */
 export function feltStacks(layout: CrapsLayout, bets: ActiveBet[], point: number | null): Drawn[] {
   const size = stackSizeFor(layout)
   const small = Math.round(size * ODDS_SHARE)
-  const top = layout.anchors['any-7'], bottom = layout.anchors['any-craps']
-  const fallback = { x: (top.x + bottom.x) / 2, y: (top.y + bottom.y) / 2 }
-  const isFallback = (p: Pt) => p.x === fallback.x && p.y === fallback.y
-  const fanned = bets.filter(b => isFallback(slotFor(layout, b)))
+  const more = moreBetsRow(layout, bets)
   const keep = (p: Pt, s: number): Pt => ({
     x: clamp(p.x, s / 2, layout.width - s / 2), y: clamp(p.y, s / 2, layout.height - s / 2),
   })
@@ -169,12 +195,15 @@ export function feltStacks(layout: CrapsLayout, bets: ActiveBet[], point: number
   const out: Drawn[] = []
   for (const b of bets) {
     let at = slotFor(layout, b)
-    // More-bets bets (hi-lo, world, hops) share the props-box centre: fan them out in a row, overlapping like a
-    // dealer's spread, so none hides another.
-    const i = fanned.indexOf(b)
-    if (i >= 0) at = { x: at.x + (i - (fanned.length - 1) / 2) * size * 0.6, y: at.y }
+    // More-bets bets (hi-lo, world, hops) sit side by side in the More bets strip; any past its "+N" aren't drawn.
+    const m = layout.moreRect
+    if (at.x === m.x + m.w / 2 && at.y === m.y + m.h / 2) {
+      const slot = more.slots.get(b.id)
+      if (!slot) continue
+      at = slot
+    }
     at = keep(at, size)
-    out.push({ key: b.id, amount: b.amount, at, size, tag: TAGS[b.type], dim: !b.working })
+    out.push({ key: b.id, amount: b.amount, at, size, tag: tagFor(b), dim: !b.working })
 
     if (!b.odds || b.odds <= 0) continue
     let oddsAt: Pt | null = null
@@ -194,6 +223,8 @@ export function CrapsFelt({ layout, bets, point, highlight, quality, fieldPays3o
   const areas = point == null ? layout.areas.filter(a => a.tone !== 'odds') : layout.areas
   const puckSlot = point != null ? layout.boxSlots[point]?.puck : undefined
   const puckSize = Math.round(size * 0.95)
+  const m = layout.moreRect
+  const overflow = moreBetsRow(layout, bets).overflow
 
   return (
     <View testID="craps-felt" style={[styles.felt, { width: layout.width, height: layout.height }]}>
@@ -204,12 +235,25 @@ export function CrapsFelt({ layout, bets, point, highlight, quality, fieldPays3o
             fieldPays3on12={fieldPays3on12} />
         )
       })}
+      <View testID="more-bets-strip" pointerEvents="none"
+        style={[styles.strip, { left: m.x, top: m.y, width: m.w, height: m.h }]}>
+        <Text numberOfLines={1} style={[styles.stripText, { fontSize: fit(9, m.w, m.h, 0.3, 12) }]}>MORE BETS</Text>
+      </View>
       {puckSlot
         ? <Puck on at={puckSlot} size={puckSize} />
         : <Puck on={false} at={layout.offPuck} size={puckSize} />}
       {feltStacks(layout, bets, point).map(s => (
         <Stack key={s.key} id={s.key} amount={s.amount} at={s.at} size={s.size} tag={s.tag} dim={s.dim} />
       ))}
+      {overflow && (
+        <View testID="more-bets-overflow" pointerEvents="none" style={[styles.overflow, {
+          left: overflow.at.x - overflow.size / 2, top: overflow.at.y - overflow.size / 2,
+          width: overflow.size, height: overflow.size, borderRadius: overflow.size / 2,
+        }]}>
+          <Text style={[styles.stackText, { color: '#fff', fontSize: overflow.size * 0.36 }]} numberOfLines={1}
+            adjustsFontSizeToFit>+{overflow.count}</Text>
+        </View>
+      )}
     </View>
   )
 }
@@ -226,6 +270,11 @@ const styles = StyleSheet.create({
   dim: { opacity: 0.55 },
   tag: { position: 'absolute', alignSelf: 'center', backgroundColor: '#000', borderRadius: 3, paddingHorizontal: 3 },
   tagText: { color: YELLOW, fontWeight: '800' },
+  strip: { position: 'absolute', borderWidth: 1, borderColor: LINE, alignItems: 'center', justifyContent: 'center',
+    overflow: 'hidden' },
+  stripText: { color: 'rgba(255,255,255,0.45)', fontWeight: '800', letterSpacing: 0.5 },
+  overflow: { position: 'absolute', alignItems: 'center', justifyContent: 'center', backgroundColor: '#000',
+    borderWidth: 1.5, borderColor: YELLOW },
   puck: { position: 'absolute', alignItems: 'center', justifyContent: 'center', borderWidth: 2 },
   puckOn: { backgroundColor: '#fff', borderColor: '#000' },
   puckOff: { backgroundColor: '#111', borderColor: '#fff' },

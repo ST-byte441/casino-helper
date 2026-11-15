@@ -84,6 +84,42 @@ describe.each(cases)('%s at %dx%d', (variant, width, height) => {
     // More-bets bets fan out instead of sitting on one another.
     expect(centreOf(boxOf(getByTestId('stack-d')))).not.toEqual(centreOf(boxOf(getByTestId('stack-e'))))
   })
+
+  const props = L.areas.filter(a => a.tone === 'prop')
+  const inStrip = (id: string, r: ReturnType<typeof draw>) => {
+    const b = boxOf(r.getByTestId(id))
+    const c = centreOf(b)
+    expect([id, inside(c, L.moreRect)]).toEqual([id, true])
+    // The whole chip stays in the strip, so it never covers a props cell or COME / FIELD.
+    expect([id, b.left >= L.moreRect.x - 1e-6, b.left + b.width <= L.moreRect.x + L.moreRect.w + 1e-6,
+      b.top >= L.moreRect.y - 1e-6, b.top + b.height <= L.moreRect.y + L.moreRect.h + 1e-6]).toEqual([id, true, true, true, true])
+    for (const a of props) expect([id, a.key, inside(c, a.rect)]).toEqual([id, a.key, false])
+  }
+
+  it('draws World, Hi-Lo and hops in the More bets strip, tagged', () => {
+    const bets = [bet({ id: 'w', type: 'world' }), bet({ id: 'h', type: 'hi-lo' }),
+      bet({ id: 'e', type: 'hop-easy', hopDice: [2, 5] }), bet({ id: 'x', type: 'hop-hard', hopDice: [3, 3] })]
+    const r = draw(L, { point: 6, bets })
+    for (const b of bets) inStrip(`stack-${b.id}`, r)
+    expect(r.getByTestId('stack-w')).toHaveTextContent(/WORLD/)
+    expect(r.getByTestId('stack-h')).toHaveTextContent(/HI-LO/)
+    expect(r.getByTestId('stack-e')).toHaveTextContent(/2-5/)
+    expect(r.getByTestId('stack-x')).toHaveTextContent(/3-3/)
+    expect(r.queryByTestId('more-bets-overflow')).toBeNull()
+  })
+
+  it('caps a long row of hops inside the strip with a +N count', () => {
+    const hops: ActiveBet[] = []
+    for (let a = 1; a <= 6; a++) for (let b = a; b <= 6; b++)
+      hops.push(bet({ id: `hop${a}${b}`, type: a === b ? 'hop-hard' : 'hop-easy', hopDice: [a, b] }))
+    const r = draw(L, { bets: hops })
+    const drawn = hops.filter(h => r.queryByTestId(`stack-${h.id}`))
+    expect(drawn.length).toBeGreaterThan(0)
+    expect(drawn.length).toBeLessThan(hops.length)
+    for (const h of drawn) inStrip(`stack-${h.id}`, r)
+    inStrip('more-bets-overflow', r)
+    expect(r.getByTestId('more-bets-overflow')).toHaveTextContent(`+${hops.length - drawn.length}`)
+  })
 })
 
 describe('CrapsFelt labels and tints', () => {
