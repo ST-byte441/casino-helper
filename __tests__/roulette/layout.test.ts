@@ -187,12 +187,12 @@ describe.each(orientations)('%s outside boxes beside the street edge', (o) => {
 
 describe('tapTarget', () => {
   const L = buildLayout('double', 'portrait', 300, 600)
-  const R = 18
+  const R = 14 // STACK_SIZE / 2
   const split = L.anchors['split:17-20']
   const c17 = centre(cell(L, '17'))
-  // A point on the split chip's rim, 17dp from its anchor toward the centre of 17.
+  // A point on the split chip, 12dp from its anchor toward the centre of 17.
   const d = Math.hypot(c17.x - split.x, c17.y - split.y)
-  const rim = { x: split.x + ((c17.x - split.x) / d) * 17, y: split.y + ((c17.y - split.y) / d) * 17 }
+  const rim = { x: split.x + ((c17.x - split.x) / d) * 12, y: split.y + ((c17.y - split.y) / d) * 12 }
 
   test('a cell centre with no bets is that straight bet', () => {
     expect(tapTarget(L, 'double', {}, c17.x, c17.y, R)).toBe('straight:17')
