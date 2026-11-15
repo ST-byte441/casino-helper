@@ -4,6 +4,7 @@ import { Text } from '../../../components/Text'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { TableRules, PayoutMode, SoftSeven, SurrenderMode, DeckCount } from '../../../lib/types'
 import { DEFAULT_TABLE_RULES } from '../../../lib/constants'
+import { useScreenClass } from '../../../lib/useScreenClass'
 
 type Props = { onStart: (rules: TableRules) => void; initialRules?: TableRules }
 
@@ -42,6 +43,7 @@ function RuleRow<T extends string | number | boolean>({ label, note, options, va
 export function TableSetup({ onStart, initialRules }: Props) {
   const [rules, setRules] = useState<TableRules>(initialRules ?? DEFAULT_TABLE_RULES)
   const [showScrollHint, setShowScrollHint] = useState(true)
+  const { sizeClass } = useScreenClass()
   const set = <K extends keyof TableRules>(key: K, val: TableRules[K]) =>
     setRules(r => ({ ...r, [key]: val }))
 
@@ -50,8 +52,8 @@ export function TableSetup({ onStart, initialRules }: Props) {
     setShowScrollHint(contentOffset.y + layoutMeasurement.height < contentSize.height - 24)
   }
 
-  return (
-    <SafeAreaView style={styles.container}>
+  const content = (
+    <>
       <Text style={styles.title}>Table Rules</Text>
       <View style={styles.scrollWrapper}>
       <ScrollView
@@ -107,12 +109,22 @@ export function TableSetup({ onStart, initialRules }: Props) {
       <TouchableOpacity style={styles.playBtn} onPress={() => onStart(rules)}>
         <Text style={styles.playBtnText}>Play</Text>
       </TouchableOpacity>
+    </>
+  )
+
+  return (
+    <SafeAreaView style={styles.container}>
+      {sizeClass === 'large'
+        // Large screens: a centred column of comfortable width instead of edge-to-edge rows.
+        ? <View testID="bj-setup-column" style={styles.largeColumn}>{content}</View>
+        : content}
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#13131f' },
+  largeColumn: { flex: 1, width: '100%', maxWidth: 520, alignSelf: 'center' },
   title: { color: '#fff', fontSize: 24, fontWeight: '700', padding: 16 },
   scrollWrapper: { flex: 1 },
   scroll: { paddingHorizontal: 16, paddingBottom: 16 },

@@ -3,10 +3,12 @@ import { Animated, StyleSheet } from 'react-native'
 import { Text } from '../../../components/Text'
 import { Card as CardType } from '../../../lib/types'
 import { RED_SUITS } from '../../../lib/constants'
+import { sizedStyles, TableSize } from '../sizes'
 
-type Props = { card: CardType }
+type Props = { card: CardType; size?: TableSize }
 
-export function Card({ card }: Props) {
+export function Card({ card, size = 'regular' }: Props) {
+  const s = SHEETS[size]
   const opacity = useRef(new Animated.Value(0)).current
 
   useEffect(() => {
@@ -15,22 +17,22 @@ export function Card({ card }: Props) {
 
   if (card.faceDown) {
     return (
-      <Animated.View style={[styles.card, styles.faceDown, { opacity }]}>
-        <Text style={styles.back}>🂠</Text>
+      <Animated.View style={[s.card, s.faceDown, { opacity }]}>
+        <Text style={s.back}>🂠</Text>
       </Animated.View>
     )
   }
 
   const isRed = RED_SUITS.includes(card.suit)
   return (
-    <Animated.View style={[styles.card, { opacity }]}>
-      <Text style={[styles.value, isRed && styles.red]}>{card.value}</Text>
-      <Text style={[styles.suit, isRed && styles.red]}>{card.suit}</Text>
+    <Animated.View style={[s.card, { opacity }]}>
+      <Text style={[s.value, isRed && s.red]}>{card.value}</Text>
+      <Text style={[s.suit, isRed && s.red]}>{card.suit}</Text>
     </Animated.View>
   )
 }
 
-const styles = StyleSheet.create({
+const base = StyleSheet.create({
   card: { width: 52, height: 76, backgroundColor: '#fff', borderRadius: 6, margin: 4,
     justifyContent: 'center', alignItems: 'center', elevation: 3,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 3 },
@@ -39,4 +41,11 @@ const styles = StyleSheet.create({
   suit: { fontSize: 14, color: '#111' },
   red: { color: '#cc0000' },
   back: { fontSize: 36, color: '#fff' },
+})
+
+const SHEETS = sizedStyles(base, {
+  card: { width: 78, height: 114, margin: 6, borderRadius: 9 },
+  value: { fontSize: 27 },
+  suit: { fontSize: 21 },
+  back: { fontSize: 54 },
 })
