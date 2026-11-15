@@ -5,7 +5,12 @@ import { Card as CardType } from '../../../lib/types'
 import { RED_SUITS } from '../../../lib/constants'
 import { sizedStyles, TableSize } from '../../../lib/tableSize'
 
-type Props = { card: CardType; size?: TableSize }
+/** 'medium' (×1.3) is for landscape tables, where three large cards would not fit a hand's column. */
+export type CardSize = TableSize | 'medium'
+
+type Props = { card: CardType; size?: CardSize }
+
+export const MEDIUM_CARD = { width: 68, height: 99, margin: 5 }
 
 export function Card({ card, size = 'regular' }: Props) {
   const s = SHEETS[size]
@@ -43,9 +48,17 @@ const base = StyleSheet.create({
   back: { fontSize: 36, color: '#fff' },
 })
 
-const SHEETS = sizedStyles(base, {
-  card: { width: 78, height: 114, margin: 6, borderRadius: 9 },
-  value: { fontSize: 27 },
-  suit: { fontSize: 21 },
-  back: { fontSize: 54 },
-})
+const SHEETS: Record<CardSize, typeof base> = {
+  ...sizedStyles(base, {
+    card: { width: 78, height: 114, margin: 6, borderRadius: 9 },
+    value: { fontSize: 27 },
+    suit: { fontSize: 21 },
+    back: { fontSize: 54 },
+  }),
+  medium: sizedStyles(base, {
+    card: { ...MEDIUM_CARD, borderRadius: 8 },
+    value: { fontSize: 23 },
+    suit: { fontSize: 18 },
+    back: { fontSize: 47 },
+  }).large,
+}
