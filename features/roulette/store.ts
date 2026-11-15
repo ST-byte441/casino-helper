@@ -26,11 +26,15 @@ type RouletteState = {
   marker: Pocket | null
   /** Transient message for the reason line, set when a chip was rejected for balance. */
   notice: string | null
+  /** Tray chip picked for tap-to-place, or null. Kept across spins; cleared when leaving the table. */
+  selectedChip: number | null
 }
 
 type RouletteActions = {
   setSettings(s: RouletteSettings): void
   placeChip(betId: string, amount: number): boolean
+  /** Selects a tray chip for tap-to-place; the selected chip again deselects it. */
+  selectChip(amount: number): void
   moveStack(from: string, to: string): void
   removeStack(betId: string): void
   undo(): void
@@ -55,6 +59,7 @@ const emptySession = {
   lastWinners: [] as string[],
   marker: null as Pocket | null,
   notice: null as string | null,
+  selectedChip: null as number | null,
 }
 
 export const useRouletteStore = create<RouletteState & RouletteActions>((set, get) => ({
@@ -80,6 +85,10 @@ export const useRouletteStore = create<RouletteState & RouletteActions>((set, ge
       notice: null,
     }))
     return true
+  },
+
+  selectChip(amount) {
+    set(s => ({ selectedChip: s.selectedChip === amount ? null : amount }))
   },
 
   moveStack(from, to) {

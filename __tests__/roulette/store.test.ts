@@ -228,3 +228,37 @@ describe('balance notice', () => {
     expect(store().reason()).toBe('Place a bet')
   })
 })
+
+describe('chip selection', () => {
+  test('selectChip toggles the same chip and switches to another', () => {
+    expect(store().selectedChip).toBeNull()
+    store().selectChip(5)
+    expect(store().selectedChip).toBe(5)
+    store().selectChip(5)
+    expect(store().selectedChip).toBeNull()
+    store().selectChip(5)
+    store().selectChip(25)
+    expect(store().selectedChip).toBe(25)
+  })
+
+  test('the selection survives a spin and returning to the table', () => {
+    store().selectChip(5)
+    store().placeChip('red', 10)
+    expect(store().spin(() => 0)).toBe(true)
+    store().finishSpin()
+    store().backToTable()
+    expect(store().selectedChip).toBe(5)
+  })
+
+  test('leaving the table clears the selection', () => {
+    store().selectChip(5)
+    store().abandon()
+    expect(store().selectedChip).toBeNull()
+  })
+
+  test('a tap placement outside betting places nothing', () => {
+    store().placeChip('red', 10)
+    store().spin(() => 0)
+    expect(store().placeChip('black', 5)).toBe(false)
+  })
+})
