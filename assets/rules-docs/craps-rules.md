@@ -5,6 +5,10 @@
 > 2. **HR:** Hard Rock Casino Cincinnati, *Craps*: https://casino.hardrock.com/cincinnati/casino/table-games/craps
 > 3. **RW:** Riverwind Casino, *Craps Odds Explained for Beginners* (2026-03-24): https://www.riverwind.com/blog/craps-odds/
 > 4. **Wiki:** Wikipedia, *Craps*, read 2026-11-14: https://en.wikipedia.org/wiki/Craps
+> 5. **NGCB:** Nevada Gaming Control Board, *Crapless Craps – Rules of Play* (scanned one-page PDF, dated 2018-10-01): https://www.gaming.nv.gov/siteassets/content/divisions/enforcement/rules-of-play/Crapless_Craps.pdf
+> 6. **PN:** PokerNews, *Crapless Craps* (casino terms), read 2026-11-14: https://www.pokernews.com/casino/casino-terms/crapless-craps.htm
+>
+> **Crapless precedence:** the NGCB is the regulator's rules of play, so where sources disagree on crapless craps, **NGCB wins**. See **Source Errata** at the end.
 >
 > Each rule is tagged with the source(s) that state it. Items marked **(derived)** are calculated from sourced rules rather than stated in a source. Items marked **(app)** are this app's own choices where the sources are silent or vary by casino. **Easy Craps is an app-only teaching variant**: none of the sources describe it. Wikipedia's craps article carries "needs more citations" tags on its rules sections, so where it is the only source, treat the rule as typical rather than universal.
 >
@@ -48,13 +52,19 @@ Two dice give 36 equally likely outcomes. *(RW, Wiki)*
 
 ### Crapless Craps
 - Also called "bastard craps"; invented by Bob Stupak at Vegas World in the 1980s. *(Wiki)*
-- **Come-out:** only 7 wins; every other number, including 2, 3, 11 and 12, becomes the point. *(Ven)*
-- A player must bet the Pass Line to shoot (no Don't Pass). *(HR)* No Don't Pass / Don't Come. *(app, consistent with HR)*
-- Place 2 or 12 pays **11 to 2** (7.14% edge); Place 3 or 11 pays **11 to 4** (6.25%). *(Wiki)*
-- Pass Line house edge **5.38%**. *(Wiki)*
-- Buy 2/12 at 6 to 1 and 3/11 at 3 to 1, less vig. *(app, from the true odds above)*
-- **Free odds on 2, 3, 11 and 12** pay true odds: 6 to 1 on 2/12, 3 to 1 on 3/11. *(derived; the sources don't state crapless odds payouts)*
-- Odds limits for 2, 3, 11 and 12 under 3-4-5x are **not covered** by the sources. *(see Not Covered)*
+- Dealt with the **same procedures as standard craps**, with the exceptions below; **all other bets are unchanged** from standard craps. *(NGCB)*
+- **Come-out:** **7 is the only Pass Line winner**, paying even money. Every other number becomes the point. *(NGCB, Ven)*
+- **2, 3, 11 and 12 become points**: they are not an automatic loss, and **11 is not an automatic winner**. *(NGCB, Ven)*
+- **No Don't Pass or Don't Come bets.** *(NGCB; PN: "typically absent")* A player must bet the Pass Line to shoot. *(HR)*
+- **Free odds:** 2 and 12 pay **6 to 1**; 3 and 11 pay **3 to 1**; all other numbers pay the same odds as standard craps. *(NGCB; PN: odds allowed on all point numbers)*
+- **Place bets on 2, 3, 11, 12** are allowed: **2 and 12 pay 25 to 5 (5 to 1)**; **3 and 11 pay 13 to 5**. *(NGCB)*
+  - House edge at those payouts: Place 2/12 **14.29%**, Place 3/11 **10.00%**. *(derived: true odds 6 to 1 and 3 to 1)*
+  - Wikipedia gives 11 to 2 (7.14%) and 11 to 4 (6.25%) instead. Some casinos may pay that, but the NGCB rule is the regulator's. *(Wiki; see Errata)*
+  - Bet 2/3/11/12 in **multiples of $5** for exact payouts. *(derived from the "to 5" payouts)*
+- **Lay bets:** the operator **may or may not offer** them; if offered, a **5% vig** is taken. *(NGCB)* Laying 2/12 pays 1 to 6 and 3/11 pays 1 to 3. *(derived from true odds)*
+- **Buy bets** on 2, 3, 11, 12 are not mentioned by the NGCB. *(not covered)* The app offers them at true odds (6 to 1, 3 to 1) less vig. *(app)*
+- Pass Line house edge **5.38%**. *(Wiki)* PN says only that it is "much higher" than standard craps.
+- Odds limits for 2, 3, 11 and 12 under 3-4-5× are **not covered** by the sources. *(see Not Covered)*
 
 ### Easy Craps (app-only)
 - **Not from any source.** A teaching variant made for this app.
@@ -171,10 +181,10 @@ The shooter rolls before a point is established. *(Ven, HR, Wiki)*
 | 4 or 10 | 9 to 5 | 6.67% |
 | 5 or 9 | 7 to 5 | 4.00% |
 | 6 or 8 | 7 to 6 | 1.52% |
-| 2 or 12 (crapless) | 11 to 2 | 7.14% |
-| 3 or 11 (crapless) | 11 to 4 | 6.25% |
+| 2 or 12 (crapless) | **25 to 5** (5 to 1) | 14.29% |
+| 3 or 11 (crapless) | **13 to 5** | 10.00% |
 
-*(payouts: Ven, Wiki; edges: Wiki)*
+*(payouts: Ven, Wiki; crapless payouts: NGCB; edges: Wiki, crapless edges derived. Wikipedia's 11 to 2 / 11 to 4 crapless payouts are in the Errata.)*
 
 - **Off on the come-out** and working once a point is set, unless the player says otherwise. *(Wiki)*
 - Can be **taken down any time** before the next roll. *(Ven, Wiki)*
@@ -302,6 +312,8 @@ Players can call any bet "On" or "Off"; the dealer marks it with a button. *(Wik
 | 2, 12, hard hop | 13.89% | Wiki |
 | Any 7 | 16.67% | Wiki |
 | Crapless Pass Line | 5.38% | Wiki |
+| Crapless Place 2/12 (25 to 5) | 14.29% | derived from NGCB |
+| Crapless Place 3/11 (13 to 5) | 10.00% | derived from NGCB |
 
 ---
 
@@ -323,6 +335,17 @@ The lowest house edge in the casino is a minimum line bet with full odds; other 
 The app needs its own decision for these, and this file marks each one **(app)** where used:
 
 - Odds limits on crapless points 2, 3, 11 and 12 under 3-4-5×.
+- Buy bets on crapless 2, 3, 11 and 12 (the NGCB lists only odds and place bets for those numbers).
+- Whether this app's crapless table offers Lay bets (the NGCB leaves it to the operator).
 - Payout rounding when an odds or place bet isn't an exact multiple (e.g. $5 of odds on a 6).
 - Table minimums and maximums for this app's table.
 - Easy Craps and its Low/High Field bets (app-only).
+
+---
+
+## Source Errata
+
+- **PN: 11 on the crapless come-out.** PokerNews says Pass Line players "still win if a 7 or 11 is rolled on the come-out roll". The NGCB says **7 is the only Pass Line winner** and "a roll of 11 will not be an automatic winner"; the Venetian agrees (any number other than 7 becomes the point). This file follows the NGCB.
+- **PN: crapless house edges by point.** PokerNews gives "Point 2 or 12: approximately 7.14%" and "Point 3 or 11: about 6.25%". Those match Wikipedia's **place-bet** edges at 11 to 2 and 11 to 4, not a Pass Line edge on those points, so they look mislabelled. Not used here.
+- **Wiki vs NGCB: crapless place payouts.** Wikipedia says place 2/12 pays 11 to 2 and 3/11 pays 11 to 4. The NGCB rules of play say **25 to 5** and **13 to 5**. Payouts can differ by casino, but this file follows the regulator.
+
