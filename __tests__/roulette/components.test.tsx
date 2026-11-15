@@ -277,3 +277,40 @@ describe('ResultPanel', () => {
     expect(getByText('Even')).toBeTruthy()
   })
 })
+
+describe('tray chip drag after the tray moves', () => {
+  // A tray chip's window origin was only measured on its own layout. Something that shifts the whole tray
+  // (a bottom inset or the Galaxy Fold taskbar arriving after mount) leaves the chip's frame inside the tray
+  // unchanged, so no layout event fires and the stale origin drew and dropped the chip under the finger.
+  const { State } = require('react-native-gesture-handler')
+  const { fireGestureHandler, getByGestureTestId } = require('react-native-gesture-handler/jest-utils')
+  const MockNativeMethods = require('@react-native/jest-preset/jest/MockNativeMethods').default
+
+  test('re-measures the chip at touch-down, so the chip lands where it is drawn', async () => {
+    let chipY = 700
+    MockNativeMethods.measureInWindow.mockImplementation(function (this: any, cb: (x: number, y: number) => void) {
+      cb(0, this.props?.testID === 'chip-5' ? chipY : 0)
+    })
+    const { getByTestId } = render(<BettingTable wheel="double" orientation="portrait" onSpin={jest.fn()} />)
+    fireEvent(getByTestId('roulette-board'), 'layout', { nativeEvent: { layout: { x: 0, y: 0, width: 300, height: 600 } } })
+    fireEvent(getByTestId('chip-5'), 'layout', { nativeEvent: { layout: { x: 0, y: 0, width: 44, height: 44 } } })
+
+    // Let the detector pick up the handlers re-rendered with the board layout.
+    await act(async () => { await new Promise(r => setTimeout(r, 0)) })
+
+    chipY = 652 // the tray moved up 48dp; the chip's own frame did not change, so no layout event
+
+    const a = buildLayout('double', 'portrait', 300, 600).anchors['straight:17']
+    const rel = { x: a.x, y: a.y + DRAG_LIFT - chipY }
+    const pan = getByGestureTestId('drag-chip-5')
+    // Touch-down, then (as on a device) time passes before the finger has moved far enough to activate the pan.
+    fireGestureHandler(pan, [{ state: State.BEGAN, x: 22, y: 22 }])
+    await act(async () => { await new Promise(r => setTimeout(r, 0)) })
+    fireGestureHandler(pan, [
+      { state: State.ACTIVE, x: rel.x, y: rel.y },
+      { state: State.END, x: rel.x, y: rel.y },
+    ])
+    await act(async () => { await new Promise(r => setTimeout(r, 0)) })
+    expect(store().bets).toEqual({ 'straight:17': 5 })
+  })
+})

@@ -99,6 +99,13 @@ function DragHandle({ source, ghost, onBegin, onMove, onDrop, onFinish, style, t
 
   const pan = Gesture.Pan()
     .minDistance(2)
+    .withTestId(`drag-${testID ?? source.type}`)
+    // Re-measure at touch-down: onLayout only fires when this handle moves within its parent, so a shift of
+    // the whole tray (a late bottom inset, the Galaxy Fold taskbar) would leave a stale origin and draw the
+    // chip under the finger. Pan activates after minDistance, so the fresh origin is in by then.
+    .onBegin(() => {
+      scheduleOnRN(measureSelf)
+    })
     .onStart(e => {
       const p = dragPoint(fingerInWindow(self.value, { x: e.x, y: e.y }))
       ghost.x.value = p.x - ghost.origin.value.x
@@ -212,7 +219,7 @@ export function BettingTable({ wheel, orientation, onSpin }: Props) {
     <View ref={rootRef} style={styles.root} onLayout={measure}>
       {/* The border sits on a wrapper so the measured view's frame is exactly the board drawing area. */}
       <View style={styles.boardFrame}>
-        <View ref={boardRef} style={styles.boardArea} onLayout={onBoardLayout}>
+        <View ref={boardRef} testID="roulette-board" style={styles.boardArea} onLayout={onBoardLayout}>
           {layout && (
             <>
               <Board wheel={wheel} layout={layout} bets={bets} marker={marker} highlight={highlight} />
