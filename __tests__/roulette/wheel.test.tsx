@@ -62,6 +62,29 @@ describe('Wheel', () => {
     expect(getByTestId('wheel-pointer')).toBeTruthy()
   })
 
+  // The ball's rendering and its end-of-spin transforms (the mock's withTiming jumps to the final value).
+  const ballOf = (speed: 'slow' | 'fast', frozen = false) => {
+    const { getByTestId, UNSAFE_root } = render(
+      <Wheel wheel="double" result={17} speed={speed} onDone={jest.fn()} size={300} frozen={frozen} />)
+    const ball = getByTestId('wheel-ball')
+    const rotations = UNSAFE_root.findAll((n: any) => n.type === 'View' && JSON.stringify(n.props.style ?? '').includes('rotate'))
+      .map((n: any) => JSON.stringify(n.props.style))
+    return { type: ball.type, style: JSON.stringify(ball.props.style), rotations }
+  }
+
+  test('fast animates the ball on the track like slow, ending in the same place', () => {
+    const fast = ballOf('fast')
+    const slow = ballOf('slow')
+    expect(fast.type).toBe(slow.type)
+    expect(fast.style).toBe(slow.style)
+    expect(fast.rotations).toEqual(slow.rotations)
+    expect(fast.rotations.length).toBeGreaterThan(0)
+  })
+
+  test('frozen still shows the ball in the result pocket', () => {
+    expect(ballOf('fast', true).type).not.toBe(ballOf('fast').type)
+  })
+
   test('slow: onDone is not called at 6999 ms and is called once at 7000 ms', () => {
     const onDone = jest.fn()
     render(<Wheel wheel="double" result={0} speed="slow" onDone={onDone} size={300} />)

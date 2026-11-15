@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View, TouchableOpacity, StyleSheet, LayoutChangeEvent, StyleProp, ViewStyle } from 'react-native'
 import { Text } from '../../../components/Text'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
@@ -7,13 +7,17 @@ import { scheduleOnRN } from 'react-native-worklets'
 import { RouletteWheel } from '../../../lib/types'
 import { ROULETTE_CHIPS } from '../../../lib/constants'
 import { totalStake } from '../engine'
-import { BoardLayout, BoardOrientation, DragSource, DropAction, buildLayout, hitTest, resolveDrop } from '../layout'
+import { BoardLayout, BoardOrientation, DragSource, DropAction, buildLayout, hitTest, resolveDrop, tapTarget } from '../layout'
 import { useRouletteStore } from '../store'
 import { Board, CHIP_COLORS, STACK_SIZE, stackChip } from './Board'
 
 type Props = { wheel: RouletteWheel; orientation: BoardOrientation; onSpin(): void }
 
 export const CHIP_SIZE = 44
+/** How long a tap-placed bet's spot stays lit. */
+const TAP_FLASH_MS = 400
+/** A deliberate press still counts as a tap; the 500ms default silently dropped slow taps. */
+const TAP_MAX_MS = 1500
 
 /** Applies a resolved drop to the roulette store. */
 export function applyDrop(action: DropAction): void {
@@ -86,12 +90,15 @@ type HandleProps = {
   onMove(absX: number, absY: number): void
   onDrop(success: boolean, absX: number, absY: number): void
   onFinish(): void
+  /** Tray chips: a tap (no movement) selects the chip for tap-to-place. Stacks have no tap; the board's tap covers them. */
+  onTap?: () => void
+  selected?: boolean
   style?: StyleProp<ViewStyle>
   testID?: string
   children?: React.ReactNode
 }
 
-function DragHandle({ source, ghost, onBegin, onMove, onDrop, onFinish, style, testID, children }: HandleProps) {
+function DragHandle({ source, ghost, onBegin, onMove, onDrop, onFinish, onTap, selected, style, testID, children }: HandleProps) {
   const selfRef = useRef<React.ComponentRef<typeof View>>(null)
   // This handle's window origin, in the same measureInWindow frame as the board and root origins.
   const self = useSharedValue<Point>({ x: 0, y: 0 })
@@ -99,6 +106,13 @@ function DragHandle({ source, ghost, onBegin, onMove, onDrop, onFinish, style, t
 
   const pan = Gesture.Pan()
     .minDistance(2)
+    .withTestId(`drag-${testID ?? source.type}`)
+    // Re-measure at touch-down: onLayout only fires when this handle moves within its parent, so a shift of
+    // the whole tray (a late bottom inset, the Galaxy Fold taskbar) would leave a stale origin and draw the
+    // chip under the finger. Pan activates after minDistance, so the fresh origin is in by then.
+    .onBegin(() => {
+      scheduleOnRN(measureSelf)
+    })
     .onStart(e => {
       const p = dragPoint(fingerInWindow(self.value, { x: e.x, y: e.y }))
       ghost.x.value = p.x - ghost.origin.value.x
@@ -120,9 +134,16 @@ function DragHandle({ source, ghost, onBegin, onMove, onDrop, onFinish, style, t
     .onFinalize(() => {
       scheduleOnRN(onFinish)
     })
+  // Raced against the pan: a finger that moves 2px+ drags, one that lifts without moving taps.
+  const gesture = onTap
+    ? Gesture.Race(pan, Gesture.Tap().maxDuration(TAP_MAX_MS).withTestId(`tap-${testID ?? source.type}`).onEnd((_e, success) => {
+        if (success) scheduleOnRN(onTap)
+      }))
+    : pan
   return (
-    <GestureDetector gesture={pan}>
-      <View ref={selfRef} testID={testID} style={style} onLayout={measureSelf}>{children}</View>
+    <GestureDetector gesture={gesture}>
+      <View ref={selfRef} testID={testID} style={style} onLayout={measureSelf}
+        accessibilityState={onTap ? { selected: !!selected } : undefined}>{children}</View>
     </GestureDetector>
   )
 }
@@ -143,6 +164,8 @@ export function BettingTable({ wheel, orientation, onSpin }: Props) {
   const reason = useRouletteStore(s => s.reason)
   // Subscribed so the reason line re-renders when a chip is rejected for balance.
   useRouletteStore(s => s.notice)
+  const selectedChip = useRouletteStore(s => s.selectedChip)
+  const selectChip = useRouletteStore(s => s.selectChip)
   const undo = useRouletteStore(s => s.undo)
   const clearBets = useRouletteStore(s => s.clearBets)
   const error = spinError()
@@ -197,7 +220,27 @@ export function BettingTable({ wheel, orientation, onSpin }: Props) {
     applyDrop(dragEndAction({ success, layout, wheel, source: dragSource.current, origin: boardOrigin.current, absX, absY }))
   }
 
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  useEffect(() => () => clearTimeout(flashTimer.current), [])
+
+  function onBoardTap(x: number, y: number) {
+    const s = useRouletteStore.getState()
+    if (!layout || s.selectedChip === null) return
+    const id = tapTarget(layout, wheel, s.bets, x, y, STACK_SIZE / 2)
+    if (!id || !s.placeChip(id, s.selectedChip)) return
+    setHighlight(id)
+    clearTimeout(flashTimer.current)
+    flashTimer.current = setTimeout(() => setHighlight(null), TAP_FLASH_MS)
+  }
+
+  // Board-local point: the tap's detector is on the measured board view itself.
+  const boardTap = Gesture.Tap().maxDuration(TAP_MAX_MS).withTestId('tap-board').onEnd((e, success) => {
+    if (success) scheduleOnRN(onBoardTap, e.x, e.y)
+  })
+
   function onFinish() {
+    // A pan also finalizes after a plain tap; with no drag under way there's nothing to clear (and a tap's flash stays).
+    if (dragSource.current === null) return
     dragSource.current = null
     setDrag(null)
     setHighlight(null)
@@ -212,7 +255,8 @@ export function BettingTable({ wheel, orientation, onSpin }: Props) {
     <View ref={rootRef} style={styles.root} onLayout={measure}>
       {/* The border sits on a wrapper so the measured view's frame is exactly the board drawing area. */}
       <View style={styles.boardFrame}>
-        <View ref={boardRef} style={styles.boardArea} onLayout={onBoardLayout}>
+        <GestureDetector gesture={boardTap}>
+        <View ref={boardRef} testID="roulette-board" style={styles.boardArea} onLayout={onBoardLayout}>
           {layout && (
             <>
               <Board wheel={wheel} layout={layout} bets={bets} marker={marker} highlight={highlight} />
@@ -231,6 +275,7 @@ export function BettingTable({ wheel, orientation, onSpin }: Props) {
             </>
           )}
         </View>
+        </GestureDetector>
       </View>
 
       <Text style={styles.error}>{reasonText ?? ' '}</Text>
@@ -255,7 +300,9 @@ export function BettingTable({ wheel, orientation, onSpin }: Props) {
 
       <View style={styles.tray}>
         {ROULETTE_CHIPS.map(amount => (
-          <DragHandle key={amount} testID={`chip-${amount}`} source={{ type: 'tray', amount }} {...handlers}>
+          <DragHandle key={amount} testID={`chip-${amount}`} source={{ type: 'tray', amount }} {...handlers}
+            onTap={() => selectChip(amount)} selected={selectedChip === amount}
+            style={[styles.trayChip, selectedChip === amount && styles.trayChipSelected]}>
             <ChipFace amount={amount} size={CHIP_SIZE} />
           </DragHandle>
         ))}
@@ -285,6 +332,10 @@ const styles = StyleSheet.create({
   spinText: { color: '#000', fontWeight: '800', fontSize: 16 },
   tray: { flexDirection: 'row', justifyContent: 'space-evenly', paddingVertical: 10, borderTopWidth: 1,
     borderColor: '#2a2a3e' },
+  // The ring's border is always there (transparent when unselected) so selecting never shifts the tray, and the
+  // negative margin cancels the ring's 5dp so the tray keeps its old height.
+  trayChip: { padding: 2, margin: -5, borderWidth: 3, borderColor: 'transparent', borderRadius: CHIP_SIZE / 2 + 5 },
+  trayChipSelected: { borderColor: '#FFD700' },
   chip: { alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderStyle: 'dashed', borderColor: '#FFD700' },
   chipText: { fontWeight: '800', fontSize: 13 },
   // Slightly see-through so the highlighted spot on a line or corner shows through the chip.

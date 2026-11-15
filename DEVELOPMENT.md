@@ -18,7 +18,7 @@ npx jest <path>   # single file
 npx tsc --noEmit  # type check only
 ```
 
-561 tests cover the game engines, strategy lookup, roulette layout and wheel maths, screens, profile store and stats, and update utility.
+631 tests cover the game engines, strategy lookup, roulette layout and wheel maths, screens, profile store and stats, and update utility.
 
 ## Project Structure
 
@@ -109,6 +109,8 @@ __tests__/        # Mirrors the feature folder structure
 `lib/screenClass.ts` sorts the window into `compact` (shorter side under 360dp, e.g. a Galaxy Fold cover screen), `regular` (360–599dp, most phones) or `large` (600dp and up, a Fold inner screen or tablet). It uses the shorter side, so rotating never changes the class. Components read it with `useScreenClass()`.
 
 `app.json` sets `"orientation": "default"` so the native build may rotate. The root layout is the only place that locks: `useOrientationLock()` (`lib/orientation.ts`) unlocks on `large` screens and otherwise locks `PORTRAIT_UP`, re-applying on fold/unfold. A screen that should follow the phone on regular phones sets `useOrientationStore.setRotationRequested(true)` while open and `false` on unmount. Today only the roulette table does this. Android 16+ ignores orientation locks on large screens anyway. Jest gets a default `expo-screen-orientation` mock in `.jest/setup.js`.
+
+**Roulette chip gestures.** Each tray chip races a Pan (drag; moves 2px+) against a Tap (selects the chip, `selectedChip` in the roulette store). The board area has one Tap that places the selected chip via `tapTarget()` (an existing stack under the finger first, otherwise `hitTest`). Stack handles keep only their Pan, so a tap on a stack is handled once, by the board. A drag handle re-measures its window origin at touch-down (`onBegin`) because `onLayout` misses moves of the whole tray. Gesture tests use RNGH `fireGestureHandler` with `withTestId` ids (`drag-chip-<n>`, `tap-chip-<n>`, `tap-board`) and flush microtasks/timers after each gesture.
 
 **Font scaling:** import `Text`/`TextInput` from `components/Text.tsx`, not `react-native`. They cap the system font-size setting at 1.3× (`MAX_FONT_SCALE`). `__tests__/lib/textCap.test.tsx` fails if a file imports them from `react-native`. `Animated.Text` needs `maxFontSizeMultiplier={MAX_FONT_SCALE}` passed by hand.
 

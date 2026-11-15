@@ -1,4 +1,4 @@
-import { buildLayout, hitTest, resolveDrop, BoardLayout, BoardOrientation, Rect } from '../../features/roulette/layout'
+import { buildLayout, hitTest, resolveDrop, tapTarget, BoardLayout, BoardOrientation, Rect } from '../../features/roulette/layout'
 import { allBets } from '../../features/roulette/engine'
 import { RouletteWheel } from '../../lib/types'
 
@@ -182,5 +182,37 @@ describe.each(orientations)('%s outside boxes beside the street edge', (o) => {
     const expected = boxAt(p)
     expect(expected).toBeTruthy()
     expect(hitTest(L, 'double', p.x, p.y)).toBe(expected)
+  })
+})
+
+describe('tapTarget', () => {
+  const L = buildLayout('double', 'portrait', 300, 600)
+  const R = 14 // STACK_SIZE / 2
+  const split = L.anchors['split:17-20']
+  const c17 = centre(cell(L, '17'))
+  // A point on the split chip, 12dp from its anchor toward the centre of 17.
+  const d = Math.hypot(c17.x - split.x, c17.y - split.y)
+  const rim = { x: split.x + ((c17.x - split.x) / d) * 12, y: split.y + ((c17.y - split.y) / d) * 12 }
+
+  test('a cell centre with no bets is that straight bet', () => {
+    expect(tapTarget(L, 'double', {}, c17.x, c17.y, R)).toBe('straight:17')
+  })
+
+  test('a shared edge is the split, same as a drop', () => {
+    const p = sharedEdge(cell(L, '17'), cell(L, '20'))
+    expect(tapTarget(L, 'double', {}, p.x, p.y, R)).toBe('split:17-20')
+  })
+
+  test('a tap on an existing stack adds to that stack, not the cell under the chip edge', () => {
+    expect(hitTest(L, 'double', rim.x, rim.y)).toBe('straight:17')
+    expect(tapTarget(L, 'double', { 'split:17-20': 5 }, rim.x, rim.y, R)).toBe('split:17-20')
+  })
+
+  test('the same point with no stack there is the cell', () => {
+    expect(tapTarget(L, 'double', {}, rim.x, rim.y, R)).toBe('straight:17')
+  })
+
+  test('off the board is null', () => {
+    expect(tapTarget(L, 'double', { 'split:17-20': 5 }, -5, 10, R)).toBeNull()
   })
 })

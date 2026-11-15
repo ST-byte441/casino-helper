@@ -32,10 +32,11 @@ const BALL_TRACK_R = 89.5
 const BALL_POCKET_R = 63
 const BALL_R = 3.6
 
-const TURNS: Record<RouletteSpeed, number> = { slow: 5, fast: 2 }
-// The ball goes round the track this many times (counter-clockwise) in slow mode, ending back at the top.
+// Slow and Fast play the same motion; only the duration (SPIN_MS) differs.
+const WHEEL_TURNS = 5
+// The ball goes round the track this many times (counter-clockwise), ending back at the top.
 const BALL_TURNS = 8
-// Slow mode: the ball rides the outer track until DROP_AT of the spin, then spirals inward until SETTLE_AT.
+// The ball rides the outer track until DROP_AT of the spin, then spirals inward until SETTLE_AT.
 // Wheel and ball share the cubic ease-out, so their relative angle still moves by (1 - SETTLE_AT)^3 of the
 // total relative travel (~4700 deg) after settling: 0.95 keeps that drift under 1 deg (0.9 gave ~4.7 deg,
 // half a triple-zero pocket).
@@ -69,9 +70,9 @@ export function Wheel({ wheel, result, speed, onDone, size, frozen = false }: Pr
   const side = size ?? measured ?? Math.min(window.width, window.height) * 0.8
   const scale = side / VB
 
-  const finalRotation = finalWheelRotation(wheel, result, TURNS[speed])
-  // In fast mode (and when frozen) the ball sits in the result pocket and turns with the wheel.
-  const ballOnWheel = frozen || speed === 'fast'
+  const finalRotation = finalWheelRotation(wheel, result, WHEEL_TURNS)
+  // Frozen (the result screen): the ball sits in the result pocket and turns with the wheel.
+  const ballOnWheel = frozen
 
   const rotation = useSharedValue(frozen ? finalRotation : 0)
   const ballAngle = useSharedValue(0)
@@ -86,13 +87,11 @@ export function Wheel({ wheel, result, speed, onDone, size, frozen = false }: Pr
     if (frozen) return
     const duration = SPIN_MS[speed]
     rotation.value = withTiming(finalRotation, { duration, easing: Easing.out(Easing.cubic) })
-    if (speed === 'slow') {
-      ballAngle.value = withTiming(-360 * BALL_TURNS, { duration, easing: Easing.out(Easing.cubic) })
-      ballRadius.value = withDelay(
-        duration * DROP_AT,
-        withTiming(BALL_POCKET_R, { duration: duration * (SETTLE_AT - DROP_AT), easing: Easing.inOut(Easing.quad) }),
-      )
-    }
+    ballAngle.value = withTiming(-360 * BALL_TURNS, { duration, easing: Easing.out(Easing.cubic) })
+    ballRadius.value = withDelay(
+      duration * DROP_AT,
+      withTiming(BALL_POCKET_R, { duration: duration * (SETTLE_AT - DROP_AT), easing: Easing.inOut(Easing.quad) }),
+    )
     // The JS timer, not the animation callback, decides when the spin is over.
     const id = setTimeout(() => {
       if (doneRef.current) return

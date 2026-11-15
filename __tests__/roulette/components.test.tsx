@@ -57,7 +57,7 @@ describe('RouletteSetup', () => {
     expect(getByText('0 · 2.70% house edge')).toBeTruthy()
     fireEvent.press(getByText('Triple zero'))
     expect(getByText('0, 00, 000 · 7.69% house edge')).toBeTruthy()
-    expect(getByText('Slow shows the ball animation')).toBeTruthy()
+    expect(getByText('Fast plays the same spin in 1.5s')).toBeTruthy()
   })
 })
 
@@ -275,5 +275,148 @@ describe('ResultPanel', () => {
     expect(getByText('-$25')).toBeTruthy()
     rerender(<ResultPanel result={17} net={0} onBack={jest.fn()} />)
     expect(getByText('Even')).toBeTruthy()
+  })
+})
+
+describe('tray chip drag after the tray moves', () => {
+  // A tray chip's window origin was only measured on its own layout. Something that shifts the whole tray
+  // (a bottom inset or the Galaxy Fold taskbar arriving after mount) leaves the chip's frame inside the tray
+  // unchanged, so no layout event fires and the stale origin drew and dropped the chip under the finger.
+  const { State } = require('react-native-gesture-handler')
+  const { fireGestureHandler, getByGestureTestId } = require('react-native-gesture-handler/jest-utils')
+  const MockNativeMethods = require('@react-native/jest-preset/jest/MockNativeMethods').default
+
+  test('re-measures the chip at touch-down, so the chip lands where it is drawn', async () => {
+    let chipY = 700
+    MockNativeMethods.measureInWindow.mockImplementation(function (this: any, cb: (x: number, y: number) => void) {
+      cb(0, this.props?.testID === 'chip-5' ? chipY : 0)
+    })
+    const { getByTestId } = render(<BettingTable wheel="double" orientation="portrait" onSpin={jest.fn()} />)
+    fireEvent(getByTestId('roulette-board'), 'layout', { nativeEvent: { layout: { x: 0, y: 0, width: 300, height: 600 } } })
+    fireEvent(getByTestId('chip-5'), 'layout', { nativeEvent: { layout: { x: 0, y: 0, width: 44, height: 44 } } })
+
+    // Let the detector pick up the handlers re-rendered with the board layout.
+    await act(async () => { await new Promise(r => setTimeout(r, 0)) })
+
+    chipY = 652 // the tray moved up 48dp; the chip's own frame did not change, so no layout event
+
+    const a = buildLayout('double', 'portrait', 300, 600).anchors['straight:17']
+    const rel = { x: a.x, y: a.y + DRAG_LIFT - chipY }
+    const pan = getByGestureTestId('drag-chip-5')
+    // Touch-down, then (as on a device) time passes before the finger has moved far enough to activate the pan.
+    fireGestureHandler(pan, [{ state: State.BEGAN, x: 22, y: 22 }])
+    await act(async () => { await new Promise(r => setTimeout(r, 0)) })
+    fireGestureHandler(pan, [
+      { state: State.ACTIVE, x: rel.x, y: rel.y },
+      { state: State.END, x: rel.x, y: rel.y },
+    ])
+    await act(async () => { await new Promise(r => setTimeout(r, 0)) })
+    expect(store().bets).toEqual({ 'straight:17': 5 })
+  })
+})
+
+describe('tap to place', () => {
+  const { State } = require('react-native-gesture-handler')
+  const { fireGestureHandler, getByGestureTestId } = require('react-native-gesture-handler/jest-utils')
+  const L = buildLayout('double', 'portrait', 300, 600)
+  const flush = (ms = 0) => act(async () => { await new Promise(r => setTimeout(r, ms)) })
+  const centreOf = (label: string) => {
+    const r = L.cells.find(c => c.label === label)!.rect
+    return { x: r.x + r.w / 2, y: r.y + r.h / 2 }
+  }
+
+  async function mount() {
+    const utils = render(<BettingTable wheel="double" orientation="portrait" onSpin={jest.fn()} />)
+    fireEvent(utils.getByTestId('roulette-board'), 'layout', { nativeEvent: { layout: { x: 0, y: 0, width: 300, height: 600 } } })
+    await flush()
+    return utils
+  }
+  async function tap(id: string, p = { x: 22, y: 22 }) {
+    fireGestureHandler(getByGestureTestId(id), [
+      { state: State.BEGAN, x: p.x, y: p.y },
+      { state: State.ACTIVE, x: p.x, y: p.y },
+      { state: State.END, x: p.x, y: p.y },
+    ])
+    await flush()
+  }
+  const selected = (utils: { getByTestId(id: string): any }, amount: number) =>
+    utils.getByTestId(`chip-${amount}`).props.accessibilityState?.selected === true
+
+  test('tapping a tray chip selects it, again deselects it, another switches', async () => {
+    const utils = await mount()
+    await tap('tap-chip-5')
+    expect(selected(utils, 5)).toBe(true)
+    await tap('tap-chip-5')
+    expect(selected(utils, 5)).toBe(false)
+    await tap('tap-chip-5')
+    await tap('tap-chip-25')
+    expect(selected(utils, 5)).toBe(false)
+    expect(selected(utils, 25)).toBe(true)
+    expect(store().bets).toEqual({})
+  })
+
+  test('with $5 selected, tapping cell 17 places it and flashes the spot', async () => {
+    const utils = await mount()
+    await tap('tap-chip-5')
+    await tap('tap-board', centreOf('17'))
+    expect(store().bets).toEqual({ 'straight:17': 5 })
+    const lit = () => StyleSheet.flatten(utils.getByTestId('cell-straight:17').props.style).borderColor === '#FFD700'
+    expect(lit()).toBe(true)
+    await flush(450)
+    expect(lit()).toBe(false)
+  })
+
+  test('tapping the 17|20 line places a split', async () => {
+    await mount()
+    await tap('tap-chip-5')
+    const a = L.cells.find(c => c.label === '17')!.rect
+    const b = L.cells.find(c => c.label === '20')!.rect
+    // In portrait 20 sits below 17; the split is the line between them (the split's own anchor).
+    expect(b.y).toBeCloseTo(a.y + a.h)
+    await tap('tap-board', { x: a.x + a.w / 2, y: b.y })
+    expect(store().bets).toEqual({ 'split:17-20': 5 })
+  })
+
+  test('with nothing selected, tapping the board places nothing', async () => {
+    await mount()
+    await tap('tap-board', centreOf('17'))
+    expect(store().bets).toEqual({})
+  })
+
+  test('tapping an existing stack adds the selected chip to it', async () => {
+    await mount()
+    act(() => { store().placeChip('split:17-20', 5) })
+    await flush()
+    await tap('tap-chip-5')
+    const s = L.anchors['split:17-20']
+    const c = centreOf('17')
+    const d = Math.hypot(c.x - s.x, c.y - s.y)
+    // On the stack chip (radius STACK_SIZE / 2 = 14) but outside the split's own target: a drop here is straight:17.
+    await tap('tap-board', { x: s.x + ((c.x - s.x) / d) * 12, y: s.y + ((c.y - s.y) / d) * 12 })
+    expect(store().bets).toEqual({ 'split:17-20': 10 })
+  })
+
+  test('a tap rejected for balance places nothing and shows the notice', async () => {
+    useProfileStore.setState(s => ({ profiles: [{ ...s.profiles[0], balance: 3 }] }))
+    const utils = await mount()
+    await tap('tap-chip-5')
+    await tap('tap-board', centreOf('17'))
+    expect(store().bets).toEqual({})
+    expect(utils.getByText('Not enough balance')).toBeTruthy()
+  })
+
+  test('a slow, deliberate press still counts as a tap (up to 1.5s)', async () => {
+    await mount()
+    expect(getByGestureTestId('tap-chip-5').config.maxDurationMs).toBeGreaterThanOrEqual(1500)
+    expect(getByGestureTestId('tap-board').config.maxDurationMs).toBeGreaterThanOrEqual(1500)
+  })
+
+  test('tapping a tray chip does not start a drag ghost', async () => {
+    const utils = await mount()
+    const chips = () => utils.UNSAFE_root.findAll((n: any) => n.type === 'Text' && /^\$\d+$/.test(String(n.props.children?.join?.('') ?? n.props.children))).length
+    const before = chips()
+    expect(before).toBeGreaterThan(0)
+    await tap('tap-chip-5')
+    expect(chips()).toBe(before)
   })
 })
