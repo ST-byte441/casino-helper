@@ -61,10 +61,10 @@ Two dice give 36 equally likely outcomes. *(RW, Wiki)*
   - House edge at those payouts: Place 2/12 **14.29%**, Place 3/11 **10.00%**. *(derived: true odds 6 to 1 and 3 to 1)*
   - Wikipedia gives 11 to 2 (7.14%) and 11 to 4 (6.25%) instead. Some casinos may pay that, but the NGCB rule is the regulator's. *(Wiki; see Errata)*
   - Bet 2/3/11/12 in **multiples of $5** for exact payouts. *(derived from the "to 5" payouts)*
-- **Lay bets:** the operator **may or may not offer** them; if offered, a **5% vig** is taken. *(NGCB)* Laying 2/12 pays 1 to 6 and 3/11 pays 1 to 3. *(derived from true odds)*
+- **Lay bets:** the operator **may or may not offer** them; if offered, a **5% vig** is taken. *(NGCB)* **App:** offered. *(app)* Laying 2/12 pays 1 to 6 and 3/11 pays 1 to 3. *(derived from true odds)*
 - **Buy bets** on 2, 3, 11, 12 are not mentioned by the NGCB. *(not covered)* The app offers them at true odds (6 to 1, 3 to 1) less vig. *(app)*
 - Pass Line house edge **5.38%**. *(Wiki)* PN says only that it is "much higher" than standard craps.
-- Odds limits for 2, 3, 11 and 12 under 3-4-5× are **not covered** by the sources. *(see Not Covered)*
+- Odds limits for 2, 3, 11 and 12 under 3-4-5× are **not covered** by the sources. **App:** 1× on 2/12 and 2× on 3/11, so the maximum odds bet pays 6× the line bet, as 3-4-5× does on the other points. *(app)*
 
 ### Easy Craps (app-only)
 - **Not from any source.** A teaching variant made for this app.
@@ -334,9 +334,9 @@ The lowest house edge in the casino is a minimum line bet with full odds; other 
 
 The app needs its own decision for these, and this file marks each one **(app)** where used:
 
-- Odds limits on crapless points 2, 3, 11 and 12 under 3-4-5×.
+- Odds limits on crapless points 2, 3, 11 and 12 under 3-4-5× (app: 1× on 2/12, 2× on 3/11).
 - Buy bets on crapless 2, 3, 11 and 12 (the NGCB lists only odds and place bets for those numbers).
-- Whether this app's crapless table offers Lay bets (the NGCB leaves it to the operator).
+- Whether a crapless table offers Lay bets (the NGCB leaves it to the operator; the app does).
 - Payout rounding when an odds or place bet isn't an exact multiple (e.g. $5 of odds on a 6).
 - Table minimums and maximums for this app's table.
 - Easy Craps and its Low/High Field bets (app-only).

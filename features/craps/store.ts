@@ -80,7 +80,8 @@ export const useCrapsStore = create<CrapsState & CrapsActions>((set, get) => ({
         return
       }
     }
-    const working = phase === 'point' || (type !== 'place' && type !== 'buy' && type !== 'lay')
+    // Place and Buy are off on the come-out; everything else (including Lay) works. Rules doc: Working and Not Working.
+    const working = phase === 'point' || (type !== 'place' && type !== 'buy')
     const bet: ActiveBet = { id: nanoid(), type, amount, number, hopDice, working }
     set({ bets: [...bets, bet] })
   },
@@ -163,7 +164,7 @@ export const useCrapsStore = create<CrapsState & CrapsActions>((set, get) => ({
     if (resolution.phaseChange === 'point-set') {
       nextPhase = 'point'
       updatedBets = updatedBets.map(b =>
-        (b.type === 'place' || b.type === 'buy' || b.type === 'lay') && !b.working
+        (b.type === 'place' || b.type === 'buy') && !b.working
           ? { ...b, working: true }
           : b
       )
@@ -171,7 +172,7 @@ export const useCrapsStore = create<CrapsState & CrapsActions>((set, get) => ({
                resolution.phaseChange === 'point-made' || resolution.phaseChange === 'seven-out') {
       nextPhase = 'come-out'
       updatedBets = updatedBets.map(b =>
-        (b.type === 'place' || b.type === 'buy' || b.type === 'lay')
+        (b.type === 'place' || b.type === 'buy')
           ? { ...b, working: false }
           : b
       )

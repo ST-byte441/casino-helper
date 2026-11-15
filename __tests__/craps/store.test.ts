@@ -111,3 +111,52 @@ describe('roll recording', () => {
     expect(useProfileStore.getState().profiles[0].stats.craps.rolls).toBe(0)
   })
 })
+
+describe('working status (rules doc: Working and Not Working)', () => {
+  beforeEach(() => setProfile(10000))
+
+  function comeOut() {
+    useCrapsStore.setState({
+      phase: 'come-out', point: null, bets: [],
+      tableRules: { variant: 'craps', oddsMultiple: '3-4-5x', fieldPays3on12: false },
+    })
+  }
+
+  test('a lay placed on the come-out is working; a place bet is off', () => {
+    comeOut()
+    useCrapsStore.getState().placeBet('lay', 40, 4)
+    useCrapsStore.getState().placeBet('place', 10, 5)
+    const bets = useCrapsStore.getState().bets
+    expect(bets.find(b => b.type === 'lay')!.working).toBe(true)
+    expect(bets.find(b => b.type === 'place')!.working).toBe(false)
+  })
+
+  test('after the point is made, lay stays working while place and buy turn off', () => {
+    pointPhase([
+      { id: 'l', type: 'lay', amount: 40, number: 4, working: true },
+      { id: 'p', type: 'place', amount: 10, number: 5, working: true },
+      { id: 'b', type: 'buy', amount: 20, number: 10, working: true },
+    ])
+    mockDice(3, 3) // point 6 made
+    useCrapsStore.getState().roll()
+    const bets = useCrapsStore.getState().bets
+    expect(useCrapsStore.getState().phase).toBe('come-out')
+    expect(bets.find(b => b.id === 'l')!.working).toBe(true)
+    expect(bets.find(b => b.id === 'p')!.working).toBe(false)
+    expect(bets.find(b => b.id === 'b')!.working).toBe(false)
+  })
+
+  test('a lay working on the come-out wins on a 7', () => {
+    comeOut()
+    useCrapsStore.getState().placeBet('lay', 40, 4)
+    mockDice(3, 4)
+    useCrapsStore.getState().roll()
+    expect(useCrapsStore.getState().lastDelta).toBe(19)
+  })
+
+  test('a come bet cannot be placed on the come-out', () => {
+    comeOut()
+    useCrapsStore.getState().placeBet('come', 10)
+    expect(useCrapsStore.getState().bets).toHaveLength(0)
+  })
+})

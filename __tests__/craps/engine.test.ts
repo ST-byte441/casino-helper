@@ -220,9 +220,9 @@ describe('calculatePayout — single-roll bets', () => {
     expect(calculatePayout(makeBet('hi-lo'), [6, 6], null, rules)).toBe(150)
     expect(calculatePayout(makeBet('hi-lo'), [3, 4], null, rules)).toBe(-10)
   })
-  test('ce: 7:1 on 2,3,12 and 3:1 on 11', () => {
-    expect(calculatePayout(makeBet('ce'), [1, 1], null, rules)).toBe(70)
-    expect(calculatePayout(makeBet('ce'), [5, 6], null, rules)).toBe(30)
+  test('ce: 3:1 on 2,3,12 and 7:1 on 11 (half on craps at 7:1, half on 11 at 15:1)', () => {
+    expect(calculatePayout(makeBet('ce'), [1, 1], null, rules)).toBe(30)
+    expect(calculatePayout(makeBet('ce'), [5, 6], null, rules)).toBe(70)
     expect(calculatePayout(makeBet('ce'), [3, 4], null, rules)).toBe(-10)
   })
   test('hop-hard pays 30:1 on exact combo', () => {
@@ -343,12 +343,12 @@ describe('resolveRoll — point phase', () => {
     expect(res.outcomes[0].delta).toBe(29)
   })
 
-  test('lay 4 wins when 7 rolls (1:2 minus 5% vig)', () => {
+  test('lay 4 wins when 7 rolls (1:2 minus 5% vig on the win)', () => {
     const lay: ActiveBet = { id: 'l1', type: 'lay', amount: 40, number: 4, working: true }
     const res = resolveRoll([3, 4], 'point', 9, [lay], rules)
     expect(res.outcomes[0].result).toBe('win')
-    // 1:2 on $40 = $20 gross minus 5% vig on $40 = $2 → net $18
-    expect(res.outcomes[0].delta).toBe(18)
+    // 1:2 on $40 = $20 gross minus 5% vig on the $20 win = $1 → net $19
+    expect(res.outcomes[0].delta).toBe(19)
   })
 
   test('hardway 6 wins on hard roll', () => {

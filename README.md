@@ -29,6 +29,7 @@ Get the latest APK from the [Releases page](../../releases/latest).
 
 - **Three variants** — Standard, Crapless (2/3/11/12 become point numbers), and Easy Craps (simplified bet menu for beginners)
 - **Full bet menu** — Pass/Don't Pass, Come/Don't Come, Place, Buy, Lay, Hardways, Field, Proposition bets, and all 21 Hop combinations
+- **Casino-accurate rules** — payouts, commissions and on/off rules follow a cited rules sheet (`assets/rules-docs/craps-rules.md`: the Venetian, the Nevada Gaming Control Board's crapless rules, Wikipedia and others). Buy and Lay take a 5% commission only on a win (on the win for Lay); Place and Buy are off on the come-out while Lay, Hardways and Big 6/8 keep working; Come bets open once a point is set
 - **Configurable odds** — 1x, 2x, 3-4-5x, 5x, or 10x free odds; optional 3:1 payout on Field 12
 - **Place bet working toggle** — flip any Place bet ON/OFF between come-out and point phases
 - **Strategy assist** — colour-coded bet quality: gold (Pass + max odds), white (acceptable), orange (poor), red (avoid)
