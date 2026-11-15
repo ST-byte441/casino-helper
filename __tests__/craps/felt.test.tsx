@@ -84,6 +84,16 @@ describe.each(cases)('%s at %dx%d', (variant, width, height) => {
     expect(inside(centreOf(boxOf(getByTestId('stack-c1-odds'))), box8)).toBe(true)
   })
 
+  it('draws odds chips at least 20dp with an amount of at least 8pt', () => {
+    const { getByTestId } = draw(L, { point: 6, bets: [bet({ id: 'c1', type: 'come', comePoint: 8, odds: 100 })] })
+    const chip = getByTestId('stack-c1-odds')
+    expect(boxOf(chip).width).toBeGreaterThanOrEqual(20)
+    const [text] = chip.findAll((n: any) => typeof n.type === 'string' && String(n.props.children).includes('$'))
+    const st = StyleSheet.flatten(text.props.style) as any
+    expect(st.fontSize).toBeGreaterThanOrEqual(8)
+    expect(st.fontSize * (text.props.minimumFontScale ?? 1)).toBeGreaterThanOrEqual(8 - 1e-6)
+  })
+
   it('draws pass odds at the pass-odds anchor once a point is set', () => {
     const { getByTestId } = draw(L, { point: 6, bets: [bet({ id: 'p1', type: 'pass', odds: 10 })] })
     const c = centreOf(boxOf(getByTestId('stack-p1-odds')))
@@ -157,9 +167,9 @@ describe('CrapsFelt labels and tints', () => {
 
   it('shows the felt labels', () => {
     const { getByText } = draw(L, { point: 6 })
-    // The boxes spell SIX / NINE only where NINE fits at a readable size (digits on this felt).
-    expect([L.boxLabels[6].text, L.boxLabels[9].text]).toEqual(['6', '9'])
-    for (const t of ['PASS LINE', "DON'T PASS BAR 12", 'COME', "DON'T COME", 'BIG 6', 'BIG 8', '6', '9', '4',
+    // The boxes spell SIX / NINE where NINE reads well, else digits: both the same way.
+    expect([['SIX', 'NINE'], ['6', '9']]).toContainEqual([L.boxLabels[6].text, L.boxLabels[9].text])
+    for (const t of ['PASS LINE', "DON'T PASS BAR 12", 'COME', "DON'T COME", 'BIG 6', 'BIG 8', L.boxLabels[6].text, L.boxLabels[9].text, '4',
       'SEVEN', 'HARD 4', 'ANY CRAPS', 'C&E', 'HORN']) expect(getByText(t)).toBeTruthy()
   })
 

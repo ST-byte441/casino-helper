@@ -312,6 +312,19 @@ export function puckSizeFor(layout: CrapsLayout): number {
 const MIN_STACK = 22
 // The odds stack is this share of the flat bet's (the felt draws it so).
 export const ODDS_SHARE = 0.7
+
+/** The drawn size of an odds stack beside a flat bet of size `stack`. */
+export function oddsSizeFor(stack: number): number {
+  return Math.max(MIN_ODDS_STACK, Math.round(stack * ODDS_SHARE))
+}
+// At most this gap between an odds chip and its flat bet's chip.
+const ODDS_GAP = 16
+// Odds chips never smaller than this, so their amount reads.
+const MIN_ODDS_STACK = 20
+// A roomy box keeps its number at least this share of its band font (`bandFont`), shrinking stacks if need be.
+const NUMBER_VS_BAND = 0.75
+// SIX / NINE are spelled out only when that keeps at least this share of the digits' font.
+const WORD_VS_DIGITS = 0.75
 // The box number is wanted at least this big before the stacks stop shrinking.
 const MIN_NUMBER_FONT = 16
 
@@ -325,17 +338,17 @@ type BoxPack = {
 }
 
 /**
- * One box's slots at stack size s, box-relative: each slot in turn takes the free point nearest its preferred
- * spot (puck top-right, Don't Come top-left, come bottom-left, lay bottom-right, place bottom-centre, each odds
- * stack beside its flat bet), clear of the slots before it; then the number takes the biggest font that fits
+ * One box's slots at stack size s, box-relative. The flat-bet slots go first, each taking the free point nearest
+ * its spot (puck top-right, Don't Come top-left, come bottom-left, lay bottom-right, place bottom-centre). Each odds
+ * stack then goes against its flat bet (`oddsBy`). Last, the number takes the biggest font whose text box fits
  * clear of them all. Slots a game can't fill sit on the place slot (never drawn). Null if a slot finds no room.
  */
 function packBox(w: number, h: number, s: number, hasDC: boolean, hasCome: boolean, hasLay: boolean): BoxPack | null {
   const I = SLOT_INSET
   const puckR = Math.round(s * PUCK_SHARE) / 2
   const r = s / 2
-  const oddsR = Math.round(s * ODDS_SHARE) / 2
-  // Plain number arrays: this runs on every layout build, so the 1dp grid scans stay allocation-free.
+  const oddsR = oddsSizeFor(s) / 2
+  // Plain number arrays and comparisons: this runs on every layout build, so the 1dp grid scans stay cheap.
   const px: number[] = [], py: number[] = [], pr: number[] = []
   const free = (x: number, y: number, rad: number) => {
     for (let k = 0; k < px.length; k++) {
@@ -344,20 +357,24 @@ function packBox(w: number, h: number, s: number, hasDC: boolean, hasCome: boole
     }
     return true
   }
-  // The free grid point nearest the wanted spot (a full 1dp scan; plain arithmetic, so it stays cheap).
-  const put = (want: Pt, rad: number): Pt | null => {
+  // The free grid point nearest the wanted spot (the spot itself when free, else a full 1dp scan).
+  const put = (want: Pt, rad: number, near?: { at: Pt; within: number }): Pt | null => {
+    const nearOk = (x: number, y: number) =>
+      !near || (x - near.at.x) * (x - near.at.x) + (y - near.at.y) * (y - near.at.y) <= near.within * near.within
     const inside = want.x >= rad + I - 1e-9 && want.x <= w - rad - I + 1e-9 && want.y >= rad + I - 1e-9 && want.y <= h - rad - I + 1e-9
-    if (inside && free(want.x, want.y, rad)) { px.push(want.x); py.push(want.y); pr.push(rad); return want }
+    if (inside && nearOk(want.x, want.y) && free(want.x, want.y, rad)) { px.push(want.x); py.push(want.y); pr.push(rad); return want }
     let bx = 0, by = 0, bestD = Infinity
     for (let x = rad + I; x <= w - rad - I + 1e-9; x += 1)
       for (let y = rad + I; y <= h - rad - I + 1e-9; y += 1) {
         const d = (x - want.x) * (x - want.x) + (y - want.y) * (y - want.y)
-        if (d < bestD && free(x, y, rad)) { bx = x; by = y; bestD = d }
+        if (d < bestD && nearOk(x, y) && free(x, y, rad)) { bx = x; by = y; bestD = d }
       }
     if (bestD === Infinity) return null
     px.push(bx); py.push(by); pr.push(rad)
     return { x: bx, y: by }
   }
+  // An odds stack stays against its flat bet (at most ODDS_GAP between the chips), so it reads as that bet's.
+  const beside = (at: Pt) => ({ at, within: r + oddsR + ODDS_GAP })
 
   // The extreme corners exactly, so the corner slots sit flush whatever the grid.
   const corner = (rad: number, right: boolean, bottom: boolean): Pt =>
@@ -367,53 +384,69 @@ function packBox(w: number, h: number, s: number, hasDC: boolean, hasCome: boole
   const come = hasCome ? put(corner(r, false, true), r) : null
   const lay = hasLay ? put(corner(r, true, true), r) : null
   const place = put({ x: w / 2, y: h - r - I }, r)
-  const comeOdds = come ? put({ x: come.x + 0.6 * s, y: come.y - 0.4 * s }, oddsR) : null
-  const dontComeOdds = dontCome ? put({ x: dontCome.x + 0.6 * s, y: dontCome.y + 0.4 * s }, oddsR) : null
-  if (!puck || !place || (hasDC && (!dontCome || !dontComeOdds)) || (hasCome && (!come || !comeOdds)) || (hasLay && !lay))
-    return null
+  if (!puck || !place || (hasDC && !dontCome) || (hasCome && !come) || (hasLay && !lay)) return null
+  // Odds stacks against their flat bet: the first free of a few set directions (beside it in its row, then
+  // toward the box's middle), else the nearest free point within ODDS_GAP of it.
+  const oddsBy = (at: Pt, dirs: number[]): Pt | null => {
+    const d = r + oddsR + 0.5
+    for (const deg of dirs) {
+      const a = (deg * Math.PI) / 180
+      const want = { x: at.x + d * Math.cos(a), y: at.y + d * Math.sin(a) }
+      const inside = want.x >= oddsR + I - 1e-9 && want.x <= w - oddsR - I + 1e-9 && want.y >= oddsR + I - 1e-9 && want.y <= h - oddsR - I + 1e-9
+      if (inside && free(want.x, want.y, oddsR)) { px.push(want.x); py.push(want.y); pr.push(oddsR); return want }
+    }
+    return put({ x: at.x + d * Math.cos((dirs[0] * Math.PI) / 180), y: at.y + d * Math.sin((dirs[0] * Math.PI) / 180) }, oddsR, beside(at))
+  }
+  // Angles in degrees, y down: come sits bottom-left (right, then up); Don't Come top-left (right, then down).
+  const comeOdds = come ? oddsBy(come, [0, -90, -45, -135, 45]) : null
+  const dontComeOdds = dontCome ? oddsBy(dontCome, [0, 90, 45, 135, -45]) : null
+  if ((come && !comeOdds) || (dontCome && !dontComeOdds)) return null
+  const flat = px.length
 
-  // The number: the biggest font whose text box fits clear of every slot, nearest the box's centre.
-  const textAt = (chars: number, f: number): Rect | null => {
-    const tw = chars * 0.62 * f, th = 1.2 * f
+  // A text box clear of the flat-bet slots, nearest the centre (square rings outward: close enough).
+  const textAt = (cw: number, ch: number): Rect | null => {
     const clear = (x: number, y: number) => {
-      for (let k = 0; k < px.length; k++) {
-        // Distance from the circle's centre to the nearest point of the text box (no Math.min/max: hot loop).
+      for (let k = 0; k < flat; k++) {
         const cx = px[k], cy = py[k]
-        const dx = cx < x ? x - cx : cx > x + tw ? cx - x - tw : 0
-        const dy = cy < y ? y - cy : cy > y + th ? cy - y - th : 0
+        const dx = cx < x ? x - cx : cx > x + cw ? cx - x - cw : 0
+        const dy = cy < y ? y - cy : cy > y + ch ? cy - y - ch : 0
         if (dx * dx + dy * dy < pr[k] * pr[k]) return false
       }
       return true
     }
-    // Rings outward from the centred spot (square rings: close enough to nearest-first), first fit wins.
-    const x0 = Math.round((w - tw) / 2), y0 = Math.round((h - th) / 2)
-    const ok = (x: number, y: number) => x >= I && y >= I && x + tw <= w - I + 1e-9 && y + th <= h - I + 1e-9 && clear(x, y)
-    const rings = Math.ceil(Math.max(x0 - I, w - I - tw - x0, y0 - I, h - I - th - y0, 0))
+    const x0 = Math.round((w - cw) / 2), y0 = Math.round((h - ch) / 2)
+    const ok = (x: number, y: number) => x >= I && y >= I && x + cw <= w - I + 1e-9 && y + ch <= h - I + 1e-9 && clear(x, y)
+    const rings = Math.ceil(Math.max(x0 - I, w - I - cw - x0, y0 - I, h - I - ch - y0, 0))
     for (let k = 0; k <= rings; k++) {
       for (let d = -k; d <= k; d++) {
-        if (ok(x0 + d, y0 - k)) return { x: x0 + d, y: y0 - k, w: tw, h: th }
-        if (ok(x0 + d, y0 + k)) return { x: x0 + d, y: y0 + k, w: tw, h: th }
-        if (ok(x0 - k, y0 + d)) return { x: x0 - k, y: y0 + d, w: tw, h: th }
-        if (ok(x0 + k, y0 + d)) return { x: x0 + k, y: y0 + d, w: tw, h: th }
+        if (ok(x0 + d, y0 - k)) return { x: x0 + d, y: y0 - k, w: cw, h: ch }
+        if (ok(x0 + d, y0 + k)) return { x: x0 + d, y: y0 + k, w: cw, h: ch }
+        if (ok(x0 - k, y0 + d)) return { x: x0 - k, y: y0 + d, w: cw, h: ch }
+        if (ok(x0 + k, y0 + d)) return { x: x0 + k, y: y0 + d, w: cw, h: ch }
       }
     }
     return null
   }
-  // Binary search in half points: a text box that fits at f fits at any smaller f.
-  const fitText = (chars: number): { f: number; at: Rect } | null => {
-    let lo = 14, hi = Math.floor(2 * Math.min(40, (w - 2 * I) / (chars * 0.62), (h - 2 * I) / 1.2))
-    let found: { f: number; at: Rect } | null = null
-    while (lo <= hi) {
-      const mid = (lo + hi) >> 1
-      const at = textAt(chars, mid / 2)
-      if (at) { found = { f: mid / 2, at }; lo = mid + 1 } else hi = mid - 1
-    }
-    return found
+  type Fit = { f: number; at: Rect }
+  const tryFont = (chars: number, f: number): Fit | null => {
+    const at = textAt(chars * 0.62 * f, 1.2 * f)
+    return at ? { f, at } : null
   }
-  // SIX / NINE when NINE (the longer word) reads at MIN_WORD_FONT; else digits ("10" the widest).
+  // Down from the biggest font in half points, first fit wins. (Not a binary search: the text box and the odds
+  // move as the font changes, so room isn't monotonic in the font.)
+  const fitText = (chars: number): Fit | null => {
+    for (let k = Math.floor(2 * Math.min(40, (w - 2 * I) / (chars * 0.62), (h - 2 * I) / 1.2)); k >= 14; k--) {
+      const got = tryFont(chars, k / 2)
+      if (got) return got
+    }
+    return null
+  }
+  // SIX / NINE when NINE (the longer word) reads at MIN_WORD_FONT and costs little against the digits
+  // ("10" the widest); else digits.
+  const digits = fitText(2)
   const word = fitText('NINE'.length)
-  const digits = word && word.f >= MIN_WORD_FONT ? null : fitText(2)
-  const label = word && word.f >= MIN_WORD_FONT ? word : digits
+  const words = !!word && word.f >= MIN_WORD_FONT && (!digits || word.f >= WORD_VS_DIGITS * digits.f)
+  const label = words ? word : digits
   if (!label) return null
   return {
     stack: s,
@@ -421,20 +454,51 @@ function packBox(w: number, h: number, s: number, hasDC: boolean, hasCome: boole
       puck, place, dontCome: dontCome ?? place, come: come ?? place, lay: lay ?? place,
       comeOdds: comeOdds ?? place, dontComeOdds: dontComeOdds ?? place,
     },
-    label: label.at, fontSize: label.f, words: label === word,
+    label: label.at, fontSize: label.f, words,
   }
 }
 
-/** The biggest stack (from `base` down to MIN_STACK) whose box packs with the number at MIN_NUMBER_FONT or more. */
+/**
+ * The font the number ("10") would get between a top row (puck) and one bottom row of stacks of size s: what a
+ * roomy box affords. 0 when the box is too short for such a band.
+ */
+function bandFont(w: number, h: number, s: number): number {
+  const bh = h - (Math.max(s, Math.round(s * PUCK_SHARE)) + 2 * SLOT_INSET) - (s + 2 * SLOT_INSET)
+  return bh > 0 ? fit(2, w - 2 * SLOT_INSET, bh, 0.8) : 0
+}
+
+/**
+ * The biggest stack (from `base` down to MIN_STACK) whose box packs with the number at MIN_NUMBER_FONT or more and
+ * at least NUMBER_VS_BAND of its band font, so roomy boxes trade a little stack size for a big number. Failing
+ * that, the pack with the biggest number for its band; failing any pack, a plain fallback (never throws).
+ */
 function packBoxes(w: number, h: number, base: number, hasDC: boolean, hasCome: boolean, hasLay: boolean): BoxPack {
-  let best: BoxPack | null = null
+  let best: { p: BoxPack; score: number } | null = null
   for (let s = base; s >= Math.min(base, MIN_STACK); s--) {
     const p = packBox(w, h, s, hasDC, hasCome, hasLay)
-    if (p && p.fontSize >= MIN_NUMBER_FONT) return p
-    if (p && (!best || p.fontSize > best.fontSize)) best = p
+    if (!p) continue
+    const want = Math.max(MIN_NUMBER_FONT, NUMBER_VS_BAND * bandFont(w, h, s))
+    if (p.fontSize >= want) return p
+    const score = p.fontSize / want
+    if (!best || score > best.score) best = { p, score }
   }
-  if (best) return best
-  throw new Error(`craps layout: a ${w.toFixed(1)}x${h.toFixed(1)} box can't hold its stacks`)
+  if (best) return best.p
+  return fallbackBox(w, h, Math.min(base, MIN_STACK))
+}
+
+/** A felt too small for any clean pack: corner slots clamped into the box, the number centred over them. */
+function fallbackBox(w: number, h: number, s: number): BoxPack {
+  const I = SLOT_INSET
+  const r = Math.min(s / 2, (w - 2 * I) / 2, (h - 2 * I) / 2)
+  const at = (fx: number, fy: number): Pt => ({ x: r + I + fx * Math.max(0, w - 2 * (r + I)), y: r + I + fy * Math.max(0, h - 2 * (r + I)) })
+  const place = at(0.5, 1)
+  const fontSize = fit(2, w - 2 * I, h - 2 * I, 0.5)
+  const tw = 2 * 0.62 * fontSize, th = 1.2 * fontSize
+  return {
+    stack: s,
+    slots: { puck: at(1, 0), dontCome: at(0, 0), come: at(0, 1), lay: at(1, 1), place, comeOdds: at(0.3, 0.6), dontComeOdds: at(0.3, 0.3) },
+    label: { x: (w - tw) / 2, y: (h - th) / 2, w: tw, h: th }, fontSize, words: false,
+  }
 }
 
 /** The smallest area containing the point, or null off every area. */

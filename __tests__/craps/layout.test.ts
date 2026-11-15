@@ -1,4 +1,4 @@
-import { buildCrapsLayout, hitCraps, labelRect, puckSizeFor, stackSizeFor, slotFor, tableFeltSize, CrapsLayout, SpotKey } from '../../features/craps/layout'
+import { buildCrapsLayout, fit, hitCraps, labelRect, oddsSizeFor, puckSizeFor, stackSizeFor, slotFor, tableFeltSize, CrapsLayout, SpotKey } from '../../features/craps/layout'
 import { feltStacks } from '../../features/craps/components/table/CrapsFelt'
 import { ActiveBet, CrapsVariant } from '../../lib/types'
 
@@ -22,7 +22,9 @@ const TABLE_SCREENS: [number, number][] = [[832, 384], [880, 320]]
 const LARGE_SCREENS: [number, number][] = [[884, 673], [673, 884]]
 const TABLE_FELTS = TABLE_SCREENS.map(([w, h]) => { const f = tableFeltSize(w, h); return [f.width, f.height] as [number, number] })
 const LARGE_FELTS = LARGE_SCREENS.map(([w, h]) => { const f = tableFeltSize(w, h, 'large'); return [f.width, f.height] as [number, number] })
-const sizes: [number, number][] = [...TABLE_FELTS, ...LARGE_FELTS, [880, 320], [832, 360], [884, 600], [673, 420]]
+// Bigger tablet felts too, where the boxes are roomy.
+const ROOMY_FELTS: [number, number][] = [[1100, 500], [1700, 760]]
+const sizes: [number, number][] = [...TABLE_FELTS, ...LARGE_FELTS, ...ROOMY_FELTS, [880, 320], [832, 360], [884, 600], [673, 420]]
 const cases = variants.flatMap(v => sizes.map(([w, h]) => [v, w, h] as [CrapsVariant, number, number]))
 
 const centre = (r: R) => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 })
@@ -187,7 +189,9 @@ describe.each(cases)('%s at %dx%d', (variant, width, height) => {
 
   it('no two chip slots (with their odds) or the puck overlap in a box, each inside the box, off the number', () => {
     const stackR = stackSizeFor(L) / 2
-    const oddsR = Math.round(stackSizeFor(L) * 0.7) / 2
+    const oddsR = oddsSizeFor(stackSizeFor(L)) / 2
+    // Odds chips stay big enough to read their amount.
+    expect(oddsSizeFor(stackSizeFor(L))).toBeGreaterThanOrEqual(20)
     const puckR = puckSizeFor(L) / 2
     const hasDC = L.areas.some(a => a.key === 'dont-come')
     const hasCome = L.areas.some(a => a.key === 'come')
@@ -260,6 +264,36 @@ describe.each(cases)('%s at %dx%d', (variant, width, height) => {
     expect(hitCraps(L, -5, -5)).toBeNull()
     expect(hitCraps(L, width + 10, height / 2)).toBeNull()
     expect(hitCraps(L, width / 2, height + 10)).toBeNull()
+  })
+})
+
+describe('box numbers on large felts', () => {
+  // The font a number ("10", the widest) would get in the band left between a top row (puck) and one bottom row
+  // of stacks: the arrangement a roomy box can afford. The packer aims for 3/4 of it; the floor here is 0.65, which
+  // the narrowest large box (crapless on the large-portrait felt, 53dp wide, place raised between come and lay)
+  // just clears. Before this round craps 801x629 had 20.5pt of 40 (0.51).
+  const bandFont = (L: CrapsLayout, chars: number) => {
+    const box = L.areas.find(a => a.tone === 'box')!.rect
+    const s = stackSizeFor(L), top = Math.max(s, puckSizeFor(L)) + 4, bottom = s + 4
+    const h = box.h - top - bottom
+    return h > 0 ? fit(chars, box.w - 4, h, 0.8) : 0
+  }
+  test.each(variants.flatMap(v => [...LARGE_FELTS, ...ROOMY_FELTS].map(([w, h]) => [v, w, h] as [CrapsVariant, number, number])))(
+    '%s at %dx%d: the number keeps at least 0.65 of its band font', (variant, w, h) => {
+      const L = buildCrapsLayout(variant, w, h)
+      const font = Math.min(...Object.values(L.boxLabels).map(t => t.fontSize))
+      expect(font).toBeGreaterThanOrEqual(0.65 * bandFont(L, 2))
+    })
+})
+
+describe('tiny felts', () => {
+  test.each(variants)('%s at 400x180 builds without throwing, every slot inside its box', variant => {
+    const L = buildCrapsLayout(variant, 400, 180)
+    for (const a of L.areas.filter(a => a.tone === 'box')) {
+      const s = L.boxSlots[Number(a.key.slice(4))]
+      for (const p of [s.place, s.come, s.lay, s.dontCome, s.puck, s.comeOdds, s.dontComeOdds])
+        expect([a.key, inside(p, a.rect)]).toEqual([a.key, true])
+    }
   })
 })
 

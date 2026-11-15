@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native'
 import { Text } from '../../../../components/Text'
 import { CHIP_COLORS, stackChip } from '../../../../components/chips/chips'
 import { ActiveBet, BetQuality } from '../../../../lib/types'
-import { Area, BoxLabel, CrapsLayout, ODDS_SHARE, Pt, Rect, SpotKey, fit, puckSizeFor, slotFor, stackSizeFor } from '../../layout'
+import { Area, BoxLabel, CrapsLayout, Pt, Rect, SpotKey, fit, oddsSizeFor, puckSizeFor, slotFor, stackSizeFor } from '../../layout'
 
 /*
  * The drawn craps felt: areas, chip stacks and the puck. Purely presentational (no gestures, no store);
@@ -41,6 +41,9 @@ const HIGH_NUMBERS = '10 · 11 · 12'
 
 
 export { stackSizeFor }
+
+// A stack's amount never shrinks below this, so a small odds chip still reads.
+const MIN_AMOUNT_FONT = 8
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi)
 
@@ -112,6 +115,7 @@ function Stack({ id, amount, at, size, tag, dim }: {
   id: string; amount: number; at: Pt; size: number; tag?: string; dim?: boolean
 }) {
   const chip = CHIP_COLORS[stackChip(amount)]
+  const amountFont = Math.max(MIN_AMOUNT_FONT, size * 0.36)
   return (
     <View
       testID={`stack-${id}`}
@@ -121,7 +125,8 @@ function Stack({ id, amount, at, size, tag, dim }: {
         backgroundColor: chip.bg, borderWidth: Math.max(1.5, size / 14),
       }, dim && styles.dim]}
     >
-      <Text style={[styles.stackText, { color: chip.fg, fontSize: size * 0.36 }]} numberOfLines={1} adjustsFontSizeToFit>
+      <Text style={[styles.stackText, { color: chip.fg, fontSize: amountFont }]} numberOfLines={1} adjustsFontSizeToFit
+        minimumFontScale={MIN_AMOUNT_FONT / amountFont}>
         ${amount}
       </Text>
       {tag && (
@@ -184,7 +189,7 @@ export function moreBetsRow(layout: CrapsLayout, bets: ActiveBet[]): {
 /** Every stack to draw: each bet at its slot, plus its odds as a smaller stack beside it or behind the line. */
 export function feltStacks(layout: CrapsLayout, bets: ActiveBet[], point: number | null): Drawn[] {
   const size = stackSizeFor(layout)
-  const small = Math.round(size * ODDS_SHARE)
+  const small = oddsSizeFor(size)
   const more = moreBetsRow(layout, bets)
   const keep = (p: Pt, s: number): Pt => ({
     x: clamp(p.x, s / 2, layout.width - s / 2), y: clamp(p.y, s / 2, layout.height - s / 2),
