@@ -163,6 +163,26 @@ describe('CrapsTable taps', () => {
     expect(store().bets).toEqual([field])
   })
 
+  test('COME tapped twice in one roll: one $10 come bet, one stack', async () => {
+    seed({ phase: 'point', point: 6 })
+    await mount()
+    await tap('tap-chip-5')
+    await tap('tap-board', anchor('come'))
+    await tap('tap-board', anchor('come'))
+    expect(store().bets).toEqual([expect.objectContaining({ type: 'come', amount: 10 })])
+    expect(feltStacks(L, store().bets, store().point)).toHaveLength(1)
+  })
+
+  test("with World down, a $25 tap at HARD 8's inner corner places a $25 Hard 8", async () => {
+    const world = bet('world', 5)
+    seed({ phase: 'point', point: 6, bets: [world] })
+    await mount()
+    await tap('tap-chip-25')
+    const h8 = L.areas.find(a => a.key === 'hard:8')!.rect
+    await tap('tap-board', { x: h8.x + 2, y: h8.y + h8.h - 2 }) // where HARD 10, HARD 8, 3 and 12 meet
+    expect(store().bets).toEqual([world, expect.objectContaining({ type: 'hardway', number: 8, amount: 25 })])
+  })
+
   test('a $1 chip on horn places a $4 horn; a $5 chip adds $20 (chip = amount per number)', async () => {
     await mount()
     await tap('tap-chip-1')
@@ -203,6 +223,18 @@ describe('CrapsTable drags', () => {
     await mount()
     await drag(`drag-stack-handle-${pass.id}`, { x: -100, y: -100 })
     expect(store().bets).toEqual([pass])
+  })
+
+  test('dragging a contract bet off the felt says why it stays', async () => {
+    const pass = bet('pass', 10)
+    const come = bet('come', 5, { comePoint: 8 })
+    seed({ phase: 'point', point: 6, bets: [pass, come] })
+    const { getByTestId } = await mount()
+    await drag(`drag-stack-handle-${pass.id}`, { x: -100, y: -100 })
+    expect(getByTestId('craps-reason').props.children).toBe('Pass is a contract bet once the point is set')
+    await drag(`drag-stack-handle-${come.id}`, { x: -100, y: -100 })
+    expect(getByTestId('craps-reason').props.children).toBe('Come bets stay until they win or lose')
+    expect(store().bets).toHaveLength(2)
   })
 })
 
@@ -253,22 +285,53 @@ describe('Stack menu', () => {
     const { queryByTestId, getByTestId } = await openMenu(pass)
     expect(getByTestId('stack-menu-title').props.children).toBe('Pass $10')
     expect(queryByTestId('stack-take-down')).toBeNull()
-    expect(getByTestId('stack-odds-plus')).toBeTruthy()
+    expect(getByTestId('stack-odds-plus-1')).toBeTruthy()
   })
 
-  test('Odds + steps the selected chip up to the cap, then is disabled', async () => {
-    const pass = bet('pass', 5)
-    seed({ phase: 'point', point: 4, bets: [pass] }) // 3x at 4 = $15
-    const { getByTestId } = await mount()
-    await tap('tap-board', stackAt(pass.id))
-    await act(async () => { useCrapsStore.setState({ selectedChip: 5 }) })
-    for (let i = 0; i < 3; i++) fireEvent.press(getByTestId('stack-odds-plus'))
-    expect(store().bets[0].odds).toBe(15)
-    expect(getByTestId('stack-odds-plus').props.accessibilityState?.disabled).toBe(true)
-    fireEvent.press(getByTestId('stack-odds-plus'))
-    expect(store().bets[0].odds).toBe(15)
-    fireEvent.press(getByTestId('stack-odds-minus'))
+  const disabled = (node: any) => node.props.accessibilityState?.disabled === true
+
+  test('Odds steps of $1, $5 and $25, each disabled once it would pass the cap', async () => {
+    const pass = bet('pass', 10)
+    seed({ phase: 'point', point: 4, bets: [pass] }) // 3x at 4 = $30
+    const { getByTestId } = await openMenu(pass)
+    expect(disabled(getByTestId('stack-odds-plus-25'))).toBe(false)
+    fireEvent.press(getByTestId('stack-odds-plus-25'))
+    expect(store().bets[0].odds).toBe(25)
+    expect(disabled(getByTestId('stack-odds-plus-25'))).toBe(true) // 25 + 25 > 30
+    expect(disabled(getByTestId('stack-odds-plus-5'))).toBe(false)
+    fireEvent.press(getByTestId('stack-odds-plus-5'))
+    expect(store().bets[0].odds).toBe(30)
+    for (const n of [1, 5, 25]) expect(disabled(getByTestId(`stack-odds-plus-${n}`))).toBe(true)
+    fireEvent.press(getByTestId('stack-odds-minus-5'))
+    expect(store().bets[0].odds).toBe(25)
+    fireEvent.press(getByTestId('stack-odds-minus-1'))
+    expect(store().bets[0].odds).toBe(24)
+    fireEvent.press(getByTestId('stack-odds-minus-25'))
+    expect(store().bets[0].odds).toBe(0)
+    for (const n of [1, 5, 25]) expect(disabled(getByTestId(`stack-odds-minus-${n}`))).toBe(true)
+  })
+
+  test('an odds step the balance cannot cover is disabled', async () => {
+    useProfileStore.setState(s => ({ profiles: s.profiles.map(p => ({ ...p, balance: 20 })) }))
+    const pass = bet('pass', 10)
+    seed({ phase: 'point', point: 6, bets: [pass] }) // cap $50, but only $10 of balance is free
+    const { getByTestId } = await openMenu(pass)
+    expect(disabled(getByTestId('stack-odds-plus-5'))).toBe(false)
+    expect(disabled(getByTestId('stack-odds-plus-25'))).toBe(true)
+    fireEvent.press(getByTestId('stack-odds-plus-5'))
+    fireEvent.press(getByTestId('stack-odds-plus-5'))
     expect(store().bets[0].odds).toBe(10)
+    expect(disabled(getByTestId('stack-odds-plus-1'))).toBe(true)
+  })
+
+  test('the menu shows the store notice on its own line, cleared when it opens', async () => {
+    const place = bet('place', 6, { number: 6 })
+    seed({ phase: 'point', point: 5, bets: [place] })
+    useCrapsStore.setState({ notice: 'old news' })
+    const { getByTestId } = await openMenu(place)
+    expect(getByTestId('stack-menu-notice').props.children).toBe(' ')
+    await act(async () => { store().setNotice('Not enough balance') })
+    expect(getByTestId('stack-menu-notice').props.children).toBe('Not enough balance')
   })
 
   test('Off on a place bet sets working false', async () => {
@@ -292,10 +355,12 @@ describe('Stack menu', () => {
     const come = bet('come', 5, { comePoint: 4, odds: 10 }) // point 6 would allow $25; 4 allows $15
     seed({ phase: 'point', point: 6, bets: [come] })
     const { getByTestId } = await openMenu(come)
-    fireEvent.press(getByTestId('stack-odds-plus'))
+    expect(disabled(getByTestId('stack-odds-plus-5'))).toBe(false)
+    fireEvent.press(getByTestId('stack-odds-plus-1'))
     expect(store().bets[0].odds).toBe(11)
+    expect(disabled(getByTestId('stack-odds-plus-5'))).toBe(true) // 11 + 5 > 15
     await act(async () => { useCrapsStore.setState({ bets: [{ ...come, odds: 15 }] }) })
-    expect(getByTestId('stack-odds-plus').props.accessibilityState?.disabled).toBe(true)
+    expect(disabled(getByTestId('stack-odds-plus-1'))).toBe(true)
   })
 })
 
@@ -313,6 +378,13 @@ describe('More bets sheet', () => {
     expect(store().bets).toEqual([expect.objectContaining({ type: 'buy', number: 6, amount: 20 })])
     fireEvent.press(getByText('1-2'))
     expect(store().bets[1]).toEqual(expect.objectContaining({ type: 'hop-easy', amount: 1, hopDice: [1, 2] }))
+  })
+
+  test('opening the sheet clears a stale notice', async () => {
+    useCrapsStore.setState({ notice: 'Come bets open once a point is set' })
+    const { getByTestId } = await openSheet()
+    expect(store().notice).toBeNull()
+    expect(getByTestId('more-bets-notice').props.children).toBe(' ')
   })
 
   test('World refuses $3 with a notice shown in the sheet', async () => {

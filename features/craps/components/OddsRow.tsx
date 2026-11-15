@@ -27,7 +27,7 @@ export function OddsRow({ odds, maxOdds, onAdd, onRemove, increments, quality, c
           <Text style={styles.btnText}>−</Text>
         </TouchableOpacity>
         {increments.map(inc => {
-          const disabled = odds >= maxOdds || (canAdd ? !canAdd(inc) : false)
+          const disabled = odds + inc > maxOdds || (canAdd ? !canAdd(inc) : false)
           return (
           <TouchableOpacity
             key={inc}

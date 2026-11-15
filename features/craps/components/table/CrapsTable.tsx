@@ -162,7 +162,8 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
     onDrop(source, target, offBoard) {
       const s = useCrapsStore.getState()
       if (source.type === 'stack') {
-        // Stacks never move between areas; off the felt a removable one is taken down (the store checks).
+        // Stacks never move between areas; off the felt a removable one is taken down (the store refuses a
+        // contract bet with a notice).
         if (offBoard) s.removeBet(source.id)
         return
       }
@@ -174,7 +175,7 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
       const t = targetAt(x, y)
       if (!t) return
       if (s.selectedChip === null) {
-        if (t.kind === 'stack') { setMenuBet(t.bet); onStackMenu?.(t.bet) }
+        if (t.kind === 'stack') { s.setNotice(null); setMenuBet(t.bet); onStackMenu?.(t.bet) }
         return
       }
       if (applyChip(t, s.selectedChip) && layout) {
@@ -270,7 +271,7 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
         <Text style={styles.title} numberOfLines={1}>CRAPS · {tableRules.oddsMultiple}</Text>
         {/* In landscape the reason line lives in the slim header so the felt keeps its height. */}
         {portrait ? <View style={styles.spacer} /> : reason}
-        <TouchableOpacity testID="craps-more-bets" onPress={() => setMoreOpen(true)} hitSlop={8}>
+        <TouchableOpacity testID="craps-more-bets" onPress={() => { useCrapsStore.getState().setNotice(null); setMoreOpen(true) }} hitSlop={8}>
           <Text style={styles.assist}>More bets</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={toggleAssist} hitSlop={8}>
