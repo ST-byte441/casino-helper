@@ -174,3 +174,51 @@ test('the header title stays on one line so narrow screens shrink it instead of 
   const screen = render(<BaccaratScreen />)
   expect(screen.getByText('BACCARAT').props.numberOfLines).toBe(1)
 })
+
+const flat = (s: unknown) => require('react-native').StyleSheet.flatten(s as any)
+const sizedAncestor = (node: any) => {
+  let n = node.parent
+  while (n && !(n.type === 'View' && flat(n.props.style)?.height)) n = n.parent
+  return n
+}
+const cardsOfWidth = (root: any, w: number) =>
+  root.findAll((n: any) => n.type === 'View' && flat(n.props.style)?.width === w && flat(n.props.style)?.backgroundColor === '#fff')
+
+describe('large portrait', () => {
+  beforeEach(() => { seedProfile(); setWindow(LARGE_PORTRAIT) })
+
+  test('the squeeze card is 280 tall', () => {
+    dealDeck(THIRD_CARDS, 'squeeze')
+    const { getByTestId } = render(<BaccaratScreen />)
+    expect(flat(sizedAncestor(getByTestId('card-face')).props.style).height).toBe(280)
+  })
+
+  test('hands use large text and 78-wide cards', () => {
+    dealDeck(THIRD_CARDS, 'flip')
+    revealAll()
+    const { getByText, UNSAFE_root } = render(<BaccaratScreen />)
+    expect(flat(getByText('Banker').props.style).fontSize).toBe(18)
+    expect(cardsOfWidth(UNSAFE_root, 78)).toHaveLength(6)
+    expect(flat(getByText('Tie 5 to 5').props.style).fontSize).toBe(30)
+  })
+
+  test('the bet area and footer sit in a centred column capped at 520', () => {
+    useBaccaratStore.getState().newHand()
+    const { getByTestId } = render(<BaccaratScreen />)
+    const col = getByTestId('bac-controls-column')
+    expect(flat(col.props.style)).toMatchObject({ maxWidth: 520, alignSelf: 'center', width: '100%' })
+    const { within } = require('@testing-library/react-native')
+    expect(within(col).getByText('DEAL')).toBeTruthy()
+    expect(within(col).getByTestId('main-chip-15')).toBeTruthy()
+    expect(flat(within(col).getByTestId('main-chip-15').props.style).width).toBe(58)
+    expect(flat(within(col).getByText('DEAL').props.style).fontSize).toBe(22)
+    expect(flat(within(col).getByText(/^Balance:/).props.style).fontSize).toBe(18)
+  })
+
+  test('the header text is 1.3x', () => {
+    useBaccaratStore.getState().newHand()
+    const { getByText } = render(<BaccaratScreen />)
+    expect(flat(getByText('BACCARAT').props.style).fontSize).toBe(20)
+    expect(flat(getByText('← Back').props.style).fontSize).toBe(20)
+  })
+})
