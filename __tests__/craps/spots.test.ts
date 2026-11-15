@@ -58,6 +58,12 @@ describe('stackTapAction', () => {
   it('horn stack places horn with 4 units', () => {
     expect(stackTapAction(bet('h', 'horn'))).toEqual({ kind: 'place', type: 'horn', units: 4 })
   })
+  it('world stack places world with 5 units', () => {
+    expect(stackTapAction(bet('w', 'world'))).toEqual({ kind: 'place', type: 'world', units: 5 })
+  })
+  it.each(['hop-hard', 'hop-easy'] as const)('%s stack keeps its hopDice', (t) => {
+    expect(stackTapAction(bet('h', t, { hopDice: [2, 4] }))).toEqual({ kind: 'place', type: t, hopDice: [2, 4] })
+  })
   it('others place more of the same type and number', () => {
     expect(stackTapAction(bet('x', 'place', { number: 8 }))).toEqual({ kind: 'place', type: 'place', number: 8 })
     expect(stackTapAction(bet('y', 'hardway', { number: 6 }))).toEqual({ kind: 'place', type: 'hardway', number: 6 })
