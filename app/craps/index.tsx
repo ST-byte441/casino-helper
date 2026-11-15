@@ -10,6 +10,7 @@ import { usePreferencesStore } from '../../features/preferences/store'
 import { getBetQuality } from '../../features/craps/strategy'
 import {
   isValidBetForVariant, isValidBetForPhase, suggestedBetIncrement, getMaxOdds, getMaxLayOdds, isCleanOdds, isCleanLayOdds,
+  isCleanPlace,
 } from '../../features/craps/engine'
 import { TableSetup } from '../../features/craps/components/TableSetup'
 import { DiceDisplay } from '../../features/craps/components/DiceDisplay'
@@ -125,18 +126,6 @@ export default function CrapsScreen() {
     return outcome?.result === 'win' ? outcome.delta : undefined
   }
 
-  // True when the place bet amount produces a whole-dollar payout for that number's true pay rate
-  function isCleanPlace(amount: number, n: number): boolean {
-    if (amount === 0) return false
-    if (n === 6 || n === 8) return amount % 6 === 0   // 7:6
-    if (n === 5 || n === 9) return amount % 5 === 0   // 7:5
-    if (n === 4 || n === 10) return amount % 5 === 0  // 9:5
-    if (n === 2 || n === 12) return amount % 2 === 0  // 11:2 (crapless)
-    if (n === 3 || n === 11) return amount % 4 === 0  // 11:4 (crapless)
-    return true
-  }
-
-  // True when the odds amount produces a whole-dollar payout at the point's true-odds rate
   function removeBet(type: BetType, num?: number) {
     const bet = bets.find(b => b.type === type && (num == null || b.number === num))
     if (bet) store.removeBet(bet.id)

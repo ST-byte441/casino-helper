@@ -43,6 +43,7 @@ export function suggestedBetIncrement(betType: BetType, number?: number): number
     if (number === 2 || number === 12) return 5
     if (number === 3 || number === 11) return 5
   }
+  if (betType === 'buy' || betType === 'lay') return minBuyLayAmount(betType, number ?? 4)
   if (betType === 'horn') return 4
   if (betType === 'world') return 5
   return 1
@@ -77,6 +78,24 @@ function layWinRatio(n: number): number {
  */
 export function getMaxLayOdds(flatAmount: number, point: number, oddsMultiple: OddsMultiple): number {
   return Math.floor(getMaxOdds(flatAmount, point, oddsMultiple) / layWinRatio(point) + 1e-9)
+}
+
+/**
+ * Smallest Buy or Lay the table takes, so the $1 minimum vig never eats the whole win (rules doc: some casinos
+ * require a $20 buy, or a lay that wins at least $20). Buy: $20. Lay: enough to win $20 at reverse true odds.
+ */
+export function minBuyLayAmount(betType: 'buy' | 'lay', number: number): number {
+  if (betType === 'buy') return 20
+  return Math.ceil(20 / layWinRatio(number) - 1e-9)
+}
+
+/** True when a place bet pays whole dollars at its payout (rules doc: Place Bets; crapless per the NGCB). */
+export function isCleanPlace(amount: number, n: number): boolean {
+  if (amount === 0) return false
+  if (n === 6 || n === 8) return amount % 6 === 0 // 7 to 6
+  if (n === 3 || n === 11) return amount % 5 === 0 // 13 to 5
+  if (n === 2 || n === 12) return true // 25 to 5 = 5 to 1
+  return amount % 5 === 0 // 4/5/9/10: 9 to 5, 7 to 5
 }
 
 /** True when taken odds pay exactly: 6/8 (6 to 5) in 5s, 5/9 (3 to 2) in 2s; 4/10 and crapless points always. */

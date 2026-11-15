@@ -160,3 +160,29 @@ describe('working status (rules doc: Working and Not Working)', () => {
     expect(useCrapsStore.getState().bets).toHaveLength(0)
   })
 })
+
+describe('Buy and Lay minimums in the store', () => {
+  beforeEach(() => setProfile(10000))
+
+  test('a buy below $20 or a lay that would win under $20 is refused', () => {
+    pointPhase([])
+    useCrapsStore.getState().placeBet('buy', 1, 6)
+    useCrapsStore.getState().placeBet('lay', 1, 4)
+    expect(useCrapsStore.getState().bets).toHaveLength(0)
+    useCrapsStore.getState().placeBet('buy', 20, 6)
+    useCrapsStore.getState().placeBet('lay', 40, 4)
+    expect(useCrapsStore.getState().bets).toHaveLength(2)
+  })
+
+  test('adding to an existing buy is fine once the total meets the minimum', () => {
+    pointPhase([{ id: 'b', type: 'buy', amount: 20, number: 6, working: true }])
+    useCrapsStore.getState().placeBet('buy', 5, 6)
+    expect(useCrapsStore.getState().bets[0].amount).toBe(25)
+  })
+
+  test('reducing a buy below the minimum takes it down', () => {
+    pointPhase([{ id: 'b', type: 'buy', amount: 25, number: 6, working: true }])
+    useCrapsStore.getState().reduceBet('b', 10)
+    expect(useCrapsStore.getState().bets).toHaveLength(0)
+  })
+})

@@ -4,7 +4,7 @@
  */
 import {
   calculatePayout, resolveRoll, getMaxOdds, getMaxLayOdds, isValidBetForPhase, suggestedBetIncrement,
-  isCleanOdds, isCleanLayOdds,
+  isCleanOdds, isCleanLayOdds, isCleanPlace, minBuyLayAmount,
 } from '../../features/craps/engine'
 import { getBetQuality } from '../../features/craps/strategy'
 import { ActiveBet, CrapsTableRules } from '../../lib/types'
@@ -167,5 +167,45 @@ describe('Clean odds amounts pay exactly', () => {
     expect(isCleanLayOdds(60, 6)).toBe(true)
     expect(isCleanLayOdds(50, 8)).toBe(false)
     expect(isCleanLayOdds(0, 4)).toBe(false)
+  })
+})
+
+describe('Buy and Lay minimums keep the $1 vig meaningful (rules doc: some casinos require $20)', () => {
+  test('a buy is at least $20', () => {
+    for (const n of [4, 5, 6, 8, 9, 10, 2, 3, 11, 12]) expect(minBuyLayAmount('buy', n)).toBe(20)
+  })
+  test('a lay must win at least $20', () => {
+    expect(minBuyLayAmount('lay', 4)).toBe(40)
+    expect(minBuyLayAmount('lay', 9)).toBe(30)
+    expect(minBuyLayAmount('lay', 6)).toBe(24)
+    expect(minBuyLayAmount('lay', 3)).toBe(60)
+    expect(minBuyLayAmount('lay', 12)).toBe(120)
+  })
+  test('the first tap on a Buy or Lay row places the minimum', () => {
+    expect(suggestedBetIncrement('buy', 6)).toBe(20)
+    expect(suggestedBetIncrement('lay', 4)).toBe(40)
+    expect(suggestedBetIncrement('lay', 6)).toBe(24)
+  })
+  test('at the minimum, every winning buy and lay nets more than $0', () => {
+    for (const n of [4, 5, 6, 8, 9, 10]) {
+      const sum = n <= 6 ? [1, n - 1] : [n - 6, 6]
+      expect(only(sum as [number, number], 'point', 99, bet('buy', { amount: 20, number: n })).delta).toBeGreaterThan(0)
+      expect(only([3, 4], 'point', 99, bet('lay', { amount: minBuyLayAmount('lay', n), number: n })).delta).toBeGreaterThan(0)
+    }
+  })
+})
+
+describe('Clean place amounts (Assist hint) follow the payout table', () => {
+  test('6/8 in 6s, 4/5/9/10 in 5s', () => {
+    expect(isCleanPlace(12, 6)).toBe(true)
+    expect(isCleanPlace(10, 8)).toBe(false)
+    expect(isCleanPlace(15, 5)).toBe(true)
+    expect(isCleanPlace(12, 10)).toBe(false)
+  })
+  test('crapless 2/12 at 25 to 5 always pay whole dollars; 3/11 at 13 to 5 need 5s', () => {
+    expect(isCleanPlace(3, 2)).toBe(true)
+    expect(isCleanPlace(5, 3)).toBe(true)
+    expect(isCleanPlace(4, 11)).toBe(false)
+    expect(isCleanPlace(0, 6)).toBe(false)
   })
 })

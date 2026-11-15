@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { nanoid } from 'nanoid/non-secure'
 import { ActiveBet, BetType, CrapsPhase, CrapsTableRules } from '../../lib/types'
-import { resolveRoll, isValidBetForVariant, isValidBetForPhase, canRemoveBet } from './engine'
+import { resolveRoll, isValidBetForVariant, isValidBetForPhase, canRemoveBet, minBuyLayAmount } from './engine'
 import { useProfileStore } from '../profile/store'
 
 const DEFAULT_RULES: CrapsTableRules = { variant: 'craps', oddsMultiple: '3-4-5x', fieldPays3on12: false }
@@ -69,6 +69,11 @@ export const useCrapsStore = create<CrapsState & CrapsActions>((set, get) => ({
       const totalBets = bets.reduce((s, b) => s + b.amount + (b.odds ?? 0), 0)
       if (totalBets + amount > profile.balance) return
     }
+    // Buy and Lay need the table minimum in total (an existing bet counts toward it).
+    if (type === 'buy' || type === 'lay') {
+      const existing = bets.find(b => b.type === type && b.number === number)
+      if ((existing?.amount ?? 0) + amount < minBuyLayAmount(type, number ?? 4)) return
+    }
     // Merge stackable bets: same type + same number (come/dont-come excluded — they track independent stages)
     const isMergeable = type !== 'hop-hard' && type !== 'hop-easy' && type !== 'come' && type !== 'dont-come'
     if (isMergeable) {
@@ -98,7 +103,8 @@ export const useCrapsStore = create<CrapsState & CrapsActions>((set, get) => ({
     const bet = bets.find(b => b.id === id)
     if (!bet || !canRemoveBet(bet, phase)) return
     const newAmount = bet.amount - amount
-    if (newAmount <= 0) {
+    const belowMin = (bet.type === 'buy' || bet.type === 'lay') && newAmount < minBuyLayAmount(bet.type, bet.number ?? 4)
+    if (newAmount <= 0 || belowMin) {
       set({ bets: bets.filter(b => b.id !== id) })
     } else {
       set({ bets: bets.map(b => b.id === id ? { ...b, amount: newAmount } : b) })

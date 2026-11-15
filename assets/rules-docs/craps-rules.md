@@ -197,7 +197,7 @@ The shooter rolls before a point is established. *(Ven, HR, Wiki)*
 - Some casinos require at least $20 so the $1 vig applies. *(Wiki)*
 - Off on the come-out unless the player says otherwise. *(Wiki)*
 - House edge **4.76%** with vig up front; with vig on wins only: 4/10 **1.67%**, 5/9 **2.00%**, 6/8 **2.27%**. *(Wiki)*
-- **App:** the vig is charged **only on a win**, as 5% of the bet rounded **down** to the dollar, minimum $1, so the $25 buy on 10 pays $49. *(app, matching the Wiki example)*
+- **App:** the vig is charged **only on a win**, as 5% of the bet rounded **down** to the dollar, minimum $1, so the $25 buy on 10 pays $49. **Minimum buy $20**, so the $1 vig never eats the win. *(app, matching the Wiki example and the $20 minimum some casinos use)*
 
 ### Lay Bets
 - Bet that a 7 rolls before your number; pays **reverse true odds** (1 to 2 on 4/10, 2 to 3 on 5/9, 5 to 6 on 6/8). *(Wiki)*
@@ -206,7 +206,7 @@ The shooter rolls before a point is established. *(Ven, HR, Wiki)*
 - **Always working, even with no point**, unless the player says otherwise. *(Wiki)*
 - Removable or reducible any time before it loses. *(Wiki)*
 - House edge (vig up front / on wins only): 4/10 **2.44% / 1.67%**, 5/9 **3.23% / 2.00%**, 6/8 **4.00% / 2.27%**. *(Wiki)*
-- **App:** vig only on a win, as 5% of the **win** rounded down to the dollar, minimum $1. *(app)*
+- **App:** vig only on a win, as 5% of the **win** rounded down to the dollar, minimum $1. **A lay must win at least $20**: $40 on 4/10, $30 on 5/9, $24 on 6/8, $60 on 3/11, $120 on 2/12. *(app, following the casinos Wiki describes)*
 
 ### Big 6 / Big 8
 - Pays even money when the 6 (or 8) rolls before a 7; true odds 6 to 5; house edge **9.09%**. *(Wiki)*
