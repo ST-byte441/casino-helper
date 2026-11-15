@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 import { View, TouchableOpacity, StyleSheet, LayoutChangeEvent } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
 import Animated from 'react-native-reanimated'
@@ -27,6 +27,12 @@ import { MoreBetsSheet } from './MoreBetsSheet'
 import { RollOverlay } from './RollOverlay'
 
 export const CRAPS_CHIPS = [1, 5, 25, 100] as const
+
+/** A roll being shown: the rolled dice, and the table as it stood before the roll. */
+type Rolling = {
+  dice: [number, number]
+  before: { bets: ActiveBet[]; point: number | null; dice: [number, number] | null; balance: string; negative: boolean }
+}
 
 type Props = {
   /** 'large' scales the chips (×1.25), the tray and the header text. */
@@ -135,14 +141,19 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
   const chip = TABLE_CHROME[size].chip
   const portrait = size === 'large' && orientation === 'portrait'
   const router = useRouter()
-  const bets = useCrapsStore(s => s.bets)
-  const point = useCrapsStore(s => s.point)
-  const dice = useCrapsStore(s => s.dice)
+  const liveBets = useCrapsStore(s => s.bets)
+  const livePoint = useCrapsStore(s => s.point)
+  const liveDice = useCrapsStore(s => s.dice)
   const lastRoll = useCrapsStore(s => s.lastRoll)
   const lastDelta = useCrapsStore(s => s.lastDelta)
   const [showBanner, setShowBanner] = useState(false)
-  // The dice tumbling over the felt after ROLL (the store has already rolled); the banner follows.
-  const [rolling, setRolling] = useState<[number, number] | null>(null)
+  // The dice tumbling over the felt after ROLL. The store has already rolled; until the dice land the felt, the
+  // dice block and the balance show `before` (the table as it was), so nothing gives the result away.
+  const [rolling, setRolling] = useState<Rolling | null>(null)
+  const rollingRef = useRef(false)
+  const bets = rolling ? rolling.before.bets : liveBets
+  const point = rolling ? rolling.before.point : livePoint
+  const dice = rolling ? rolling.before.dice : liveDice
   const [menuBet, setMenuBet] = useState<ActiveBet | null>(null)
   const [moreOpen, setMoreOpen] = useState(false)
   const phase = useCrapsStore(s => s.phase)
@@ -153,8 +164,10 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
   const selectedChip = useCrapsStore(s => s.selectedChip)
   const selectChip = useCrapsStore(s => s.selectChip)
   const active = useProfileStore(s => s.profiles.find(p => p.id === s.activeProfileId))
-  const balance = active ? (active.bankrollMode === 'infinite' ? '∞' : formatMoney(active.balance)) : '—'
-  const isNegative = !!active && active.bankrollMode !== 'infinite' && active.balance < 0
+  const liveBalance = active ? (active.bankrollMode === 'infinite' ? '∞' : formatMoney(active.balance)) : '—'
+  const liveNegative = !!active && active.bankrollMode !== 'infinite' && active.balance < 0
+  const balance = rolling ? rolling.before.balance : liveBalance
+  const isNegative = rolling ? rolling.before.negative : liveNegative
 
   const targetAt = (x: number, y: number) => {
     const s = useCrapsStore.getState()
@@ -165,6 +178,8 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
   const table = useChipTable({
     hit: (x, y) => encode(targetAt(x, y)),
     onDrop(source, target, offBoard) {
+      // No chips go down (or come off) while the dice roll.
+      if (rollingRef.current) return
       const s = useCrapsStore.getState()
       if (source.type === 'stack') {
         // Stacks never move between areas; off the felt a removable one is taken down (the store refuses a
@@ -176,6 +191,7 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
       if (t) applyChip(t, source.amount)
     },
     onTapPoint(x, y) {
+      if (rollingRef.current) return
       const s = useCrapsStore.getState()
       const t = targetAt(x, y)
       if (!t) return
@@ -218,14 +234,19 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
   }
 
   function handleRoll() {
+    const s0 = useCrapsStore.getState()
+    const before = { bets: s0.bets, point: s0.point, dice: s0.dice, balance: liveBalance, negative: liveNegative }
     setShowBanner(false)
     onRoll()
-    const rolled = useCrapsStore.getState().dice
-    if (rolled) setRolling(rolled)
-    else setShowBanner(true)
+    const s1 = useCrapsStore.getState()
+    // The store refused (no new roll): don't replay the old dice.
+    if (s1.lastRoll === s0.lastRoll || !s1.dice) return
+    rollingRef.current = true
+    setRolling({ dice: s1.dice, before })
   }
 
   function rollShown() {
+    rollingRef.current = false
     setRolling(null)
     setShowBanner(true)
   }
@@ -273,7 +294,7 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
           </View>
         )}
         {layout && rolling && (
-          <RollOverlay dice={rolling} size={Math.round(Math.min(layout.height * 0.32, 120))} onDone={rollShown} />
+          <RollOverlay dice={rolling.dice} size={Math.round(Math.min(layout.height * 0.32, 120))} onDone={rollShown} />
         )}
       </View>
   )
@@ -287,8 +308,8 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
         <Text style={styles.title} numberOfLines={1}>CRAPS · {tableRules.oddsMultiple}</Text>
         {/* In landscape the reason line lives in the slim header so the felt keeps its height. */}
         {portrait ? <View style={styles.spacer} /> : reason}
-        <TouchableOpacity testID="craps-more-bets" onPress={() => { useCrapsStore.getState().setNotice(null); setMoreOpen(true) }} hitSlop={8}>
-          <Text style={styles.assist}>More bets</Text>
+        <TouchableOpacity testID="craps-more-bets" disabled={rolling !== null} onPress={() => { useCrapsStore.getState().setNotice(null); setMoreOpen(true) }} hitSlop={8}>
+          <Text style={[styles.assist, rolling && styles.dimmed]}>More bets</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={toggleAssist} hitSlop={8}>
           <Text style={[styles.assist, assistEnabled && styles.assistOn]}>Assist {assistEnabled ? '●' : '○'}</Text>
@@ -341,6 +362,7 @@ function makeSheets(c: Record<TableSize, TableChrome>) {
     spacer: { flex: 1 },
     assist: { color: '#aaa', fontSize: 13 },
     assistOn: { color: '#FFD700' },
+    dimmed: { opacity: 0.4 },
     balance: { color: '#fff', fontWeight: '700', fontSize: 13 },
     negative: { color: '#ff5555' },
     body: { flex: 1, flexDirection: 'row' },

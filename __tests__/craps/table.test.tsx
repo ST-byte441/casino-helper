@@ -278,6 +278,65 @@ describe('CrapsTable chrome', () => {
     expect(getByTestId('craps-roll')).not.toBeDisabled()
   })
 
+  test('during the overlay the felt, dice block and balance still show the pre-roll state', async () => {
+    // Previous dice 2 + 3; this roll is 3 + 4, a natural: the $5 Pass is paid (+$5) and taken down.
+    seed({ bets: [bet('pass', 5), bet('place', 6, { number: 6, working: false })] })
+    useCrapsStore.setState({ dice: [2, 3] })
+    const utils = await mount({ onRoll: () => store().roll() })
+    jest.useFakeTimers()
+    jest.spyOn(Math, 'random').mockReturnValueOnce(2.5 / 6).mockReturnValueOnce(3.5 / 6)
+    const { getByTestId, queryByTestId, getByText, queryByText } = utils
+    expect(getByText('$1,000')).toBeTruthy()
+    fireEvent.press(getByText('ROLL'))
+    expect(store().bets.map(b => b.type)).toEqual(['place'])
+    expect(useProfileStore.getState().profiles[0].balance).toBe(1005)
+    // Still the pre-roll picture.
+    expect(queryByTestId('stack-pass-5-')).toBeTruthy()
+    expect(getByTestId('craps-dice')).toHaveTextContent(/= 5/)
+    expect(getByText('$1,000')).toBeTruthy()
+    expect(queryByText('$1,005')).toBeNull()
+    act(() => { jest.advanceTimersByTime(1100) })
+    expect(queryByTestId('stack-pass-5-')).toBeNull()
+    expect(getByTestId('craps-dice')).toHaveTextContent(/= 7/)
+    expect(getByText('$1,005')).toBeTruthy()
+  })
+
+  test('a point-setting roll moves the puck only once the dice land', async () => {
+    seed({ bets: [bet('pass', 5)] })
+    const utils = await mount({ onRoll: () => store().roll() })
+    jest.useFakeTimers()
+    jest.spyOn(Math, 'random').mockReturnValueOnce(1.5 / 6).mockReturnValueOnce(3.5 / 6) // 2 + 4: point 6
+    fireEvent.press(utils.getByText('ROLL'))
+    expect(store().point).toBe(6)
+    expect(utils.queryByTestId('puck-off')).toBeTruthy()
+    expect(utils.queryByTestId('puck-on')).toBeNull()
+    fireEvent.press(utils.getByTestId('craps-roll-overlay'))
+    expect(utils.queryByTestId('puck-on')).toBeTruthy()
+  })
+
+  test('no chips go down while the dice roll, and More bets is disabled', async () => {
+    seed({ bets: [bet('pass', 5), bet('place', 6, { number: 6, working: false })] })
+    jest.spyOn(Math, 'random').mockReturnValueOnce(2.5 / 6).mockReturnValueOnce(3.5 / 6)
+    const { getByText, getByTestId } = await mount({ onRoll: () => store().roll() })
+    fireEvent.press(getByText('ROLL'))
+    expect(getByTestId('craps-roll-overlay')).toBeTruthy()
+    const before = store().bets
+    await drag('drag-chip-5', anchor('field'))
+    await tap('tap-chip-5')
+    await tap('tap-board', anchor('field'))
+    expect(store().bets).toEqual(before)
+    expect(getByTestId('craps-more-bets')).toBeDisabled()
+  })
+
+  test('a ROLL the store refuses starts no overlay and replays no old roll', async () => {
+    seed({ bets: [bet('pass', 5)] })
+    useCrapsStore.setState({ dice: [2, 3] })
+    const { getByText, queryByTestId, getByTestId } = await mount() // onRoll does nothing
+    fireEvent.press(getByText('ROLL'))
+    expect(queryByTestId('craps-roll-overlay')).toBeNull()
+    expect(getByTestId('craps-roll')).not.toBeDisabled()
+  })
+
   test('tapping the overlay skips to the result', async () => {
     const { getByTestId, queryByTestId, getByText } = await rollNatural()
     fireEvent.press(getByTestId('craps-roll-overlay'))
