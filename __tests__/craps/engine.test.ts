@@ -1,6 +1,6 @@
 import {
   rollDice, sumDice, isHardRoll,
-  isValidBetForVariant, isValidBetForPhase, canRemoveBet, suggestedBetIncrement, getMaxOdds,
+  isValidBetForVariant, isValidBetForPhase, canRemoveBet, suggestedBetIncrement, getMaxOdds, oddsCap,
 } from '../../features/craps/engine'
 import { ActiveBet, CrapsTableRules } from '../../lib/types'
 
@@ -403,5 +403,23 @@ describe('resolveRoll — point phase', () => {
     const res = resolveRoll([3, 3], 'point', 9, [big6], rules)
     expect(res.outcomes[0].result).toBe('win')
     expect(res.outcomes[0].delta).toBe(10)
+  })
+})
+
+describe('oddsCap', () => {
+  const b = (type: ActiveBet['type'], amount: number, extra: Partial<ActiveBet> = {}): ActiveBet =>
+    ({ id: 'x', type, amount, working: true, ...extra })
+  test('pass and dont-pass cap against the table point', () => {
+    expect(oddsCap(b('pass', 5), 4, '3-4-5x')).toBe(15)
+    expect(oddsCap(b('dont-pass', 10), 6, '3-4-5x')).toBe(60)
+  })
+  test('come and dont-come cap against their own come point', () => {
+    expect(oddsCap(b('come', 5, { comePoint: 4 }), 6, '3-4-5x')).toBe(15)
+    expect(oddsCap(b('dont-come', 10, { comePoint: 4 }), 6, '2x')).toBe(40)
+  })
+  test('null with no point, before a come bet travels, or on a non-line bet', () => {
+    expect(oddsCap(b('pass', 5), null, '3-4-5x')).toBeNull()
+    expect(oddsCap(b('come', 5), 6, '3-4-5x')).toBeNull()
+    expect(oddsCap(b('field', 5), 6, '3-4-5x')).toBeNull()
   })
 })

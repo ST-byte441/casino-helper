@@ -81,6 +81,20 @@ export function getMaxLayOdds(flatAmount: number, point: number, oddsMultiple: O
 }
 
 /**
+ * The most odds `bet` can carry, against its own point (the come point for Come / Don't Come, else the table
+ * point); null when it takes no odds (not a line bet, or no point yet). The store and the table share this cap.
+ */
+export function oddsCap(bet: ActiveBet, point: number | null, oddsMultiple: OddsMultiple): number | null {
+  const isCome = bet.type === 'come' || bet.type === 'dont-come'
+  const isLine = isCome || bet.type === 'pass' || bet.type === 'dont-pass'
+  const betPoint = isCome ? bet.comePoint : point
+  if (!isLine || betPoint == null) return null
+  return bet.type === 'dont-pass' || bet.type === 'dont-come'
+    ? getMaxLayOdds(bet.amount, betPoint, oddsMultiple)
+    : getMaxOdds(bet.amount, betPoint, oddsMultiple)
+}
+
+/**
  * Why `amount` on `type` (on top of any `existing` bet) can't be placed, or null when it can. Pure; the store adds
  * its own balance check.
  */

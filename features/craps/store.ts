@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { nanoid } from 'nanoid/non-secure'
 import { ActiveBet, BetType, CrapsPhase, CrapsTableRules } from '../../lib/types'
-import { resolveRoll, canRemoveBet, minBuyLayAmount, placementRefusal, getMaxOdds, getMaxLayOdds } from './engine'
+import { resolveRoll, canRemoveBet, minBuyLayAmount, placementRefusal, oddsCap } from './engine'
 import { useProfileStore } from '../profile/store'
 
 const DEFAULT_RULES: CrapsTableRules = { variant: 'craps', oddsMultiple: '3-4-5x', fieldPays3on12: false }
@@ -91,12 +91,14 @@ export const useCrapsStore = create<CrapsState & CrapsActions>((set, get) => ({
         return false
       }
     }
-    // Merge stackable bets: same type + same number (come/dont-come excluded — they track independent stages)
-    const isMergeable = type !== 'hop-hard' && type !== 'hop-easy' && type !== 'come' && type !== 'dont-come'
+    // Merge stackable bets: same type + same number. A Come / Don't Come merges only with one of its type still
+    // in the Come box (one Come bet per player per roll, rules doc); bets that travelled to a number stay separate.
+    const isCome = type === 'come' || type === 'dont-come'
+    const isMergeable = type !== 'hop-hard' && type !== 'hop-easy'
     if (isMergeable) {
-      const existing = bets.find(b =>
-        b.type === type && (number != null ? b.number === number : b.number == null)
-      )
+      const existing = bets.find(b => b.type === type && (isCome
+        ? b.comePoint == null
+        : number != null ? b.number === number : b.number == null))
       if (existing) {
         set({ bets: bets.map(b => b.id === existing.id ? { ...b, amount: b.amount + amount } : b), notice: null })
         return true
@@ -112,8 +114,12 @@ export const useCrapsStore = create<CrapsState & CrapsActions>((set, get) => ({
   removeBet(id) {
     const { bets, phase } = get()
     const bet = bets.find(b => b.id === id)
-    if (!bet || !canRemoveBet(bet, phase)) return
-    set({ bets: bets.filter(b => b.id !== id) })
+    if (!bet) return
+    if (!canRemoveBet(bet, phase)) {
+      set({ notice: bet.type === 'pass' ? 'Pass is a contract bet once the point is set' : 'Come bets stay until they win or lose' })
+      return
+    }
+    set({ bets: bets.filter(b => b.id !== id), notice: null })
   },
 
   reduceBet(id, amount) {
@@ -143,16 +149,11 @@ export const useCrapsStore = create<CrapsState & CrapsActions>((set, get) => ({
       const bet = bets.find(b => b.id === betId)
       if (!bet) return false
       // Each bet's odds are capped against its own point: the come point for Come / Don't Come.
-      const isCome = bet.type === 'come' || bet.type === 'dont-come'
-      const isLine = isCome || bet.type === 'pass' || bet.type === 'dont-pass'
-      const betPoint = isCome ? bet.comePoint : point
-      if (!isLine || betPoint == null) {
+      const max = oddsCap(bet, point, tableRules.oddsMultiple)
+      if (max == null) {
         set({ notice: 'Odds go on a bet with a point' })
         return false
       }
-      const max = bet.type === 'dont-pass' || bet.type === 'dont-come'
-        ? getMaxLayOdds(bet.amount, betPoint, tableRules.oddsMultiple)
-        : getMaxOdds(bet.amount, betPoint, tableRules.oddsMultiple)
       if ((bet.odds ?? 0) + amount > max) {
         set({ notice: `Max odds here is $${max}` })
         return false
@@ -167,7 +168,7 @@ export const useCrapsStore = create<CrapsState & CrapsActions>((set, get) => ({
   },
 
   toggleWorking(betId) {
-    set(s => ({ bets: s.bets.map(b => b.id === betId ? { ...b, working: !b.working } : b) }))
+    set(s => ({ bets: s.bets.map(b => b.id === betId ? { ...b, working: !b.working } : b), notice: null }))
   },
 
   roll() {

@@ -325,3 +325,80 @@ describe('placement notices', () => {
     expect(s().selectedChip).toBeNull()
   })
 })
+
+describe('come bets merge within a roll', () => {
+  const s = () => useCrapsStore.getState()
+  const reset = (bets: ActiveBet[] = []) => {
+    setProfile(1000)
+    useCrapsStore.setState({
+      phase: 'point', point: 6, bets, notice: null, selectedChip: null,
+      tableRules: { variant: 'craps', oddsMultiple: '3-4-5x', fieldPays3on12: false },
+    })
+  }
+
+  test('two COME bets in one roll make one $10 come bet', () => {
+    reset()
+    expect(s().placeBet('come', 5)).toBe(true)
+    expect(s().placeBet('come', 5)).toBe(true)
+    expect(s().bets).toEqual([expect.objectContaining({ type: 'come', amount: 10 })])
+  })
+
+  test("two DON'T COME bets in one roll merge too; Come and Don't Come stay apart", () => {
+    reset()
+    s().placeBet('dont-come', 5)
+    s().placeBet('dont-come', 5)
+    s().placeBet('come', 5)
+    expect(s().bets).toEqual([
+      expect.objectContaining({ type: 'dont-come', amount: 10 }),
+      expect.objectContaining({ type: 'come', amount: 5 }),
+    ])
+  })
+
+  test('a come bet that travelled stays separate from a new come bet', () => {
+    reset()
+    s().placeBet('come', 10)
+    mockDice(4, 4) // 8: the come bet travels to 8
+    s().roll()
+    expect(s().bets).toEqual([expect.objectContaining({ type: 'come', amount: 10, comePoint: 8 })])
+    expect(s().placeBet('come', 5)).toBe(true)
+    expect(s().bets).toHaveLength(2)
+    expect(s().bets[0]).toEqual(expect.objectContaining({ amount: 10, comePoint: 8 }))
+    expect(s().bets[1]).toEqual(expect.objectContaining({ type: 'come', amount: 5 }))
+    expect(s().bets[1].comePoint).toBeUndefined()
+  })
+})
+
+describe('stale notices', () => {
+  const s = () => useCrapsStore.getState()
+  const reset = (bets: ActiveBet[]) => {
+    setProfile(1000)
+    useCrapsStore.setState({
+      phase: 'point', point: 6, bets, notice: 'old', selectedChip: null,
+      tableRules: { variant: 'craps', oddsMultiple: '3-4-5x', fieldPays3on12: false },
+    })
+  }
+
+  test('removeBet clears the notice', () => {
+    reset([{ id: 'f', type: 'field', amount: 5, working: true }])
+    s().removeBet('f')
+    expect(s().bets).toEqual([])
+    expect(s().notice).toBeNull()
+  })
+
+  test('toggleWorking clears the notice', () => {
+    reset([{ id: 'p', type: 'place', amount: 6, number: 6, working: true }])
+    s().toggleWorking('p')
+    expect(s().bets[0].working).toBe(false)
+    expect(s().notice).toBeNull()
+  })
+
+  test('removeBet on a contract bet says why it stays', () => {
+    reset([{ id: 'p', type: 'pass', amount: 10, working: true },
+      { id: 'c', type: 'come', amount: 5, working: true, comePoint: 8 }])
+    s().removeBet('p')
+    expect(s().notice).toBe('Pass is a contract bet once the point is set')
+    s().removeBet('c')
+    expect(s().notice).toBe('Come bets stay until they win or lose')
+    expect(s().bets).toHaveLength(2)
+  })
+})
