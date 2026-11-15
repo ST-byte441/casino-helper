@@ -314,3 +314,103 @@ describe('tray chip drag after the tray moves', () => {
     expect(store().bets).toEqual({ 'straight:17': 5 })
   })
 })
+
+describe('tap to place', () => {
+  const { State } = require('react-native-gesture-handler')
+  const { fireGestureHandler, getByGestureTestId } = require('react-native-gesture-handler/jest-utils')
+  const L = buildLayout('double', 'portrait', 300, 600)
+  const flush = (ms = 0) => act(async () => { await new Promise(r => setTimeout(r, ms)) })
+  const centreOf = (label: string) => {
+    const r = L.cells.find(c => c.label === label)!.rect
+    return { x: r.x + r.w / 2, y: r.y + r.h / 2 }
+  }
+
+  async function mount() {
+    const utils = render(<BettingTable wheel="double" orientation="portrait" onSpin={jest.fn()} />)
+    fireEvent(utils.getByTestId('roulette-board'), 'layout', { nativeEvent: { layout: { x: 0, y: 0, width: 300, height: 600 } } })
+    await flush()
+    return utils
+  }
+  async function tap(id: string, p = { x: 22, y: 22 }) {
+    fireGestureHandler(getByGestureTestId(id), [
+      { state: State.BEGAN, x: p.x, y: p.y },
+      { state: State.ACTIVE, x: p.x, y: p.y },
+      { state: State.END, x: p.x, y: p.y },
+    ])
+    await flush()
+  }
+  const selected = (utils: { getByTestId(id: string): any }, amount: number) =>
+    utils.getByTestId(`chip-${amount}`).props.accessibilityState?.selected === true
+
+  test('tapping a tray chip selects it, again deselects it, another switches', async () => {
+    const utils = await mount()
+    await tap('tap-chip-5')
+    expect(selected(utils, 5)).toBe(true)
+    await tap('tap-chip-5')
+    expect(selected(utils, 5)).toBe(false)
+    await tap('tap-chip-5')
+    await tap('tap-chip-25')
+    expect(selected(utils, 5)).toBe(false)
+    expect(selected(utils, 25)).toBe(true)
+    expect(store().bets).toEqual({})
+  })
+
+  test('with $5 selected, tapping cell 17 places it and flashes the spot', async () => {
+    const utils = await mount()
+    await tap('tap-chip-5')
+    await tap('tap-board', centreOf('17'))
+    expect(store().bets).toEqual({ 'straight:17': 5 })
+    const lit = () => StyleSheet.flatten(utils.getByTestId('cell-straight:17').props.style).borderColor === '#FFD700'
+    expect(lit()).toBe(true)
+    await flush(450)
+    expect(lit()).toBe(false)
+  })
+
+  test('tapping the 17|20 line places a split', async () => {
+    await mount()
+    await tap('tap-chip-5')
+    const a = L.cells.find(c => c.label === '17')!.rect
+    const b = L.cells.find(c => c.label === '20')!.rect
+    // In portrait 20 sits below 17; the split is the line between them (the split's own anchor).
+    expect(b.y).toBeCloseTo(a.y + a.h)
+    await tap('tap-board', { x: a.x + a.w / 2, y: b.y })
+    expect(store().bets).toEqual({ 'split:17-20': 5 })
+  })
+
+  test('with nothing selected, tapping the board places nothing', async () => {
+    await mount()
+    await tap('tap-board', centreOf('17'))
+    expect(store().bets).toEqual({})
+  })
+
+  test('tapping an existing stack adds the selected chip to it', async () => {
+    await mount()
+    act(() => { store().placeChip('split:17-20', 5) })
+    await flush()
+    await tap('tap-chip-5')
+    const s = L.anchors['split:17-20']
+    const c = centreOf('17')
+    const d = Math.hypot(c.x - s.x, c.y - s.y)
+    // On the stack chip (radius STACK_SIZE / 2 = 14) but outside the split's own target: a drop here is straight:17.
+    await tap('tap-board', { x: s.x + ((c.x - s.x) / d) * 12, y: s.y + ((c.y - s.y) / d) * 12 })
+    expect(store().bets).toEqual({ 'split:17-20': 10 })
+  })
+
+  test('a tap rejected for balance places nothing and shows the notice', async () => {
+    useProfileStore.setState(s => ({ profiles: [{ ...s.profiles[0], balance: 3 }] }))
+    const utils = await mount()
+    await tap('tap-chip-5')
+    await tap('tap-board', centreOf('17'))
+    expect(store().bets).toEqual({})
+    expect(utils.getByText('Not enough balance')).toBeTruthy()
+  })
+
+  test('tapping a tray chip does not start a drag ghost', async () => {
+    const utils = await mount()
+    const chips = () => utils.UNSAFE_root.findAll((n: any) => n.type === 'Text' && /^\$\d+$/.test(String(n.props.children?.join?.('') ?? n.props.children))).length
+    const before = chips()
+    expect(before).toBeGreaterThan(0)
+    await tap('tap-chip-5')
+    expect(chips()).toBe(before)
+  })
+})
