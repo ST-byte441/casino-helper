@@ -39,6 +39,7 @@ Get the latest APK from the [Releases page](../../releases/latest).
 - **Chip betting** — pick a main chip ($15 / $25 / $50 / $100) for Player and Banker ($15 table minimum) and a side chip ($1 / $5 / $10 / $25) for Tie and the pairs. Side bets have a dashed purple outline
 - **Fully automatic rules** — all drawing rules applied after Deal; no player decisions required
 - **Card squeeze** — reveal every card in real dealing order (P1, B1, P2, B2, then third cards) by dragging up to peel it back, or turn the header **Squeeze ●/○** toggle off for a quick automatic flip. The result waits until you tap **Next Hand**
+- **Large screens** — on a Galaxy Fold's inner screen or a tablet, bigger cards and a bigger squeeze card; in landscape Banker and Player sit side by side like a real table, with the bets, Deal and balance in a side panel
 - **Sandbox mode** — manually set all four starting cards, pick third cards step-by-step, and see the rule explanation driving each draw decision
 
 ### Roulette

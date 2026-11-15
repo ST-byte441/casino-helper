@@ -1,4 +1,4 @@
-import { pickLayout } from '../../features/blackjack/layout'
+import { pickLayout } from '../../lib/tableLayout'
 
 test('phones always get the phone layout, whatever the orientation', () => {
   expect(pickLayout('compact', 'portrait')).toBe('phone')

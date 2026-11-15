@@ -3,7 +3,7 @@ import { Text } from '../../../components/Text'
 import { Card as CardType } from '../../../lib/types'
 import { Card } from './Card'
 import { formatHandTotal, scoreHand } from '../engine'
-import { sizedStyles, TableSize } from '../sizes'
+import { sizedStyles, TableSize } from '../../../lib/tableSize'
 
 type Props = {
   hand: CardType[]

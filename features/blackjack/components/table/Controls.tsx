@@ -2,7 +2,7 @@ import { ComponentProps } from 'react'
 import { Phase } from '../../../../lib/types'
 import { ActionButtons } from '../ActionButtons'
 import { BetControls } from '../BetControls'
-import { TableSize } from '../../sizes'
+import { TableSize } from '../../../../lib/tableSize'
 
 type Props = {
   size: TableSize

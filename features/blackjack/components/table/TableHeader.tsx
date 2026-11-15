@@ -1,6 +1,6 @@
 import { View, TouchableOpacity, StyleSheet } from 'react-native'
 import { Text } from '../../../../components/Text'
-import { sizedStyles, TableSize } from '../../sizes'
+import { sizedStyles, TableSize } from '../../../../lib/tableSize'
 
 type Props = {
   size: TableSize

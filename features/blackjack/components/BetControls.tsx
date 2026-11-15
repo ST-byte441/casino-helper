@@ -1,7 +1,7 @@
 import { View, TouchableOpacity, StyleSheet } from 'react-native'
 import { Text } from '../../../components/Text'
 import { CHIP_DENOMINATIONS, TABLE_MINIMUM } from '../../../lib/constants'
-import { sizedStyles, TableSize } from '../sizes'
+import { sizedStyles, TableSize } from '../../../lib/tableSize'
 
 type Props = {
   bet: number

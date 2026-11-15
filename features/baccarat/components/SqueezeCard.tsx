@@ -8,6 +8,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets'
 import { BaccaratRevealMode, Card } from '../../../lib/types'
 import { cardFaceImage, CARD_FACE_ASPECT } from '../cardFaces'
+import { TableSize } from '../../../lib/tableSize'
 
 type Props = {
   card: Card
@@ -15,21 +16,22 @@ type Props = {
   onRevealed(): void
   /** Ref to an enclosing gesture-handler ScrollView that the squeeze drag must win over. */
   scrollRef?: React.RefObject<any>
+  size?: TableSize
 }
 
-const H = 186
-const W = Math.round(H * CARD_FACE_ASPECT)
+/** Card height per table size; the width follows the card-face artwork's aspect. */
+export const SQUEEZE_H: Record<TableSize, number> = { regular: 186, large: 280 }
 const RELEASE_THRESHOLD = 0.55
 const PEEL_MS = 220
 const FLIP_MS = 300
 /** Short pause on the revealed face before handing off to the next card. */
 const HOLD_MS = 350
 
-function CardFace({ card }: { card: Card }) {
+function CardFace({ card, styles }: { card: Card; styles: SqueezeStyles }) {
   return <Image testID="card-face" source={cardFaceImage(card)} style={styles.face} resizeMode="cover" />
 }
 
-function CardBack() {
+function CardBack({ styles }: { styles: SqueezeStyles }) {
   return (
     <View style={styles.back}>
       <View style={styles.backInner}>
@@ -39,7 +41,9 @@ function CardBack() {
   )
 }
 
-export function SqueezeCard({ card, mode, onRevealed, scrollRef }: Props) {
+export function SqueezeCard({ card, mode, onRevealed, scrollRef, size = 'regular' }: Props) {
+  const styles = SHEETS[size]
+  const H = SQUEEZE_H[size]
   const progress = useSharedValue(0) // squeeze: 0 = face-down, 1 = fully peeled
   const flip = useSharedValue(0) // flip: 0 = back, 1 = face
   const [done, setDone] = useState(false)
@@ -67,6 +71,7 @@ export function SqueezeCard({ card, mode, onRevealed, scrollRef }: Props) {
   }, [mode, flip, finish])
 
   const pan = Gesture.Pan()
+    .withTestId('squeeze-pan')
     .enabled(mode === 'squeeze' && !done)
     .onUpdate(e => {
       progress.value = Math.min(1, Math.max(0, -e.translationY / (H * 0.9)))
@@ -96,9 +101,9 @@ export function SqueezeCard({ card, mode, onRevealed, scrollRef }: Props) {
     return (
       <View style={styles.wrap}>
         <Animated.View style={[styles.card, flipStyle]}>
-          <CardFace card={card} />
+          <CardFace card={card} styles={styles} />
           <Animated.View style={[StyleSheet.absoluteFill, flipBackStyle]}>
-            <CardBack />
+            <CardBack styles={styles} />
           </Animated.View>
         </Animated.View>
       </View>
@@ -110,9 +115,9 @@ export function SqueezeCard({ card, mode, onRevealed, scrollRef }: Props) {
       <Text style={styles.hint}>Drag up to squeeze</Text>
       <GestureDetector gesture={pan}>
         <View style={styles.card}>
-          <CardFace card={card} />
+          <CardFace card={card} styles={styles} />
           <Animated.View style={[styles.backClip, backStyle]}>
-            <CardBack />
+            <CardBack styles={styles} />
           </Animated.View>
           <Animated.View pointerEvents="none" style={[styles.curl, curlStyle]} />
         </View>
@@ -124,9 +129,11 @@ export function SqueezeCard({ card, mode, onRevealed, scrollRef }: Props) {
   )
 }
 
-const styles = StyleSheet.create({
+function makeStyles(H: number, large: boolean) {
+  const W = Math.round(H * CARD_FACE_ASPECT)
+  return StyleSheet.create({
   wrap: { alignItems: 'center', paddingVertical: 8 },
-  hint: { color: '#FFD700', fontSize: 12, marginBottom: 6 },
+  hint: { color: '#FFD700', fontSize: large ? 16 : 12, marginBottom: large ? 9 : 6 },
   card: { width: W, height: H, borderRadius: 10, overflow: 'hidden', backgroundColor: '#fff' },
   face: { position: 'absolute', top: 0, left: 0, width: W, height: H, borderRadius: 10 },
   backClip: { position: 'absolute', top: 0, left: 0, right: 0, overflow: 'hidden' },
@@ -134,10 +141,13 @@ const styles = StyleSheet.create({
     padding: 6 },
   backInner: { flex: 1, borderWidth: 1, borderColor: '#c9a0a7', borderRadius: 6, backgroundColor: '#5c1520',
     alignItems: 'center', justifyContent: 'center' },
-  backMotif: { color: '#c9a0a7', fontSize: 28 },
+  backMotif: { color: '#c9a0a7', fontSize: large ? 42 : 28 },
   curl: { position: 'absolute', left: 0, right: 0, backgroundColor: '#e6e6e6',
     borderTopWidth: 1, borderColor: '#bbb', shadowColor: '#000', shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.4, shadowRadius: 5, elevation: 6 },
-  skip: { color: '#aaa', fontSize: 13, marginTop: 10 },
+  skip: { color: '#aaa', fontSize: large ? 17 : 13, marginTop: large ? 15 : 10 },
   skipDone: { opacity: 0.4 },
 })
+}
+type SqueezeStyles = ReturnType<typeof makeStyles>
+const SHEETS: Record<TableSize, SqueezeStyles> = { regular: makeStyles(SQUEEZE_H.regular, false), large: makeStyles(SQUEEZE_H.large, true) }

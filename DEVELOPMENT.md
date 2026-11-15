@@ -18,7 +18,7 @@ npx jest <path>   # single file
 npx tsc --noEmit  # type check only
 ```
 
-631 tests cover the game engines, strategy lookup, roulette layout and wheel maths, screens, profile store and stats, and update utility.
+665 tests cover the game engines, strategy lookup, roulette layout and wheel maths, screens, profile store and stats, and update utility.
 
 ## Project Structure
 
@@ -45,9 +45,7 @@ features/
     engine.ts     # Pure TS: deck, scoring, rule checks, hand resolution
     strategy.ts   # Pure TS: basic strategy lookup table
     store.ts      # Session Zustand store
-    layout.ts     # Pure: pickLayout(sizeClass, orientation) → phone | largePortrait | largeLandscape
-    sizes.ts      # TableSize ('regular' | 'large'), LARGE_SCALE, sizedStyles()
-    components/   # UI components (Card, Hand, ActionButtons, BetControls, TableSetup)
+    components/   # UI components (Card — sizes regular/medium/large, also used by baccarat; Hand, ActionButtons, BetControls, TableSetup)
       table/      # Screen pieces shared by every layout (TableHeader, DealerArea, HandsArea, ResultBanner, Controls, BalanceFooter)
   craps/
     engine.ts     # Pure TS: dice, phase helpers, bet validity, odds helpers, payout calc, roll resolution
@@ -60,7 +58,8 @@ features/
     cardFaces.ts  # Static require map: card -> assets/card-faces/<V><S>.jpg (big squeeze card art)
     reveal.ts     # Pure TS: card reveal order (P1,B1,P2,B2,P3,B3) and per-hand face-up/shown counts
     store.ts      # Session Zustand store (shoe, hands, bets, betting→revealing→result phases, deferred settlement, assist toggle)
-    components/   # UI components (BetPanel, HandDisplay, ResultBanner, SqueezeCard)
+    components/   # UI components (BetPanel, HandDisplay, ResultBanner, SqueezeCard), each taking a table size
+      table/      # Screen pieces shared by every layout (TableHeader, HandsArea stack/sideBySide, RevealArea, Footer bar/panel, landscape.ts PANEL_WIDTH)
   roulette/
     engine.ts     # Pure TS: wheels, pocket order and colours, bet catalogue, validation ($10 minimum), settlement
     layout.ts     # Pure TS: board geometry for portrait/landscape, hit testing and drop resolution
@@ -84,6 +83,8 @@ lib/
   screenClass.ts  # Pure: size class (compact <360dp / regular / large >=600dp, by the shorter side) + orientation
   useScreenClass.ts # Hook wrapping screenClass with useWindowDimensions
   orientation.ts  # Orientation lock owner (useOrientationLock) + rotation-request store
+  tableLayout.ts  # Pure: pickLayout(sizeClass, orientation) → phone | largePortrait | largeLandscape (card games)
+  tableSize.ts    # TableSize ('regular' | 'large'), LARGE_SCALE, sizedStyles()
 components/
   Text.tsx        # Text/TextInput wrappers that cap font scaling at 1.3x; import these, not react-native's
   UpdateModal.tsx # In-app update prompt modal
@@ -116,10 +117,10 @@ __tests__/        # Mirrors the feature folder structure
 
 ### Per-game large-screen layouts
 
-Blackjack is the first game with its own large-screen layouts. Baccarat and craps should follow the same pattern:
-- `features/<game>/layout.ts`: `pickLayout(sizeClass, orientation)` returns `phone`, `largePortrait` or `largeLandscape`. Phones keep one layout whatever the orientation.
-- The screen is built from small pieces (`components/table/`). Each layout only arranges them: the phone order, the same order bigger with the controls in a centred `maxWidth: 520` column, or the felt plus a 300dp right-hand control panel.
-- Sizing: components take `size: 'regular' | 'large'` (default `regular`) and pick a whole style sheet from `sizedStyles(base, largeOverrides)`. Don't write `size === 'large' && styles.x`: that adds `false` to style arrays and changes the phone output.
+Blackjack and baccarat have their own large-screen layouts; craps should follow the same pattern:
+- `lib/tableLayout.ts`: `pickLayout(sizeClass, orientation)` returns `phone`, `largePortrait` or `largeLandscape`. Phones keep one layout whatever the orientation.
+- The screen is built from small pieces (`components/table/`). Each layout only arranges them: the phone order, the same order bigger with the controls in a centred `maxWidth: 520` column, or the felt plus a right-hand control panel (300dp blackjack, 340dp baccarat so its chip rows fit).
+- Sizing: components take `size: 'regular' | 'large'` (default `regular`) and pick a whole style sheet from `sizedStyles(base, largeOverrides)` (`lib/tableSize.ts`). Baccarat's landscape felt uses `Card size="medium"` (68×99) so a three-card hand fits each half of the Fold's inner screen; `__tests__/baccarat/screen.test.tsx` pins that arithmetic. Don't write `size === 'large' && styles.x`: that adds `false` to style arrays and changes the phone output.
 - Guard: `__tests__/<game>/screen.test.tsx` snapshots the phone screen in every phase. Never update those snapshots with `-u` as part of large-screen work, because a diff there means phones changed.
 
 ## Publishing a Release

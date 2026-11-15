@@ -1,4 +1,4 @@
-import { Orientation, SizeClass } from '../../lib/screenClass'
+import { Orientation, SizeClass } from './screenClass'
 
 export type TableLayout = 'phone' | 'largePortrait' | 'largeLandscape'
 

@@ -115,3 +115,53 @@ describe('BetPanel', () => {
     expect(style('bet-player').borderStyle ?? 'solid').toBe('solid')
   })
 })
+
+describe('large sizes', () => {
+  const { StyleSheet } = require('react-native')
+  const { BACCARAT_CHIPS } = require('../../lib/constants')
+  const flat = (s: unknown) => StyleSheet.flatten(s as any)
+  const panelProps = {
+    bets: {}, assistEnabled: false, mainChip: BACCARAT_CHIPS[0], sideChip: 5,
+    onMainChipChange: jest.fn(), onSideChipChange: jest.fn(), onAdd: jest.fn(), onClear: jest.fn(),
+  }
+
+  test('a large hand with medium cards: label 18, score 32, cards 68 wide', () => {
+    const { getByText, getByTestId, UNSAFE_root } = render(
+      <HandDisplay hand={[c('9'), c('K'), c('5')]} label="Player" size="large" cardSize="medium" />)
+    expect(flat(getByText('Player').props.style).fontSize).toBe(18)
+    expect(flat(getByTestId('hand-score').props.style).fontSize).toBe(32)
+    const cards = UNSAFE_root.findAll((n: any) => n.type === 'View' && flat(n.props.style)?.height === 99)
+    expect(cards).toHaveLength(3)
+    expect(cards.every((n: any) => flat(n.props.style).width === 68)).toBe(true)
+  })
+
+  test('cardSize defaults to size: a large hand has 78-wide cards', () => {
+    const { UNSAFE_root } = render(<HandDisplay hand={[c('9'), c('K')]} label="Player" size="large" />)
+    expect(UNSAFE_root.findAll((n: any) => n.type === 'View' && flat(n.props.style)?.width === 78)).toHaveLength(2)
+  })
+
+  test('a natural badge on a large hand is 15', () => {
+    const { getByText } = render(<HandDisplay hand={[c('9'), c('K')]} label="Player" size="large" />)
+    expect(flat(getByText('Natural').props.style).fontSize).toBe(15)
+  })
+
+  test('a large result banner: label 30, delta 26', () => {
+    const { getByText } = render(
+      <ResultBanner outcome="player" playerScore={9} bankerScore={3} netDelta={15} size="large" />)
+    expect(flat(getByText('Player Wins 9 to 3').props.style).fontSize).toBe(30)
+    expect(flat(getByText('+$15').props.style).fontSize).toBe(26)
+  })
+
+  test('a large bet panel: chips 58, bet buttons min 76 with 16/18 text, Clear 17', () => {
+    const { getByTestId, getByText } = render(<BetPanel {...panelProps} bets={{ player: 15 }} size="large" />)
+    expect(flat(getByTestId(`main-chip-${BACCARAT_CHIPS[0]}`).props.style)).toMatchObject({ width: 58, height: 58 })
+    const player = getByText('Player')
+    expect(flat(player.props.style).fontSize).toBe(16)
+    const { within } = require('@testing-library/react-native')
+    expect(flat(within(getByTestId('bet-player')).getByText('$15').props.style).fontSize).toBe(18)
+    let btn: any = player.parent
+    while (btn && !(btn.type === 'View' && flat(btn.props.style)?.minHeight)) btn = btn.parent
+    expect(flat(btn.props.style).minHeight).toBe(76)
+    expect(flat(getByText('Clear Bets').props.style).fontSize).toBe(17)
+  })
+})

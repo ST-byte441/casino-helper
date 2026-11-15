@@ -1,7 +1,7 @@
 import React from 'react'
 import { StyleSheet } from 'react-native'
 import { render } from '@testing-library/react-native'
-import { Card } from '../../features/blackjack/components/Card'
+import { Card, MEDIUM_CARD } from '../../features/blackjack/components/Card'
 import { Hand } from '../../features/blackjack/components/Hand'
 import { ActionButtons } from '../../features/blackjack/components/ActionButtons'
 import { BetControls } from '../../features/blackjack/components/BetControls'
@@ -29,6 +29,20 @@ const betProps = {
 test('a regular card keeps its phone size', () => {
   const tree = render(<Card card={ACE} />).toJSON() as any
   expect(flat(tree.props.style)).toMatchObject({ width: 52, height: 76 })
+})
+
+test('a medium card (landscape tables) is 68×99 with margin 5 and 1.3x text', () => {
+  const screen = render(<Card card={ACE} size="medium" />)
+  const box = flat(screen.toJSON()!.props.style)
+  expect(box).toMatchObject({ width: 68, height: 99, margin: 5, borderRadius: 8 })
+  expect(MEDIUM_CARD).toEqual({ width: 68, height: 99, margin: 5 })
+  expect(flat(screen.getByText('A').props.style).fontSize).toBe(23)
+  expect(flat(screen.getByText('♥').props.style).fontSize).toBe(18)
+})
+
+test('a face-down medium card has a 47 back glyph', () => {
+  const screen = render(<Card card={DOWN} size="medium" />)
+  expect(flat(screen.getByText('🂠').props.style).fontSize).toBe(47)
 })
 
 test('a large card is 1.5x with scaled text', () => {
