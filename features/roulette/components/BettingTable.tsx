@@ -1,23 +1,23 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { View, TouchableOpacity, StyleSheet, LayoutChangeEvent, StyleProp, ViewStyle } from 'react-native'
+import React, { useMemo } from 'react'
+import { View, TouchableOpacity, StyleSheet } from 'react-native'
 import { Text } from '../../../components/Text'
-import { Gesture, GestureDetector } from 'react-native-gesture-handler'
-import Animated, { SharedValue, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
-import { scheduleOnRN } from 'react-native-worklets'
+import { GestureDetector } from 'react-native-gesture-handler'
+import Animated from 'react-native-reanimated'
 import { RouletteWheel } from '../../../lib/types'
 import { ROULETTE_CHIPS } from '../../../lib/constants'
+import { CHIP_SIZE, ChipSource, Point } from '../../../components/chips/chips'
+import { ChipFace } from '../../../components/chips/ChipFace'
+import { ChipTray } from '../../../components/chips/ChipTray'
+import { DragHandle } from '../../../components/chips/DragHandle'
+import { useChipTable } from '../../../components/chips/useChipTable'
 import { totalStake } from '../engine'
-import { BoardLayout, BoardOrientation, DragSource, DropAction, buildLayout, hitTest, resolveDrop, tapTarget } from '../layout'
+import { BoardLayout, BoardOrientation, DragSource, DropAction, buildLayout, dropAction, hitTest, resolveDrop, tapTarget } from '../layout'
 import { useRouletteStore } from '../store'
-import { Board, CHIP_COLORS, STACK_SIZE, stackChip } from './Board'
+import { Board, STACK_SIZE } from './Board'
+
+export { CHIP_SIZE, DRAG_LIFT, FINGERTIP_REACH, TAP_FLASH_MS, TAP_MAX_MS, dragPoint, fingerInWindow } from '../../../components/chips/chips'
 
 type Props = { wheel: RouletteWheel; orientation: BoardOrientation; onSpin(): void }
-
-export const CHIP_SIZE = 44
-/** How long a tap-placed bet's spot stays lit. */
-const TAP_FLASH_MS = 400
-/** A deliberate press still counts as a tap; the 500ms default silently dropped slow taps. */
-const TAP_MAX_MS = 1500
 
 /** Applies a resolved drop to the roulette store. */
 export function applyDrop(action: DropAction): void {
@@ -28,39 +28,6 @@ export function applyDrop(action: DropAction): void {
     case 'remove': s.removeStack(action.betId); break
     case 'none': break
   }
-}
-
-type Point = { x: number; y: number }
-
-/**
- * The finger's window position, from the dragged handle's measureInWindow origin plus the handle-relative
- * touch point (`e.x`/`e.y`, valid even outside the handle). Deliberately not `absoluteX/Y`: those use a
- * different vertical frame from measureInWindow on Android edge-to-edge (status bar), which drew the chip
- * below the finger and dropped it there.
- */
-export function fingerInWindow(handleOrigin: Point, rel: Point): Point {
-  'worklet'
-  return { x: handleOrigin.x + rel.x, y: handleOrigin.y + rel.y }
-}
-
-/**
- * How far the visible fingertip edge reaches above the reported touch point (the touch point is the centre of
- * the finger's contact patch, well below the tip). Estimated from device testing on a Galaxy S23 Ultra: a chip
- * whose top was 33px above the touch point was fully covered; one whose bottom was 34px above it was fully visible.
- */
-export const FINGERTIP_REACH = 34
-/** Share of the dragged chip that shows above the fingertip edge; the rest tucks under the fingertip. */
-const LIFT_SHARE = 0.75
-/** How far the dragged chip's centre sits above the touch point. */
-export const DRAG_LIFT = FINGERTIP_REACH + CHIP_SIZE * LIFT_SHARE - CHIP_SIZE / 2
-
-/**
- * The point a drag acts on: the finger lifted by DRAG_LIFT. The ghost chip is drawn here, and the highlight and
- * the drop use it too, so a chip lands exactly where it is shown.
- */
-export function dragPoint(finger: Point): Point {
-  'worklet'
-  return { x: finger.x, y: finger.y - DRAG_LIFT }
 }
 
 /**
@@ -83,80 +50,6 @@ export function dragEndAction(args: {
   return resolveDrop(layout, wheel, source, absX - origin.x, absY - origin.y)
 }
 
-type HandleProps = {
-  source: DragSource
-  ghost: { x: SharedValue<number>; y: SharedValue<number>; origin: SharedValue<Point> }
-  onBegin(source: DragSource, absX: number, absY: number): void
-  onMove(absX: number, absY: number): void
-  onDrop(success: boolean, absX: number, absY: number): void
-  onFinish(): void
-  /** Tray chips: a tap (no movement) selects the chip for tap-to-place. Stacks have no tap; the board's tap covers them. */
-  onTap?: () => void
-  selected?: boolean
-  style?: StyleProp<ViewStyle>
-  testID?: string
-  children?: React.ReactNode
-}
-
-function DragHandle({ source, ghost, onBegin, onMove, onDrop, onFinish, onTap, selected, style, testID, children }: HandleProps) {
-  const selfRef = useRef<React.ComponentRef<typeof View>>(null)
-  // This handle's window origin, in the same measureInWindow frame as the board and root origins.
-  const self = useSharedValue<Point>({ x: 0, y: 0 })
-  const measureSelf = () => selfRef.current?.measureInWindow((x, y) => { self.value = { x, y } })
-
-  const pan = Gesture.Pan()
-    .minDistance(2)
-    .withTestId(`drag-${testID ?? source.type}`)
-    // Re-measure at touch-down: onLayout only fires when this handle moves within its parent, so a shift of
-    // the whole tray (a late bottom inset, the Galaxy Fold taskbar) would leave a stale origin and draw the
-    // chip under the finger. Pan activates after minDistance, so the fresh origin is in by then.
-    .onBegin(() => {
-      scheduleOnRN(measureSelf)
-    })
-    .onStart(e => {
-      const p = dragPoint(fingerInWindow(self.value, { x: e.x, y: e.y }))
-      ghost.x.value = p.x - ghost.origin.value.x
-      ghost.y.value = p.y - ghost.origin.value.y
-      scheduleOnRN(onBegin, source, p.x, p.y)
-    })
-    .onUpdate(e => {
-      const p = dragPoint(fingerInWindow(self.value, { x: e.x, y: e.y }))
-      ghost.x.value = p.x - ghost.origin.value.x
-      ghost.y.value = p.y - ghost.origin.value.y
-      scheduleOnRN(onMove, p.x, p.y)
-    })
-    // success is false when an active gesture was cancelled or failed; onDrop then does nothing.
-    .onEnd((e, success) => {
-      const p = dragPoint(fingerInWindow(self.value, { x: e.x, y: e.y }))
-      scheduleOnRN(onDrop, success, p.x, p.y)
-    })
-    // Runs on every outcome (end, cancel, fail), so the ghost and highlight are always cleared.
-    .onFinalize(() => {
-      scheduleOnRN(onFinish)
-    })
-  // Raced against the pan: a finger that moves 2px+ drags, one that lifts without moving taps.
-  const gesture = onTap
-    ? Gesture.Race(pan, Gesture.Tap().maxDuration(TAP_MAX_MS).withTestId(`tap-${testID ?? source.type}`).onEnd((_e, success) => {
-        if (success) scheduleOnRN(onTap)
-      }))
-    : pan
-  return (
-    <GestureDetector gesture={gesture}>
-      <View ref={selfRef} testID={testID} style={style} onLayout={measureSelf}
-        accessibilityState={onTap ? { selected: !!selected } : undefined}>{children}</View>
-    </GestureDetector>
-  )
-}
-
-function ChipFace({ amount, size }: { amount: number; size: number }) {
-  const c = CHIP_COLORS[stackChip(amount)]
-  return (
-    <View style={[styles.chip, { width: size, height: size, borderRadius: size / 2, backgroundColor: c.bg }]}>
-      <Text style={[styles.chipText, { color: c.fg }]} numberOfLines={1} adjustsFontSizeToFit>${amount}</Text>
-    </View>
-  )
-}
-
 export function BettingTable({ wheel, orientation, onSpin }: Props) {
   const bets = useRouletteStore(s => s.bets)
   const marker = useRouletteStore(s => s.marker)
@@ -171,88 +64,38 @@ export function BettingTable({ wheel, orientation, onSpin }: Props) {
   const error = spinError()
   const reasonText = reason()
 
-  const [size, setSize] = useState<{ w: number; h: number } | null>(null)
+  /** A ChipSource in the roulette layout's terms. */
+  const toDragSource = (c: ChipSource): DragSource =>
+    c.type === 'tray' ? c : { type: 'stack', betId: c.id }
+
+  // The hook only calls `hit` once the board is laid out, so `layout` is set whenever these run.
+  const table = useChipTable({
+    hit(x, y) {
+      if (!layout) return null
+      const inside = x >= 0 && x <= layout.width && y >= 0 && y <= layout.height
+      return inside ? hitTest(layout, wheel, x, y) : null
+    },
+    onDrop(source, target, offBoard) {
+      applyDrop(dropAction(toDragSource(source), target, offBoard))
+    },
+    onTapPoint(x, y) {
+      const s = useRouletteStore.getState()
+      if (!layout || s.selectedChip === null) return
+      const id = tapTarget(layout, wheel, s.bets, x, y, STACK_SIZE / 2)
+      if (!id || !s.placeChip(id, s.selectedChip)) return
+      table.flash(id)
+    },
+    stackAmount: id => useRouletteStore.getState().bets[id] ?? 0,
+  })
+  const { rootRef, boardRef, onRootLayout, onBoardLayout, boardSize: size, handlers, ghostStyle, dragAmount,
+    highlight, boardTap } = table
   const layout = useMemo<BoardLayout | null>(
     () => (size ? buildLayout(wheel, orientation, size.w, size.h) : null),
     [wheel, orientation, size],
   )
 
-  const rootRef = useRef<React.ComponentRef<typeof View>>(null)
-  const boardRef = useRef<React.ComponentRef<typeof View>>(null)
-  const boardOrigin = useRef<Point>({ x: 0, y: 0 })
-  const dragSource = useRef<DragSource | null>(null)
-  const [drag, setDrag] = useState<{ amount: number } | null>(null)
-  const [highlight, setHighlight] = useState<string | null>(null)
-  const ghost = { x: useSharedValue(0), y: useSharedValue(0), origin: useSharedValue<Point>({ x: 0, y: 0 }) }
-
-  const measure = useCallback(() => {
-    boardRef.current?.measureInWindow((x, y) => { boardOrigin.current = { x, y } })
-    rootRef.current?.measureInWindow((x, y) => { ghost.origin.value = { x, y } })
-  }, [ghost.origin])
-
-  function onBoardLayout(e: LayoutChangeEvent) {
-    const { width, height } = e.nativeEvent.layout
-    if (!size || size.w !== width || size.h !== height) setSize({ w: width, h: height })
-    measure()
-  }
-
-  const toLocal = (absX: number, absY: number) => ({
-    x: absX - boardOrigin.current.x,
-    y: absY - boardOrigin.current.y,
-  })
-
-  function onBegin(source: DragSource, _absX: number, _absY: number) {
-    measure()
-    dragSource.current = source
-    const amount = source.type === 'tray' ? source.amount : useRouletteStore.getState().bets[source.betId] ?? 0
-    setDrag({ amount })
-  }
-
-  function onMove(absX: number, absY: number) {
-    if (!layout) return
-    const { x, y } = toLocal(absX, absY)
-    const inside = x >= 0 && x <= layout.width && y >= 0 && y <= layout.height
-    const id = inside ? hitTest(layout, wheel, x, y) : null
-    setHighlight(prev => (prev === id ? prev : id))
-  }
-
-  function onDrop(success: boolean, absX: number, absY: number) {
-    applyDrop(dragEndAction({ success, layout, wheel, source: dragSource.current, origin: boardOrigin.current, absX, absY }))
-  }
-
-  const flashTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  useEffect(() => () => clearTimeout(flashTimer.current), [])
-
-  function onBoardTap(x: number, y: number) {
-    const s = useRouletteStore.getState()
-    if (!layout || s.selectedChip === null) return
-    const id = tapTarget(layout, wheel, s.bets, x, y, STACK_SIZE / 2)
-    if (!id || !s.placeChip(id, s.selectedChip)) return
-    setHighlight(id)
-    clearTimeout(flashTimer.current)
-    flashTimer.current = setTimeout(() => setHighlight(null), TAP_FLASH_MS)
-  }
-
-  // Board-local point: the tap's detector is on the measured board view itself.
-  const boardTap = Gesture.Tap().maxDuration(TAP_MAX_MS).withTestId('tap-board').onEnd((e, success) => {
-    if (success) scheduleOnRN(onBoardTap, e.x, e.y)
-  })
-
-  function onFinish() {
-    // A pan also finalizes after a plain tap; with no drag under way there's nothing to clear (and a tap's flash stays).
-    if (dragSource.current === null) return
-    dragSource.current = null
-    setDrag(null)
-    setHighlight(null)
-  }
-
-  const handlers = { ghost, onBegin, onMove, onDrop, onFinish }
-  const ghostStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: ghost.x.value - CHIP_SIZE / 2 }, { translateY: ghost.y.value - CHIP_SIZE / 2 }],
-  }))
-
   return (
-    <View ref={rootRef} style={styles.root} onLayout={measure}>
+    <View ref={rootRef} style={styles.root} onLayout={onRootLayout}>
       {/* The border sits on a wrapper so the measured view's frame is exactly the board drawing area. */}
       <View style={styles.boardFrame}>
         <GestureDetector gesture={boardTap}>
@@ -266,7 +109,7 @@ export function BettingTable({ wheel, orientation, onSpin }: Props) {
                 return (
                   <DragHandle
                     key={id}
-                    source={{ type: 'stack', betId: id }}
+                    source={{ type: 'stack', id }}
                     {...handlers}
                     style={[styles.stackHandle, { left: a.x - STACK_SIZE / 2, top: a.y - STACK_SIZE / 2 }]}
                   />
@@ -298,19 +141,11 @@ export function BettingTable({ wheel, orientation, onSpin }: Props) {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.tray}>
-        {ROULETTE_CHIPS.map(amount => (
-          <DragHandle key={amount} testID={`chip-${amount}`} source={{ type: 'tray', amount }} {...handlers}
-            onTap={() => selectChip(amount)} selected={selectedChip === amount}
-            style={[styles.trayChip, selectedChip === amount && styles.trayChipSelected]}>
-            <ChipFace amount={amount} size={CHIP_SIZE} />
-          </DragHandle>
-        ))}
-      </View>
+      <ChipTray chips={ROULETTE_CHIPS} selected={selectedChip} onSelect={selectChip} handlers={handlers} />
 
-      {drag && (
+      {dragAmount !== null && (
         <Animated.View pointerEvents="none" style={[styles.ghost, ghostStyle]}>
-          <ChipFace amount={drag.amount} size={CHIP_SIZE} />
+          <ChipFace amount={dragAmount} size={CHIP_SIZE} />
         </Animated.View>
       )}
     </View>
@@ -330,14 +165,6 @@ const styles = StyleSheet.create({
   spinBtn: { paddingVertical: 10, paddingHorizontal: 22, borderRadius: 8, backgroundColor: '#FFD700' },
   spinBtnDisabled: { opacity: 0.4 },
   spinText: { color: '#000', fontWeight: '800', fontSize: 16 },
-  tray: { flexDirection: 'row', justifyContent: 'space-evenly', paddingVertical: 10, borderTopWidth: 1,
-    borderColor: '#2a2a3e' },
-  // The ring's border is always there (transparent when unselected) so selecting never shifts the tray, and the
-  // negative margin cancels the ring's 5dp so the tray keeps its old height.
-  trayChip: { padding: 2, margin: -5, borderWidth: 3, borderColor: 'transparent', borderRadius: CHIP_SIZE / 2 + 5 },
-  trayChipSelected: { borderColor: '#FFD700' },
-  chip: { alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderStyle: 'dashed', borderColor: '#FFD700' },
-  chipText: { fontWeight: '800', fontSize: 13 },
   // Slightly see-through so the highlighted spot on a line or corner shows through the chip.
   ghost: { position: 'absolute', left: 0, top: 0, opacity: 0.8 },
 })
