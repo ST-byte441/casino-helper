@@ -148,6 +148,7 @@ export default function CrapsScreen() {
       </View>
 
       <DiceDisplay dice={dice} point={point} />
+      <Text testID="craps-rotate-hint" style={styles.rotateHint}>Rotate for the table ⟳</Text>
 
       <ScrollView style={styles.scroll}>
         {isValidBetForVariant('pass', variant) && (
@@ -361,6 +362,7 @@ const styles = StyleSheet.create({
   headerTitle: { color: '#FFD700', fontWeight: '700', fontSize: 15, flexShrink: 1, marginHorizontal: 8 },
   assist: { color: '#aaa', fontSize: 13 },
   assistOn: { color: '#FFD700' },
+  rotateHint: { color: '#888', fontSize: 12, textAlign: 'center', paddingBottom: 6 },
   scroll: { flex: 1 },
   footer: { borderTopWidth: 1, borderColor: '#2a2a3e', paddingBottom: 4 },
   balanceText: { fontSize: 13, textAlign: 'center', paddingTop: 8, fontWeight: '700' },
