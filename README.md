@@ -33,6 +33,8 @@ Get the latest APK from the [Releases page](../../releases/latest).
 - **Configurable odds** — 1x, 2x, 3-4-5x, 5x, or 10x free odds; optional 3:1 payout on Field 12
 - **Place bet working toggle** — flip any Place bet ON/OFF between come-out and point phases
 - **Strategy assist** — colour-coded bet quality: gold (Pass + max odds), white (acceptable), orange (poor), red (avoid)
+- **The table with chips** — turn your phone to landscape for a drawn casino felt (Pass Line, Field, Come, the number boxes, Big 6/8 and the centre props box). Drag a $1 / $5 / $25 / $100 chip onto an area, or tap a chip and then tap areas. Tap a stack for Take down, Odds and ON/OFF; Buy/Lay, Hi-Lo, World and hops are under **More bets**. A refused bet explains why on the reason line. In portrait you get the bet list, with a "Rotate for the table" hint; your bets, point and chip carry over when you turn the phone
+- **Large screens** — on a Galaxy Fold's inner screen or a tablet the table shows in both orientations with bigger chips (×1.25); in portrait the felt fills the width with the reason line and chip tray below it
 
 ### Baccarat
 
