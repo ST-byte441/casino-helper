@@ -3,7 +3,7 @@ import { Animated, StyleSheet } from 'react-native'
 import { Text } from '../../../components/Text'
 import { Card as CardType } from '../../../lib/types'
 import { RED_SUITS } from '../../../lib/constants'
-import { sizedStyles, TableSize } from '../sizes'
+import { sizedStyles, TableSize } from '../../../lib/tableSize'
 
 type Props = { card: CardType; size?: TableSize }
 

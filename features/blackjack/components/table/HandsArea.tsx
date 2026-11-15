@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { View, ScrollView, StyleSheet, type ScrollViewInstance } from 'react-native'
 import { Card as CardType } from '../../../../lib/types'
 import { Hand } from '../Hand'
-import { TableSize } from '../../sizes'
+import { TableSize } from '../../../../lib/tableSize'
 
 type Props = {
   size: TableSize

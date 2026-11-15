@@ -1,7 +1,7 @@
 import { View, TouchableOpacity, StyleSheet } from 'react-native'
 import { Text } from '../../../../components/Text'
 import { Outcome } from '../../../../lib/types'
-import { sizedStyles, TableSize } from '../../sizes'
+import { sizedStyles, TableSize } from '../../../../lib/tableSize'
 
 type Props = { size: TableSize; outcome: Outcome | null; delta: number; onNext: () => void }
 

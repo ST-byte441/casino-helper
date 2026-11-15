@@ -1,7 +1,7 @@
 import { View, StyleSheet } from 'react-native'
 import { Card as CardType } from '../../../../lib/types'
 import { Hand } from '../Hand'
-import { sizedStyles, TableSize } from '../../sizes'
+import { sizedStyles, TableSize } from '../../../../lib/tableSize'
 
 type Props = { size: TableSize; hand: CardType[]; hideScore: boolean }
 
