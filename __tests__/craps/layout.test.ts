@@ -185,6 +185,37 @@ describe.each(cases)('%s at %dx%d', (variant, width, height) => {
     }
   })
 
+  it('no two chip slots (with their odds) or the puck overlap in a box, each inside the box, off the number', () => {
+    const stackR = stackSizeFor(L) / 2
+    const oddsR = Math.round(stackSizeFor(L) * 0.7) / 2
+    const puckR = puckSizeFor(L) / 2
+    const hasDC = L.areas.some(a => a.key === 'dont-come')
+    const hasCome = L.areas.some(a => a.key === 'come')
+    const hasLay = variant !== 'easy'
+    // Readable amounts: never below 22dp.
+    expect(stackSizeFor(L)).toBeGreaterThanOrEqual(22)
+    for (const a of L.areas.filter(a => a.tone === 'box')) {
+      const n = Number(a.key.slice(4))
+      const s = L.boxSlots[n]
+      // Only the slots this game can fill (no Don't Come outside craps; no come or lay on the easy table).
+      const circles: [string, { x: number; y: number }, number][] = [['puck', s.puck, puckR], ['place', s.place, stackR]]
+      if (hasCome) circles.push(['come', s.come, stackR], ['comeOdds', s.comeOdds, oddsR])
+      if (hasLay) circles.push(['lay', s.lay, stackR])
+      if (hasDC) circles.push(['dontCome', s.dontCome, stackR], ['dontComeOdds', s.dontComeOdds, oddsR])
+      for (const [name, c, r] of circles) {
+        expect([a.key, name, c.x - r >= a.rect.x - 1e-6, c.x + r <= a.rect.x + a.rect.w + 1e-6,
+          c.y - r >= a.rect.y - 1e-6, c.y + r <= a.rect.y + a.rect.h + 1e-6]).toEqual([a.key, name, true, true, true, true])
+        expect([a.key, name, circleHits(c, r, L.boxLabels[n].box)]).toEqual([a.key, name, false])
+      }
+      for (let i = 0; i < circles.length; i++)
+        for (let j = i + 1; j < circles.length; j++) {
+          const [na, ca, ra] = circles[i], [nb, cb, rb] = circles[j]
+          // Touching is fine (1dp of slack); overlapping hides an amount.
+          expect([a.key, na, nb, Math.hypot(ca.x - cb.x, ca.y - cb.y) >= ra + rb - 1]).toEqual([a.key, na, nb, true])
+        }
+    }
+  })
+
   it('off puck is on the felt (in Don\'t Come when there is one)', () => {
     expect(inside(L.offPuck, { x: 0, y: 0, w: width, h: height })).toBe(true)
     const dc = L.areas.find(a => a.key === 'dont-come')
@@ -229,6 +260,24 @@ describe.each(cases)('%s at %dx%d', (variant, width, height) => {
     expect(hitCraps(L, -5, -5)).toBeNull()
     expect(hitCraps(L, width + 10, height / 2)).toBeNull()
     expect(hitCraps(L, width / 2, height + 10)).toBeNull()
+  })
+})
+
+describe('box stacks on the Fold cover felt', () => {
+  test.each(variants)('%s: Place 6, a travelled Come 6 with odds and a Lay 6 draw without overlapping', variant => {
+    const L = buildCrapsLayout(variant, 812, 284)
+    const bets: ActiveBet[] = [bet({ id: 'p', type: 'place', number: 6 })]
+    if (variant !== 'easy') bets.push(bet({ id: 'c', type: 'come', comePoint: 6, odds: 10 }), bet({ id: 'l', type: 'lay', number: 6, amount: 40 }))
+    if (variant === 'craps') bets.push(bet({ id: 'd', type: 'dont-come', comePoint: 6, odds: 10 }))
+    const drawn = feltStacks(L, bets, 6)
+    expect(drawn.length).toBe(bets.length + bets.filter(b => b.odds).length)
+    const puck = { key: 'puck', at: L.boxSlots[6].puck, size: puckSizeFor(L) }
+    const all = [...drawn, puck]
+    for (let i = 0; i < all.length; i++)
+      for (let j = i + 1; j < all.length; j++) {
+        const d = Math.hypot(all[i].at.x - all[j].at.x, all[i].at.y - all[j].at.y)
+        expect([all[i].key, all[j].key, d >= (all[i].size + all[j].size) / 2 - 1]).toEqual([all[i].key, all[j].key, true])
+      }
   })
 })
 

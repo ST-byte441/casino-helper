@@ -19,8 +19,10 @@ import type { TableSize } from '../../lib/tableSize'
  * resolves them; the line's own centre stays outside its odds strip. The line's label sits left of centre in its
  * own box (`labelRect`) and the odds strip to the right of it, so odds chips never cover the label.
  *
- * Number boxes: Don't Come and the ON puck in a top row, come / place / lay in a bottom row, and the number
- * (`labelRect`, `boxLabels`) where no slot reaches: between Don't Come and the puck, or between the rows.
+ * Number boxes (`packBox`): the puck top-right, Don't Come top-left, come / lay in the bottom corners, place at the
+ * bottom centre (or as near as it fits), each odds stack beside its flat bet: no two overlap, and the number
+ * (`labelRect`, `boxLabels`) takes the biggest font clear of them all. Stacks shrink (to 22dp at the least) when a
+ * box is too small for them at full size.
  *
  * More bets strip: a thin band at the bottom of the props box (`moreRect`, not an area: it takes no chip) where the
  * More bets panel's World, Hi-Lo and Hop stacks are drawn, so they never sit on a props cell.
@@ -48,6 +50,8 @@ export type BoxLabel = { text: string; fontSize: number; box: Rect }
 export type CrapsLayout = {
   width: number
   height: number
+  /** The chip stacks' drawn size (see `stackSizeFor`). */
+  stack: number
   areas: Area[]
   diceRect: Rect
   /** The More bets strip under the props cells (World, Hi-Lo, Hops). */
@@ -201,48 +205,21 @@ export function buildCrapsLayout(variant: CrapsVariant, width: number, height: n
   const boxW = (propsX - rowX) / nums.length
   const boxSlots: Record<number, BoxSlots> = {}
   const boxLabels: Record<number, BoxLabel> = {}
-  // Each box has a top row (the Don't Come slot at the left, the ON puck in the top-right corner) and a bottom row
-  // (come at the left, place in the middle, lay at the right). The number takes whichever gives it the bigger font:
-  // the top row between Don't Come and the puck (short boxes), or the band between the two rows (tall boxes).
-  // No slot circle enters that band, so no chip or puck ever covers the number.
-  const stack = stackSize(height, boxW)
-  const puckD = Math.round(stack * PUCK_SHARE)
-  const I = SLOT_INSET
-  const topRow = Math.max(stack, puckD) + 2 * I
-  const bottomRow = stack + 2 * I
-  const leftUsed = hasDC ? stack + 2 * I : I
-  const inTop = { dx: leftUsed, dy: I, w: boxW - leftUsed - puckD - 2 * I, h: topRow - 2 * I }
-  const inMiddle = { dx: I, dy: topRow, w: boxW - 2 * I, h: boxesH - topRow - bottomRow }
-  const fontIn = (b: { w: number; h: number }, chars: number) => (b.w > 0 && b.h > 0 ? fit(chars, b.w, b.h, 0.8) : 0)
-  // Judged on the widest number ("10"), so every box uses the same place.
-  const middle = fontIn(inMiddle, 2) >= fontIn(inTop, 2)
-  const band = middle ? inMiddle : inTop
-  // SIX / NINE when NINE (the longer word) still reads at MIN_WORD_FONT, else digits on every box.
-  const words = fontIn(band, 'NINE'.length) >= MIN_WORD_FONT
+  // Every box packs the same way (see `packBox`): the slots this game can fill, the puck and the number, none
+  // overlapping, with the chip stacks shrunk (never below MIN_STACK) when the box is too small at full size.
+  const pack = packBoxes(boxW, boxesH, stackSize(height, boxW), hasDC, hasCome, isValidBetForVariant('lay', variant))
+  const stack = pack.stack
   nums.forEach((n, i) => {
     const r = { x: rowX + i * boxW, y: 0, w: boxW, h: boxesH }
     add(`box:${n}`, BOX_LABEL[n] ?? String(n), r, 'box')
-    const lb = { x: r.x + band.dx, y: r.y + band.dy, w: band.w, h: band.h }
+    const lb = { x: r.x + pack.label.x, y: r.y + pack.label.y, w: pack.label.w, h: pack.label.h }
     labels[`box:${n}`] = lb
-    const text = (words && BOX_LABEL[n]) || String(n)
-    const fontSize = fit(text.length, lb.w, lb.h, 0.8)
-    boxLabels[n] = { text, fontSize, box: textBox(text, fontSize, lb) }
-    const top = r.y + stack / 2 + I
-    const bottom = r.y + r.h - stack / 2 - I
-    const come = { x: r.x + stack / 2 + I, y: bottom }
-    // Without a Don't Come bet there's nothing at the top-left; keep the unused slot off the number anyway.
-    const dontCome = hasDC || middle ? { x: r.x + stack / 2 + I, y: top } : come
+    const text = (pack.words && BOX_LABEL[n]) || String(n)
+    boxLabels[n] = { text, fontSize: pack.fontSize, box: textBox(text, pack.fontSize, lb) }
+    const at = (p: Pt): Pt => ({ x: r.x + p.x, y: r.y + p.y })
     boxSlots[n] = {
-      dontCome,
-      puck: { x: r.x + r.w - puckD / 2 - I, y: r.y + puckD / 2 + I },
-      come,
-      lay: { x: r.x + r.w - stack / 2 - I, y: bottom },
-      place: { x: r.x + r.w / 2, y: bottom },
-      // Odds sit offset on their flat bet: beside it in its row, or (Don't Come with the number in the top row)
-      // just under it, short of the number.
-      comeOdds: { x: come.x + 0.55 * stack, y: come.y },
-      dontComeOdds: middle ? { x: dontCome.x + 0.55 * stack, y: dontCome.y }
-        : { x: dontCome.x + 0.15 * stack, y: dontCome.y + 0.5 * stack },
+      dontCome: at(pack.slots.dontCome), puck: at(pack.slots.puck), come: at(pack.slots.come), lay: at(pack.slots.lay),
+      place: at(pack.slots.place), comeOdds: at(pack.slots.comeOdds), dontComeOdds: at(pack.slots.dontComeOdds),
     }
   })
 
@@ -298,7 +275,7 @@ export function buildCrapsLayout(variant: CrapsVariant, width: number, height: n
   const anchors = {} as Record<SpotKey, Pt>
   for (const a of areas) anchors[a.key] = a.tone === 'box' ? boxSlots[Number(a.key.slice(4))].place : centre(a.rect)
 
-  return { width, height, areas, diceRect, moreRect, boxSlots, labels, boxLabels, offPuck, anchors }
+  return { width, height, stack, areas, diceRect, moreRect, boxSlots, labels, boxLabels, offPuck, anchors }
 }
 
 /** The box an area's label is drawn in: its own label box where it has one, else the whole area. */
@@ -321,14 +298,143 @@ function stackSize(height: number, boxW: number): number {
   return Math.round(Math.max(20, Math.min(BASE_STACK * scale, boxW * 0.44)))
 }
 
-/** The drawn size of a bet's chip stack on this felt. */
+/** The drawn size of a bet's chip stack on this felt (shrunk in boxes too small for full-size stacks). */
 export function stackSizeFor(layout: CrapsLayout): number {
-  return stackSize(layout.height, Math.min(...layout.areas.filter(a => a.tone === 'box').map(a => a.rect.w)))
+  return layout.stack
 }
 
 /** The drawn size (diameter) of the ON / OFF puck. */
 export function puckSizeFor(layout: CrapsLayout): number {
   return Math.round(stackSizeFor(layout) * PUCK_SHARE)
+}
+
+// Shrunk stacks stay at least this big so their amounts still read.
+const MIN_STACK = 22
+// The odds stack is this share of the flat bet's (the felt draws it so).
+export const ODDS_SHARE = 0.7
+// The box number is wanted at least this big before the stacks stop shrinking.
+const MIN_NUMBER_FONT = 16
+
+type BoxPack = {
+  stack: number
+  slots: Omit<BoxSlots, never>
+  /** The number's box (box-relative): the widest label at `fontSize`. */
+  label: Rect
+  fontSize: number
+  words: boolean
+}
+
+/**
+ * One box's slots at stack size s, box-relative: each slot in turn takes the free point nearest its preferred
+ * spot (puck top-right, Don't Come top-left, come bottom-left, lay bottom-right, place bottom-centre, each odds
+ * stack beside its flat bet), clear of the slots before it; then the number takes the biggest font that fits
+ * clear of them all. Slots a game can't fill sit on the place slot (never drawn). Null if a slot finds no room.
+ */
+function packBox(w: number, h: number, s: number, hasDC: boolean, hasCome: boolean, hasLay: boolean): BoxPack | null {
+  const I = SLOT_INSET
+  const puckR = Math.round(s * PUCK_SHARE) / 2
+  const r = s / 2
+  const oddsR = Math.round(s * ODDS_SHARE) / 2
+  // Plain number arrays: this runs on every layout build, so the 1dp grid scans stay allocation-free.
+  const px: number[] = [], py: number[] = [], pr: number[] = []
+  const free = (x: number, y: number, rad: number) => {
+    for (let k = 0; k < px.length; k++) {
+      const dx = x - px[k], dy = y - py[k], rr = rad + pr[k]
+      if (dx * dx + dy * dy < rr * rr) return false
+    }
+    return true
+  }
+  // The free grid point nearest the wanted spot (a full 1dp scan; plain arithmetic, so it stays cheap).
+  const put = (want: Pt, rad: number): Pt | null => {
+    const inside = want.x >= rad + I - 1e-9 && want.x <= w - rad - I + 1e-9 && want.y >= rad + I - 1e-9 && want.y <= h - rad - I + 1e-9
+    if (inside && free(want.x, want.y, rad)) { px.push(want.x); py.push(want.y); pr.push(rad); return want }
+    let bx = 0, by = 0, bestD = Infinity
+    for (let x = rad + I; x <= w - rad - I + 1e-9; x += 1)
+      for (let y = rad + I; y <= h - rad - I + 1e-9; y += 1) {
+        const d = (x - want.x) * (x - want.x) + (y - want.y) * (y - want.y)
+        if (d < bestD && free(x, y, rad)) { bx = x; by = y; bestD = d }
+      }
+    if (bestD === Infinity) return null
+    px.push(bx); py.push(by); pr.push(rad)
+    return { x: bx, y: by }
+  }
+
+  // The extreme corners exactly, so the corner slots sit flush whatever the grid.
+  const corner = (rad: number, right: boolean, bottom: boolean): Pt =>
+    ({ x: right ? w - rad - I : rad + I, y: bottom ? h - rad - I : rad + I })
+  const puck = put(corner(puckR, true, false), puckR)
+  const dontCome = hasDC ? put(corner(r, false, false), r) : null
+  const come = hasCome ? put(corner(r, false, true), r) : null
+  const lay = hasLay ? put(corner(r, true, true), r) : null
+  const place = put({ x: w / 2, y: h - r - I }, r)
+  const comeOdds = come ? put({ x: come.x + 0.6 * s, y: come.y - 0.4 * s }, oddsR) : null
+  const dontComeOdds = dontCome ? put({ x: dontCome.x + 0.6 * s, y: dontCome.y + 0.4 * s }, oddsR) : null
+  if (!puck || !place || (hasDC && (!dontCome || !dontComeOdds)) || (hasCome && (!come || !comeOdds)) || (hasLay && !lay))
+    return null
+
+  // The number: the biggest font whose text box fits clear of every slot, nearest the box's centre.
+  const textAt = (chars: number, f: number): Rect | null => {
+    const tw = chars * 0.62 * f, th = 1.2 * f
+    const clear = (x: number, y: number) => {
+      for (let k = 0; k < px.length; k++) {
+        // Distance from the circle's centre to the nearest point of the text box (no Math.min/max: hot loop).
+        const cx = px[k], cy = py[k]
+        const dx = cx < x ? x - cx : cx > x + tw ? cx - x - tw : 0
+        const dy = cy < y ? y - cy : cy > y + th ? cy - y - th : 0
+        if (dx * dx + dy * dy < pr[k] * pr[k]) return false
+      }
+      return true
+    }
+    // Rings outward from the centred spot (square rings: close enough to nearest-first), first fit wins.
+    const x0 = Math.round((w - tw) / 2), y0 = Math.round((h - th) / 2)
+    const ok = (x: number, y: number) => x >= I && y >= I && x + tw <= w - I + 1e-9 && y + th <= h - I + 1e-9 && clear(x, y)
+    const rings = Math.ceil(Math.max(x0 - I, w - I - tw - x0, y0 - I, h - I - th - y0, 0))
+    for (let k = 0; k <= rings; k++) {
+      for (let d = -k; d <= k; d++) {
+        if (ok(x0 + d, y0 - k)) return { x: x0 + d, y: y0 - k, w: tw, h: th }
+        if (ok(x0 + d, y0 + k)) return { x: x0 + d, y: y0 + k, w: tw, h: th }
+        if (ok(x0 - k, y0 + d)) return { x: x0 - k, y: y0 + d, w: tw, h: th }
+        if (ok(x0 + k, y0 + d)) return { x: x0 + k, y: y0 + d, w: tw, h: th }
+      }
+    }
+    return null
+  }
+  // Binary search in half points: a text box that fits at f fits at any smaller f.
+  const fitText = (chars: number): { f: number; at: Rect } | null => {
+    let lo = 14, hi = Math.floor(2 * Math.min(40, (w - 2 * I) / (chars * 0.62), (h - 2 * I) / 1.2))
+    let found: { f: number; at: Rect } | null = null
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1
+      const at = textAt(chars, mid / 2)
+      if (at) { found = { f: mid / 2, at }; lo = mid + 1 } else hi = mid - 1
+    }
+    return found
+  }
+  // SIX / NINE when NINE (the longer word) reads at MIN_WORD_FONT; else digits ("10" the widest).
+  const word = fitText('NINE'.length)
+  const digits = word && word.f >= MIN_WORD_FONT ? null : fitText(2)
+  const label = word && word.f >= MIN_WORD_FONT ? word : digits
+  if (!label) return null
+  return {
+    stack: s,
+    slots: {
+      puck, place, dontCome: dontCome ?? place, come: come ?? place, lay: lay ?? place,
+      comeOdds: comeOdds ?? place, dontComeOdds: dontComeOdds ?? place,
+    },
+    label: label.at, fontSize: label.f, words: label === word,
+  }
+}
+
+/** The biggest stack (from `base` down to MIN_STACK) whose box packs with the number at MIN_NUMBER_FONT or more. */
+function packBoxes(w: number, h: number, base: number, hasDC: boolean, hasCome: boolean, hasLay: boolean): BoxPack {
+  let best: BoxPack | null = null
+  for (let s = base; s >= Math.min(base, MIN_STACK); s--) {
+    const p = packBox(w, h, s, hasDC, hasCome, hasLay)
+    if (p && p.fontSize >= MIN_NUMBER_FONT) return p
+    if (p && (!best || p.fontSize > best.fontSize)) best = p
+  }
+  if (best) return best
+  throw new Error(`craps layout: a ${w.toFixed(1)}x${h.toFixed(1)} box can't hold its stacks`)
 }
 
 /** The smallest area containing the point, or null off every area. */

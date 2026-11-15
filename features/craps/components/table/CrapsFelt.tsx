@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native'
 import { Text } from '../../../../components/Text'
 import { CHIP_COLORS, stackChip } from '../../../../components/chips/chips'
 import { ActiveBet, BetQuality } from '../../../../lib/types'
-import { Area, BoxLabel, CrapsLayout, Pt, Rect, SpotKey, fit, puckSizeFor, slotFor, stackSizeFor } from '../../layout'
+import { Area, BoxLabel, CrapsLayout, ODDS_SHARE, Pt, Rect, SpotKey, fit, puckSizeFor, slotFor, stackSizeFor } from '../../layout'
 
 /*
  * The drawn craps felt: areas, chip stacks and the puck. Purely presentational (no gestures, no store);
@@ -39,7 +39,6 @@ const FIELD_NUMBERS = '2 · 3 · 4 · 9 · 10 · 11 · 12'
 const LOW_NUMBERS = '2 · 3 · 4'
 const HIGH_NUMBERS = '10 · 11 · 12'
 
-const ODDS_SHARE = 0.7
 
 export { stackSizeFor }
 
