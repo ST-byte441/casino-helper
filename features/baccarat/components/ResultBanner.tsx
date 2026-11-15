@@ -2,12 +2,14 @@ import React from 'react'
 import { View, StyleSheet } from 'react-native'
 import { Text } from '../../../components/Text'
 import { BaccaratOutcome } from '../../../lib/types'
+import { sizedStyles, TableSize } from '../../../lib/tableSize'
 
 type Props = {
   outcome: BaccaratOutcome
   playerScore: number
   bankerScore: number
   netDelta: number
+  size?: TableSize
 }
 
 function headline(outcome: BaccaratOutcome, p: number, b: number): string {
@@ -16,7 +18,8 @@ function headline(outcome: BaccaratOutcome, p: number, b: number): string {
   return `Tie ${p} to ${b}`
 }
 
-export function ResultBanner({ outcome, playerScore, bankerScore, netDelta }: Props) {
+export function ResultBanner({ outcome, playerScore, bankerScore, netDelta, size = 'regular' }: Props) {
+  const styles = SHEETS[size]
   const sign = netDelta >= 0 ? '+' : '-'
   return (
     <View style={styles.card}>
@@ -28,7 +31,7 @@ export function ResultBanner({ outcome, playerScore, bankerScore, netDelta }: Pr
   )
 }
 
-const styles = StyleSheet.create({
+const base = StyleSheet.create({
   card: { backgroundColor: 'rgba(30,30,46,0.95)', borderRadius: 12, paddingVertical: 12,
     paddingHorizontal: 20, marginHorizontal: 24, marginVertical: 8, alignItems: 'center',
     borderWidth: 1, borderColor: '#FFD700' },
@@ -36,4 +39,10 @@ const styles = StyleSheet.create({
   delta: { fontSize: 18, fontWeight: '700' },
   positive: { color: '#2ecc71' },
   negative: { color: '#e74c3c' },
+})
+
+const SHEETS = sizedStyles(base, {
+  card: { borderRadius: 18, paddingVertical: 18, paddingHorizontal: 30, marginHorizontal: 24, marginVertical: 12 },
+  label: { fontSize: 30, marginBottom: 6, textAlign: 'center' },
+  delta: { fontSize: 26 },
 })

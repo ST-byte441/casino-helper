@@ -4,6 +4,7 @@ import { Text } from '../../../components/Text'
 import { BaccaratBet, BetQuality } from '../../../lib/types'
 import { BACCARAT_CHIPS, BACCARAT_SIDE_CHIPS } from '../../../lib/constants'
 import { getBaccaratBetQuality } from '../strategy'
+import { sizedStyles, TableSize } from '../../../lib/tableSize'
 
 type Props = {
   bets: Partial<Record<BaccaratBet, number>>
@@ -15,6 +16,7 @@ type Props = {
   onSideChipChange(chip: number): void
   onAdd(bet: BaccaratBet, amount: number): void
   onClear(): void
+  size?: TableSize
 }
 
 const MAIN_BETS: { bet: BaccaratBet; label: string }[] = [
@@ -44,9 +46,10 @@ type ChipRowProps = {
   accent: string
   disabled?: boolean
   onSelect(value: number): void
+  styles: typeof base
 }
 
-function ChipRow({ label, values, selected, idPrefix, accent, disabled, onSelect }: ChipRowProps) {
+function ChipRow({ label, values, selected, idPrefix, accent, disabled, onSelect, styles }: ChipRowProps) {
   return (
     <View style={styles.chipRow}>
       <Text style={[styles.chipRowLabel, { color: accent }]}>{label}</Text>
@@ -69,8 +72,9 @@ function ChipRow({ label, values, selected, idPrefix, accent, disabled, onSelect
 }
 
 export function BetPanel({
-  bets, assistEnabled, disabled, mainChip, sideChip, onMainChipChange, onSideChipChange, onAdd, onClear,
+  bets, assistEnabled, disabled, mainChip, sideChip, onMainChipChange, onSideChipChange, onAdd, onClear, size = 'regular',
 }: Props) {
+  const styles = SHEETS[size]
   function betButton({ bet, label }: { bet: BaccaratBet; label: string }, isSide: boolean) {
     const amount = bets[bet] ?? 0
     const quality = assistEnabled ? getBaccaratBetQuality(bet) : null
@@ -92,11 +96,11 @@ export function BetPanel({
   return (
     <View style={styles.container}>
       <ChipRow label="MAIN" values={BACCARAT_CHIPS} selected={mainChip} idPrefix="main-chip"
-        accent="#FFD700" disabled={disabled} onSelect={onMainChipChange} />
+        accent="#FFD700" disabled={disabled} onSelect={onMainChipChange} styles={styles} />
       <View style={styles.row}>{MAIN_BETS.map(b => betButton(b, false))}</View>
 
       <ChipRow label="SIDE" values={BACCARAT_SIDE_CHIPS} selected={sideChip} idPrefix="side-chip"
-        accent={SIDE_COLOR} disabled={disabled} onSelect={onSideChipChange} />
+        accent={SIDE_COLOR} disabled={disabled} onSelect={onSideChipChange} styles={styles} />
       <View style={styles.row}>{SIDE_BETS.map(b => betButton(b, true))}</View>
 
       {Object.values(bets).some(v => v && v > 0) && !disabled && (
@@ -108,7 +112,7 @@ export function BetPanel({
   )
 }
 
-const styles = StyleSheet.create({
+const base = StyleSheet.create({
   container: { paddingHorizontal: 12, paddingVertical: 8 },
   chipRow: { flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'center', marginVertical: 6 },
   chipRowLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1, width: 36 },
@@ -123,4 +127,19 @@ const styles = StyleSheet.create({
   amount: { color: '#FFD700', fontSize: 13, fontWeight: '700', marginTop: 4 },
   clearBtn: { marginTop: 8, alignItems: 'center', padding: 8 },
   clearText: { color: '#aaa', fontSize: 13 },
+})
+
+// Chips grow 1.25x (not 1.5x) so a row of label + 4 chips fits the 340dp landscape panel: 40 + 4*58 + 4*8 + 24 = 328.
+const SHEETS = sizedStyles(base, {
+  container: { paddingHorizontal: 12, paddingVertical: 12 },
+  chipRow: { gap: 8, marginVertical: 8 },
+  chipRowLabel: { fontSize: 12, width: 40 },
+  chip: { width: 58, height: 58, borderRadius: 29 },
+  chipText: { fontSize: 15 },
+  row: { gap: 8 },
+  btn: { borderRadius: 14, paddingVertical: 14, minHeight: 76 },
+  label: { fontSize: 16 },
+  amount: { fontSize: 18, marginTop: 6 },
+  clearBtn: { marginTop: 12, padding: 12 },
+  clearText: { fontSize: 17 },
 })
