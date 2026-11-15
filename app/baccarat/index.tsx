@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { View, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, ScrollView, StyleSheet } from 'react-native'
 import { Text } from '../../components/Text'
 import { LegacyScrollView } from 'react-native-gesture-handler'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -13,6 +13,7 @@ import { TableHeader } from '../../features/baccarat/components/table/TableHeade
 import { HandsArea } from '../../features/baccarat/components/table/HandsArea'
 import { RevealArea } from '../../features/baccarat/components/table/RevealArea'
 import { Footer } from '../../features/baccarat/components/table/Footer'
+import { PANEL_WIDTH } from '../../features/baccarat/components/table/landscape'
 import { pickLayout } from '../../lib/tableLayout'
 import { TableSize } from '../../lib/tableSize'
 import { useScreenClass } from '../../lib/useScreenClass'
@@ -164,6 +165,24 @@ export default function BaccaratScreen() {
     )
   }
 
+  if (layout === 'largeLandscape') {
+    // Felt on the left: Banker | Player side by side, the squeeze card or result below. The side panel
+    // on the right holds the bets, DEAL / Next Hand and the balance (pinned to its bottom; it scrolls
+    // when the font is scaled up).
+    return (
+      <SafeAreaView style={styles.root}>
+        {header}
+        <View style={styles.landscapeRow}>
+          {table('sideBySide')}
+          <ScrollView testID="bac-panel" style={styles.panel} contentContainerStyle={styles.panelContent}>
+            {isBetting && betPanel}
+            <Footer {...footerProps} variant="panel" />
+          </ScrollView>
+        </View>
+      </SafeAreaView>
+    )
+  }
+
   // Large portrait: the phone order, bigger, with the bets and footer in a centred column so
   // tablets don't stretch the chips and buttons.
   return (
@@ -186,4 +205,7 @@ const styles = StyleSheet.create({
   waitingLarge: { fontSize: 22 },
   betArea: { paddingVertical: 8, borderBottomWidth: 1, borderColor: '#2a2a3e' },
   controlsColumn: { width: '100%', maxWidth: 520, alignSelf: 'center' },
+  landscapeRow: { flex: 1, flexDirection: 'row' },
+  panel: { width: PANEL_WIDTH, flexGrow: 0, backgroundColor: '#0f0f1a', borderLeftWidth: 1, borderColor: '#2a2a3e' },
+  panelContent: { flexGrow: 1, paddingVertical: 8 },
 })

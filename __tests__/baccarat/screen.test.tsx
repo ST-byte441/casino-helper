@@ -222,3 +222,95 @@ describe('large portrait', () => {
     expect(flat(getByText('← Back').props.style).fontSize).toBe(20)
   })
 })
+
+describe('large landscape', () => {
+  const { within, fireEvent: fire } = require('@testing-library/react-native')
+  const { ScrollView } = require('react-native')
+  const { PANEL_WIDTH } = require('../../features/baccarat/components/table/landscape')
+  const { HAND_COLUMN_PADDING } = require('../../features/baccarat/components/table/HandsArea')
+  const { MEDIUM_CARD } = require('../../features/blackjack/components/Card')
+
+  beforeEach(() => { seedProfile(); setWindow(LARGE_LANDSCAPE) })
+
+  test('three medium cards fit a hand column on the Fold inner screen (884 wide)', () => {
+    const handPadding = 8 // HandDisplay's card row padding on each side
+    const need = 3 * (MEDIUM_CARD.width + 2 * MEDIUM_CARD.margin) + 2 * handPadding
+    const column = (LARGE_LANDSCAPE.width - PANEL_WIDTH - 1) / 2 - 2 * HAND_COLUMN_PADDING
+    expect(need).toBeLessThanOrEqual(column)
+  })
+
+  test('betting: the felt says Place your bets; the 340 panel holds the chips and DEAL', () => {
+    useBaccaratStore.getState().newHand()
+    const { getByTestId, getByText } = render(<BaccaratScreen />)
+    expect(within(getByTestId('baccarat-table')).getByText('Place your bets')).toBeTruthy()
+    const panel = getByTestId('bac-panel')
+    expect(flat(panel.props.style)).toMatchObject({ width: 340 })
+    expect(within(panel).getByTestId('main-chip-15')).toBeTruthy()
+    expect(within(panel).getByText('DEAL')).toBeTruthy()
+    expect(within(panel).getByText(/^Balance:/)).toBeTruthy()
+    void getByText
+  })
+
+  test('result: Banker | Player side by side with three 68-wide cards each; Next Hand in the panel', () => {
+    dealDeck(THIRD_CARDS, 'flip')
+    revealAll()
+    const { getByTestId, UNSAFE_root } = render(<BaccaratScreen />)
+    const row = getByTestId('bac-hands-row')
+    expect(flat(row.props.style).flexDirection).toBe('row')
+    expect(within(row).getByText('Banker')).toBeTruthy()
+    expect(within(row).getByText('Player')).toBeTruthy()
+    expect(cardsOfWidth(UNSAFE_root, 68)).toHaveLength(6)
+    expect(within(getByTestId('baccarat-table')).getByText('Tie 5 to 5')).toBeTruthy()
+    expect(within(getByTestId('bac-panel')).getByText('Next Hand')).toBeTruthy()
+  })
+
+  test('squeezing: the felt does not bounce, and the squeeze card is 280 tall inside it', () => {
+    dealDeck(THIRD_CARDS, 'squeeze')
+    const { getByTestId } = render(<BaccaratScreen />)
+    const felt = getByTestId('baccarat-table')
+    expect(felt.props.bounces).toBe(false)
+    expect(flat(sizedAncestor(within(felt).getByTestId('card-face')).props.style).height).toBe(280)
+  })
+
+  test('rotating mid-squeeze keeps the same card in the squeeze', () => {
+    dealDeck(THIRD_CARDS, 'squeeze')
+    const count = useBaccaratStore.getState().revealedCount
+    setWindow(LARGE_PORTRAIT)
+    const screen = render(<BaccaratScreen />)
+    setWindow(LARGE_LANDSCAPE)
+    screen.rerender(<BaccaratScreen />)
+    expect(useBaccaratStore.getState().revealedCount).toBe(count)
+    expect(screen.getByText('Drag up to squeeze')).toBeTruthy()
+    expect(screen.getByTestId('bac-hands-row')).toBeTruthy()
+  })
+
+  test('unfolding the Fold mid-squeeze (phone to large landscape) keeps the same card', () => {
+    dealDeck(THIRD_CARDS, 'squeeze')
+    const count = useBaccaratStore.getState().revealedCount
+    setWindow(PHONE)
+    const screen = render(<BaccaratScreen />)
+    setWindow(LARGE_LANDSCAPE)
+    screen.rerender(<BaccaratScreen />)
+    expect(useBaccaratStore.getState().revealedCount).toBe(count)
+    expect(screen.getByText('Drag up to squeeze')).toBeTruthy()
+  })
+
+  test('below the minimum, the panel hints and DEAL is disabled; a bet enables it', () => {
+    useBaccaratStore.getState().newHand()
+    const { getByTestId, queryByText } = render(<BaccaratScreen />)
+    const panel = getByTestId('bac-panel')
+    expect(within(panel).getByText('Min $15 on Player or Banker')).toBeTruthy()
+    const deal = () => within(getByTestId('bac-panel')).getByText('DEAL')
+    let btn: any = deal().parent
+    while (btn && btn.props.accessibilityState === undefined) btn = btn.parent
+    expect(btn.props.accessibilityState.disabled).toBe(true)
+    fire.press(within(getByTestId('bac-panel')).getByText('Player'))
+    expect(queryByText('Min $15 on Player or Banker')).toBeNull()
+  })
+
+  test('the panel scrolls, so DEAL stays reachable at large font sizes', () => {
+    useBaccaratStore.getState().newHand()
+    const { UNSAFE_root } = render(<BaccaratScreen />)
+    expect(UNSAFE_root.findAll((n: any) => n.type === ScrollView && n.props.testID === 'bac-panel')).toHaveLength(1)
+  })
+})
