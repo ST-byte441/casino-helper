@@ -23,6 +23,8 @@ export function isValidBetForVariant(betType: BetType, variant: CrapsVariant): b
 
 export function isValidBetForPhase(betType: BetType, phase: CrapsPhase): boolean {
   if (betType === 'pass' || betType === 'dont-pass') return phase === 'come-out'
+  // Come and Don't Come are made only after a point is set (rules doc: Come / Don't Come).
+  if (betType === 'come' || betType === 'dont-come') return phase === 'point'
   return true
 }
 
@@ -37,9 +39,11 @@ export function suggestedBetIncrement(betType: BetType, number?: number): number
     if (number === 6 || number === 8) return 6
     if (number === 5 || number === 9) return 5
     if (number === 4 || number === 10) return 5
-    if (number === 2 || number === 12) return 2
-    if (number === 3 || number === 11) return 4
+    // Crapless 2/12 pay 25 to 5 and 3/11 pay 13 to 5 (NGCB): $5 units pay exactly.
+    if (number === 2 || number === 12) return 5
+    if (number === 3 || number === 11) return 5
   }
+  if (betType === 'buy' || betType === 'lay') return minBuyLayAmount(betType, number ?? 4)
   if (betType === 'horn') return 4
   if (betType === 'world') return 5
   return 1
@@ -50,10 +54,70 @@ export function getMaxOdds(passAmount: number, point: number, oddsMultiple: Odds
   if (oddsMultiple === '2x') return passAmount * 2
   if (oddsMultiple === '5x') return passAmount * 5
   if (oddsMultiple === '10x') return passAmount * 10
-  // 3-4-5x
+  // 3-4-5x: the max odds bet always pays 6x the line bet.
   if (point === 4 || point === 10) return passAmount * 3
   if (point === 5 || point === 9) return passAmount * 4
+  // Crapless points (app; the sources don't cover them): keep the 6x max payout, so 1x at 6 to 1, 2x at 3 to 1.
+  if (point === 2 || point === 12) return passAmount
+  if (point === 3 || point === 11) return passAmount * 2
   return passAmount * 5 // 6 or 8
+}
+
+/** How many times the stake a winning lay pays, per number (reverse true odds). */
+function layWinRatio(n: number): number {
+  if (n === 4 || n === 10) return 1 / 2
+  if (n === 5 || n === 9) return 2 / 3
+  if (n === 6 || n === 8) return 5 / 6
+  if (n === 3 || n === 11) return 1 / 3
+  return 1 / 6 // 2 or 12
+}
+
+/**
+ * Max lay odds behind Don't Pass / Don't Come. The cap is on the win: the lay may win as much as the Pass
+ * odds cap would bet, so under 3-4-5x a don't player lays 6x the flat bet on every point.
+ */
+export function getMaxLayOdds(flatAmount: number, point: number, oddsMultiple: OddsMultiple): number {
+  return Math.floor(getMaxOdds(flatAmount, point, oddsMultiple) / layWinRatio(point) + 1e-9)
+}
+
+/**
+ * Smallest Buy or Lay the table takes, so the $1 minimum vig never eats the whole win (rules doc: some casinos
+ * require a $20 buy, or a lay that wins at least $20). Buy: $20. Lay: enough to win $20 at reverse true odds.
+ */
+export function minBuyLayAmount(betType: 'buy' | 'lay', number: number): number {
+  if (betType === 'buy') return 20
+  return Math.ceil(20 / layWinRatio(number) - 1e-9)
+}
+
+/** True when a place bet pays whole dollars at its payout (rules doc: Place Bets; crapless per the NGCB). */
+export function isCleanPlace(amount: number, n: number): boolean {
+  if (amount === 0) return false
+  if (n === 6 || n === 8) return amount % 6 === 0 // 7 to 6
+  if (n === 3 || n === 11) return amount % 5 === 0 // 13 to 5
+  if (n === 2 || n === 12) return true // 25 to 5 = 5 to 1
+  return amount % 5 === 0 // 4/5/9/10: 9 to 5, 7 to 5
+}
+
+/** True when taken odds pay exactly: 6/8 (6 to 5) in 5s, 5/9 (3 to 2) in 2s; 4/10 and crapless points always. */
+export function isCleanOdds(oddsAmt: number, point: number): boolean {
+  if (oddsAmt === 0) return false
+  if (point === 6 || point === 8) return oddsAmt % 5 === 0
+  if (point === 5 || point === 9) return oddsAmt % 2 === 0
+  return true
+}
+
+/** True when laid odds pay exactly: 4/10 (1 to 2) in 2s, 5/9 (2 to 3) in 3s, 6/8 (5 to 6) in 6s. */
+export function isCleanLayOdds(oddsAmt: number, point: number): boolean {
+  if (oddsAmt === 0) return false
+  if (point === 4 || point === 10) return oddsAmt % 2 === 0
+  if (point === 5 || point === 9) return oddsAmt % 3 === 0
+  if (point === 6 || point === 8) return oddsAmt % 6 === 0
+  return true
+}
+
+/** The 5% commission on a Buy or Lay, on the given base, rounded down to the dollar with a $1 minimum. */
+function vig(base: number): number {
+  return Math.max(1, Math.floor(base * 0.05))
 }
 
 export function calculatePayout(
@@ -90,10 +154,13 @@ export function calculatePayout(
       return sum === 12 ? amount * 30 : -amount
     case 'hi-lo':
       return (sum === 2 || sum === 12) ? amount * 15 : -amount
-    case 'ce':
-      if ([2, 3, 12].includes(sum)) return amount * 7
-      if (sum === 11) return amount * 3
+    case 'ce': {
+      // Half on Any Craps (7 to 1), half on 11 (15 to 1); the other half loses.
+      const half = amount / 2
+      if ([2, 3, 12].includes(sum)) return half * 7 - half // 3 to 1 on the whole bet
+      if (sum === 11) return half * 15 - half // 7 to 1
       return -amount
+    }
     case 'hop-hard': {
       const [h1, h2] = bet.hopDice!
       return (dice[0] === h1 && dice[1] === h2) ? amount * 30 : -amount
@@ -124,13 +191,11 @@ export function calculatePayout(
 function oddsPayout(bet: ActiveBet, point: number): number {
   const odds = bet.odds ?? 0
   if (odds === 0) return 0
-  if (bet.type === 'dont-pass' || bet.type === 'dont-come') {
-    if (point === 6 || point === 8) return Math.floor(odds * 5 / 6)
-    if (point === 5 || point === 9) return Math.floor(odds * 2 / 3)
-    return Math.floor(odds / 2)
-  }
+  if (bet.type === 'dont-pass' || bet.type === 'dont-come') return Math.floor(odds * layWinRatio(point) + 1e-9)
   if (point === 6 || point === 8) return Math.floor(odds * 6 / 5)
   if (point === 5 || point === 9) return Math.floor(odds * 3 / 2)
+  if (point === 3 || point === 11) return odds * 3 // crapless (NGCB)
+  if (point === 2 || point === 12) return odds * 6 // crapless (NGCB)
   return odds * 2
 }
 
@@ -182,8 +247,8 @@ function resolvePlaceBet(bet: ActiveBet, dice: [number, number]): BetOutcome {
     if (n === 6 || n === 8) win = Math.floor(amt * 7 / 6)
     else if (n === 5 || n === 9) win = Math.floor(amt * 7 / 5)
     else if (n === 4 || n === 10) win = Math.floor(amt * 9 / 5)
-    else if (n === 2 || n === 12) win = Math.floor(amt * 11 / 2)
-    else win = Math.floor(amt * 11 / 4) // 3 or 11
+    else if (n === 2 || n === 12) win = amt * 5 // crapless: 25 to 5 (NGCB)
+    else win = Math.floor(amt * 13 / 5) // crapless 3 or 11: 13 to 5 (NGCB)
   } else if (bet.type === 'buy') {
     let gross: number
     if (n === 4 || n === 10) gross = amt * 2
@@ -191,7 +256,7 @@ function resolvePlaceBet(bet: ActiveBet, dice: [number, number]): BetOutcome {
     else if (n === 6 || n === 8) gross = Math.floor(amt * 6 / 5)
     else if (n === 2 || n === 12) gross = amt * 6
     else gross = amt * 3 // 3 or 11
-    win = gross - Math.ceil(amt * 0.05)
+    win = gross - vig(amt) // 5% of the bet, taken on a win
   } else { // big6 / big8
     win = amt
   }
@@ -203,12 +268,8 @@ function resolveLayBet(bet: ActiveBet, dice: [number, number]): BetOutcome {
   const sum = sumDice(dice)
   const n = bet.number!
   if (sum === 7) {
-    const amt = bet.amount
-    let gross: number
-    if (n === 4 || n === 10) gross = Math.floor(amt / 2)
-    else if (n === 5 || n === 9) gross = Math.floor(amt * 2 / 3)
-    else gross = Math.floor(amt * 5 / 6)
-    const win = gross - Math.ceil(amt * 0.05)
+    const gross = Math.floor(bet.amount * layWinRatio(n) + 1e-9)
+    const win = gross - vig(gross) // 5% of the win, not the bet
     return { betId: bet.id, result: 'win', delta: win }
   }
   if (sum === n) return { betId: bet.id, result: 'lose', delta: -bet.amount }
@@ -230,7 +291,7 @@ function resolveHardway(bet: ActiveBet, dice: [number, number]): BetOutcome {
   return { betId: bet.id, result: 'continue', delta: 0 }
 }
 
-function resolveComeBet(bet: ActiveBet, dice: [number, number], rules: CrapsTableRules): BetOutcome & { newComePoint?: number } {
+function resolveComeBet(bet: ActiveBet, dice: [number, number], phase: CrapsPhase, rules: CrapsTableRules): BetOutcome & { newComePoint?: number } {
   const sum = sumDice(dice)
   const isCome = bet.type === 'come'
 
@@ -247,13 +308,18 @@ function resolveComeBet(bet: ActiveBet, dice: [number, number], rules: CrapsTabl
     return { betId: bet.id, result: 'continue', delta: 0, newComePoint: sum }
   }
 
+  // Come odds are off on the come-out: a decision then returns them (no win, no loss). Don't Come lay odds stay working.
+  const oddsOff = isCome && phase === 'come-out'
   if (sum === bet.comePoint) {
-    const op = oddsPayout({ ...bet, type: isCome ? 'pass' : 'dont-pass' }, bet.comePoint)
+    if (oddsOff) return { betId: bet.id, result: 'win', delta: bet.amount }
+    const op = oddsPayout(bet, bet.comePoint)
     return { betId: bet.id, result: isCome ? 'win' : 'lose', delta: isCome ? bet.amount + op : -(bet.amount + (bet.odds ?? 0)) }
   }
   if (sum === 7) {
+    if (oddsOff) return { betId: bet.id, result: 'lose', delta: -bet.amount }
     const odds = bet.odds ?? 0
-    const op = oddsPayout({ ...bet, type: isCome ? 'dont-pass' : 'pass' }, bet.comePoint)
+    // The winner's own odds: true odds for Come, lay odds for Don't Come.
+    const op = oddsPayout(bet, bet.comePoint)
     return { betId: bet.id, result: isCome ? 'lose' : 'win', delta: isCome ? -(bet.amount + odds) : bet.amount + op }
   }
   return { betId: bet.id, result: 'continue', delta: 0 }
@@ -281,7 +347,7 @@ export function resolveRoll(
     if (bet.type === 'pass' || bet.type === 'dont-pass') {
       outcomes.push(resolvePassBet(bet, dice, phase, point, rules))
     } else if (bet.type === 'come' || bet.type === 'dont-come') {
-      outcomes.push(resolveComeBet(bet, dice, rules))
+      outcomes.push(resolveComeBet(bet, dice, phase, rules))
     } else if (bet.type === 'place' || bet.type === 'buy' || bet.type === 'big6' || bet.type === 'big8') {
       outcomes.push(resolvePlaceBet(bet, dice))
     } else if (bet.type === 'lay') {

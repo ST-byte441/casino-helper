@@ -8,7 +8,10 @@ import { useProfileStore } from '../../features/profile/store'
 import { formatMoney } from '../../features/profile/format'
 import { usePreferencesStore } from '../../features/preferences/store'
 import { getBetQuality } from '../../features/craps/strategy'
-import { isValidBetForVariant, isValidBetForPhase, suggestedBetIncrement, getMaxOdds } from '../../features/craps/engine'
+import {
+  isValidBetForVariant, isValidBetForPhase, suggestedBetIncrement, getMaxOdds, getMaxLayOdds, isCleanOdds, isCleanLayOdds,
+  isCleanPlace,
+} from '../../features/craps/engine'
 import { TableSetup } from '../../features/craps/components/TableSetup'
 import { DiceDisplay } from '../../features/craps/components/DiceDisplay'
 import { BetCategoryPanel } from '../../features/craps/components/BetCategoryPanel'
@@ -76,7 +79,10 @@ export default function CrapsScreen() {
     if (!assistEnabled) return null
     const bet = bets.find(b => b.type === type && (number == null || b.number === number))
     const hasOdds = (bet?.odds ?? 0) > 0
-    const maxOdds = passBet && point ? getMaxOdds(passBet.amount, point, tableRules.oddsMultiple) : 0
+    // Each line bet's odds are measured against its own cap: take odds for Pass, lay odds for Don't Pass.
+    const maxOdds = !point || !bet ? 0
+      : type === 'dont-pass' ? getMaxLayOdds(bet.amount, point, tableRules.oddsMultiple)
+      : getMaxOdds(bet.amount, point, tableRules.oddsMultiple)
     const oddsAtMax = hasOdds && (bet?.odds ?? 0) >= maxOdds
     return getBetQuality(type, hasOdds, oddsAtMax, number)
   }
@@ -118,25 +124,6 @@ export default function CrapsScreen() {
     if (!bet) return undefined
     const outcome = lastRoll.outcomes.find(o => o.betId === bet.id)
     return outcome?.result === 'win' ? outcome.delta : undefined
-  }
-
-  // True when the place bet amount produces a whole-dollar payout for that number's true pay rate
-  function isCleanPlace(amount: number, n: number): boolean {
-    if (amount === 0) return false
-    if (n === 6 || n === 8) return amount % 6 === 0   // 7:6
-    if (n === 5 || n === 9) return amount % 5 === 0   // 7:5
-    if (n === 4 || n === 10) return amount % 5 === 0  // 9:5
-    if (n === 2 || n === 12) return amount % 2 === 0  // 11:2 (crapless)
-    if (n === 3 || n === 11) return amount % 4 === 0  // 11:4 (crapless)
-    return true
-  }
-
-  // True when the odds amount produces a whole-dollar payout at the point's true-odds rate
-  function isCleanOdds(oddsAmt: number, pt: number): boolean {
-    if (oddsAmt === 0) return false
-    if (pt === 6 || pt === 8) return oddsAmt % 5 === 0  // 6:5 — needs multiples of 5
-    if (pt === 5 || pt === 9) return oddsAmt % 2 === 0  // 3:2 — needs multiples of 2
-    return true                                          // 4/10: 2:1 — always clean
   }
 
   function removeBet(type: BetType, num?: number) {
@@ -209,10 +196,10 @@ export default function CrapsScreen() {
             {dontPassBet && point && (
               <OddsRow
                 odds={dontPassBet.odds ?? 0}
-                maxOdds={getMaxOdds(dontPassBet.amount, point, tableRules.oddsMultiple)}
+                maxOdds={getMaxLayOdds(dontPassBet.amount, point, tableRules.oddsMultiple)}
                 increments={[1, 5, 10]}
                 canAdd={store.canAfford}
-                quality={assistEnabled && isCleanOdds(dontPassBet.odds ?? 0, point) ? 'optimal' : null}
+                quality={assistEnabled && isCleanLayOdds(dontPassBet.odds ?? 0, point) ? 'optimal' : null}
                 onAdd={amt => store.addOdds(dontPassBet.id, amt)}
                 onRemove={amt => store.addOdds(dontPassBet.id, -Math.min(amt, dontPassBet.odds ?? 0))}
               />
@@ -226,6 +213,7 @@ export default function CrapsScreen() {
               label="Come"
               amount={betAmount('come')}
               increment={1}
+              disabled={!isValidBetForPhase('come', phase)}
               quality={getQuality('come')}
               onAdd={() => addBet('come')}
               onRemove={() => removeBet('come')}
