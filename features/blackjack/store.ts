@@ -58,6 +58,10 @@ type BlackjackActions = {
   canAffordExtra: () => boolean
   /** Double is allowed on the active hand now: two cards, DAS after a split, and affordable. */
   canDoubleNow: () => boolean
+  /** Hit is allowed on the active hand now (not on a split ace). */
+  canHitNow: () => boolean
+  /** Split is allowed on the active hand now: a pair, affordable, and a split ace only with resplitAces. */
+  canSplitNow: () => boolean
 }
 
 const initialState: BlackjackState = {
@@ -84,6 +88,11 @@ function affordsExtra(handBets: number[], index: number): boolean {
   return total + (handBets[index] ?? 0) <= profile.balance
 }
 
+/** A split ace: after a split, a hand whose first card (the pair card) is an ace. It gets one card only. */
+function isSplitAceHand(playerHands: Card[][], index: number): boolean {
+  return playerHands.length > 1 && playerHands[index]?.[0]?.value === 'A'
+}
+
 /**
  * What the player may do with hand `index` right now: double on two cards (after a split only with DAS) when
  * affordable, split when affordable, surrender only on the original hand. The Double button, doubleDown and Assist
@@ -92,9 +101,12 @@ function affordsExtra(handBets: number[], index: number): boolean {
 function allowedMoves(playerHands: Card[][], index: number, handBets: number[], rules: TableRules): AllowedMoves {
   const hand = playerHands[index] ?? []
   const afford = affordsExtra(handBets, index)
+  // Split aces get one card each: no hit or double, and a new ace splits again only with resplitAces.
+  const splitAce = isSplitAceHand(playerHands, index)
   return {
-    double: canDouble(hand, playerHands.length > 1, rules) && afford,
-    split: afford,
+    hit: !splitAce,
+    double: !splitAce && canDouble(hand, playerHands.length > 1, rules) && afford,
+    split: afford && (!splitAce || rules.resplitAces),
     surrender: playerHands.length === 1,
   }
 }
@@ -216,8 +228,19 @@ export const useBlackjackStore = create<Store>((set, get) => ({
   },
 
   canDoubleNow: () => {
-    const { playerHands, activeHandIndex, handBets, tableRules } = get()
-    return allowedMoves(playerHands, activeHandIndex, handBets, tableRules).double
+    const { phase, playerHands, activeHandIndex, handBets, tableRules } = get()
+    return phase === 'playing' && allowedMoves(playerHands, activeHandIndex, handBets, tableRules).double
+  },
+
+  canHitNow: () => {
+    const { phase, playerHands, activeHandIndex, handBets, tableRules } = get()
+    return phase === 'playing' && allowedMoves(playerHands, activeHandIndex, handBets, tableRules).hit !== false
+  },
+
+  canSplitNow: () => {
+    const { phase, playerHands, activeHandIndex, handBets, tableRules } = get()
+    return phase === 'playing' && canSplit(playerHands[activeHandIndex] ?? [])
+      && allowedMoves(playerHands, activeHandIndex, handBets, tableRules).split
   },
 
   deal: () => {
@@ -263,6 +286,7 @@ export const useBlackjackStore = create<Store>((set, get) => ({
   },
 
   hit: () => {
+    if (!get().canHitNow()) return
     let { deck, playerHands, activeHandIndex, tableRules, assistEnabled, dealerHand } = get()
     let card: Card
     ;[card, deck] = dealCard(deck)
@@ -285,6 +309,8 @@ export const useBlackjackStore = create<Store>((set, get) => ({
       const { assistEnabled, dealerHand, tableRules } = get()
       const suggestedAction = computeSuggestion(playerHands, next, dealerHand, assistEnabled, tableRules, get().handBets)
       set({ activeHandIndex: next, suggestedAction })
+      // A split ace that can't be split again has its one card: it stands at once.
+      if (isSplitAceHand(playerHands, next) && !get().canSplitNow()) get().stand()
       return
     }
     // All hands done — dealer plays out, cards revealed one at a time
@@ -306,8 +332,7 @@ export const useBlackjackStore = create<Store>((set, get) => ({
     const { phase, playerHands, activeHandIndex } = get()
     if (phase !== 'playing') return
     const hand = playerHands[activeHandIndex]
-    if (!canSplit(hand)) return
-    if (!get().canAffordExtra()) return
+    if (!get().canSplitNow()) return
     let { deck, handBets } = get()
     let c1: Card, c2: Card
     ;[c1, deck] = dealCard(deck)
@@ -338,6 +363,8 @@ export const useBlackjackStore = create<Store>((set, get) => ({
         i === activeHandIndex ? [hand[0], c1] : i === activeHandIndex + 1 ? [hand[1], c2] : h)
       const suggestedAction = computeSuggestion(newHands, activeHandIndex, dealerHand, assistEnabled, tableRules, get().handBets)
       set({ playerHands: newHands, suggestedAction, phase: 'playing' })
+      // Split aces get one card each: unless it can split again, the hand stands (and so on down the hands).
+      if (isSplitAceHand(newHands, activeHandIndex) && !get().canSplitNow()) get().stand()
     }
     scheduleStep(finishSplit, D * 2)
     pendingFinish = finishSplit

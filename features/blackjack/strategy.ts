@@ -69,7 +69,7 @@ function getHardAction(score: number, dk: DealerKey): Action {
 }
 
 /** Which moves the player can make right now (rules, cards, split hands and balance all considered). */
-export type AllowedMoves = { double: boolean; split: boolean; surrender: boolean }
+export type AllowedMoves = { double: boolean; split: boolean; surrender: boolean; /** default true */ hit?: boolean }
 const ALL_MOVES: AllowedMoves = { double: true, split: true, surrender: true }
 
 /**
@@ -99,7 +99,9 @@ export function getOptimalAction(
   const split = allowed.split ? getSplitAction(playerHand, dk) : null
   if (split) return split
 
-  const action = soft ? getSoftAction(score, dk, rules) : getHardAction(score, dk)
-  if (action === 'double' && !allowed.double) return soft && score >= 18 ? 'stand' : 'hit'
+  let action = soft ? getSoftAction(score, dk, rules) : getHardAction(score, dk)
+  if (action === 'double' && !allowed.double) action = soft && score >= 18 ? 'stand' : 'hit'
+  // A hand that can't take cards (a split ace) can only stand.
+  if (action === 'hit' && allowed.hit === false) action = 'stand'
   return action
 }

@@ -1,6 +1,6 @@
 import React from 'react'
 import { StyleSheet } from 'react-native'
-import { render } from '@testing-library/react-native'
+import { render, fireEvent } from '@testing-library/react-native'
 import { Card, MEDIUM_CARD } from '../../features/blackjack/components/Card'
 import { Hand } from '../../features/blackjack/components/Hand'
 import { ActionButtons } from '../../features/blackjack/components/ActionButtons'
@@ -83,4 +83,21 @@ test('large bet controls have bigger chips and Deal', () => {
   const screen = render(<BetControls {...betProps} size="large" />)
   expect(flat(screen.getByText('$15').props.style).fontSize).toBe(22)
   expect(flat(screen.getByText('Deal').props.style).fontSize).toBe(22)
+})
+
+describe('ActionButtons canHit', () => {
+  const props = {
+    suggestedAction: null, canDouble: false, canSplit: true, canSurrender: false,
+    onHit: jest.fn(), onStand: jest.fn(), onDouble: jest.fn(), onSplit: jest.fn(), onSurrender: jest.fn(),
+  }
+  test('Hit is disabled when the hand can’t take a card (a split ace)', () => {
+    const { getByText } = render(<ActionButtons {...props} canHit={false} />)
+    fireEvent.press(getByText('Hit'))
+    expect(props.onHit).not.toHaveBeenCalled()
+  })
+  test('Hit is enabled by default', () => {
+    const { getByText } = render(<ActionButtons {...props} />)
+    fireEvent.press(getByText('Hit'))
+    expect(props.onHit).toHaveBeenCalled()
+  })
 })

@@ -621,16 +621,17 @@ describe('Assist suggests only moves you can make, with the right fallback', () 
     expect(s().suggestedAction).toBe('stand')
   })
 
-  test('after a split at a no-DAS table: A-7 vs 5 stands, and Double is off on the first hand too', () => {
+  // 7s split vs 5, then an ace: 7-A is soft 18 (split aces would just stand, so they can't show this).
+  test('after a split at a no-DAS table: 7-A vs 5 stands, and Double is off on the first hand too', () => {
     act(() => {
       playing('5', {
         tableRules: { ...DEFAULT_TABLE_RULES, doubleAfterSplit: false },
-        playerHands: [[k('A'), k('A', '♥')]], handBets: [20], bet: 20, deck: [k('7'), k('9'), k('2')],
+        playerHands: [[k('7'), k('7', '♥')]], handBets: [20], bet: 20, deck: [k('A'), k('9'), k('2')],
       })
       s().split()
       jest.runAllTimers()
     })
-    expect(s().playerHands[0].map(c => c.value)).toEqual(['A', '7'])
+    expect(s().playerHands[0].map(c => c.value)).toEqual(['7', 'A'])
     expect(s().suggestedAction).toBe('stand')
     expect(s().canDoubleNow()).toBe(false)
     act(() => { s().doubleDown() })
@@ -640,10 +641,11 @@ describe('Assist suggests only moves you can make, with the right fallback', () 
 
   test('with DAS the same hand doubles', () => {
     act(() => {
-      playing('5', { playerHands: [[k('A'), k('A', '♥')]], handBets: [20], bet: 20, deck: [k('7'), k('9'), k('2')] })
+      playing('5', { playerHands: [[k('7'), k('7', '♥')]], handBets: [20], bet: 20, deck: [k('A'), k('9'), k('2')] })
       s().split()
       jest.runAllTimers()
     })
+    expect(s().playerHands[0].map(c => c.value)).toEqual(['7', 'A'])
     expect(s().suggestedAction).toBe('double')
     expect(s().canDoubleNow()).toBe(true)
   })
@@ -700,5 +702,72 @@ describe('a two-card 21 after a split', () => {
     // Hand 1: 21 vs 17 wins $20 (not $30); hand 2: 15 vs 17 loses $20.
     expect(s().lastDelta).toBe(0)
     expect(s().lastOutcome).toBe('win')
+  })
+})
+
+describe('split aces: one card each; resplit only with the option', () => {
+  const k = (value: Card['value'], suit: Card['suit'] = '♠'): Card => ({ value, suit })
+  const s = () => useBlackjackStore.getState()
+  const vals = () => s().playerHands.map(h => h.map(c => c.value))
+  beforeEach(() => useProfileStore.setState({
+    profiles: [{ id: 'p1', name: 'T', bankrollMode: 'finite', balance: 1000, createdAt: 0, startingBalance: 1000,
+      trackingSince: 0, refills: [], stats: emptyStats() }],
+    activeProfileId: 'p1',
+  }))
+  function splitAces(resplitAces: boolean, deck: Card['value'][]) {
+    act(() => {
+      useBlackjackStore.setState({
+        phase: 'playing', activeHandIndex: 0, assistEnabled: true,
+        tableRules: { ...DEFAULT_TABLE_RULES, resplitAces },
+        dealerHand: [k('10'), { ...k('7'), faceDown: true }],
+        playerHands: [[k('A'), k('A', '♥')]], handBets: [20], bet: 20, deck: deck.map(v => k(v)),
+      })
+      s().split()
+      jest.runAllTimers()
+    })
+  }
+
+  test('each split ace gets one card and stands: the round settles with no moves', () => {
+    splitAces(false, ['K', '5', '2', '3'])
+    expect(vals()).toEqual([['A', 'K'], ['A', '5']])
+    expect(s().phase).toBe('result')
+  })
+
+  test('a second ace can’t be split again when Resplit aces is off: it stands too', () => {
+    splitAces(false, ['A', '5', '2', '3'])
+    expect(vals()).toEqual([['A', 'A'], ['A', '5']])
+    expect(s().phase).toBe('result')
+  })
+
+  test('with Resplit aces on, A-A may split again, but never hit or double', () => {
+    splitAces(true, ['A', '5', '9', '6', '2', '3'])
+    expect(vals()).toEqual([['A', 'A'], ['A', '5']])
+    expect(s().phase).toBe('playing')
+    expect(s().canSplitNow()).toBe(true)
+    expect(s().canHitNow()).toBe(false)
+    expect(s().canDoubleNow()).toBe(false)
+    expect(s().suggestedAction).toBe('split')
+    act(() => { s().hit() })
+    act(() => { s().doubleDown() })
+    expect(vals()).toEqual([['A', 'A'], ['A', '5']])
+    act(() => { s().split(); jest.runAllTimers() })
+    expect(vals()).toEqual([['A', '9'], ['A', '6'], ['A', '5']])
+    expect(s().phase).toBe('result')
+  })
+
+  test('other split pairs play on as before', () => {
+    act(() => {
+      useBlackjackStore.setState({
+        phase: 'playing', activeHandIndex: 0, assistEnabled: false, tableRules: DEFAULT_TABLE_RULES,
+        dealerHand: [k('10'), { ...k('7'), faceDown: true }],
+        playerHands: [[k('8'), k('8', '♥')]], handBets: [20], bet: 20, deck: [k('2'), k('3'), k('4'), k('5')],
+      })
+      s().split()
+      jest.runAllTimers()
+    })
+    expect(s().phase).toBe('playing')
+    expect(s().canHitNow()).toBe(true)
+    act(() => { s().hit() })
+    expect(vals()[0]).toEqual(['8', '2', '4'])
   })
 })
