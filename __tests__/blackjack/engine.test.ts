@@ -231,3 +231,16 @@ describe('needsReshuffle', () => {
     expect(needsReshuffle(fullDeck, 1)).toBe(false)
   })
 })
+
+describe('resolveHand — a two-card 21 after a split is not a blackjack', () => {
+  const rules = DEFAULT_TABLE_RULES
+  test('A-K on a split hand wins 1:1 as an ordinary 21', () => {
+    expect(resolveHand([card('A'), card('K')], [card('10'), card('7')], 10, rules, true)).toEqual({ outcome: 'win', delta: 10 })
+  })
+  test('the same cards before any split are a blackjack, 3:2', () => {
+    expect(resolveHand([card('A'), card('K')], [card('10'), card('7')], 10, rules)).toEqual({ outcome: 'blackjack', delta: 15 })
+  })
+  test('a split 21 against a dealer 21 of three cards pushes', () => {
+    expect(resolveHand([card('A'), card('K')], [card('10'), card('5'), card('6')], 10, rules, true)).toEqual({ outcome: 'push', delta: 0 })
+  })
+})

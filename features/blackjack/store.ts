@@ -150,8 +150,9 @@ function settleRound(get: () => Store, set: SetState, animate: boolean) {
   const { deck, dealerHand, playerHands, handBets, tableRules } = get()
   const { deck: newDeck, dealerHand: fullDealerHand } = runDealer(deck, dealerHand, playerHands, tableRules)
 
+  const split = playerHands.length > 1
   const outcomes: Array<{ outcome: Outcome; delta: number }> = playerHands.map((h, i) =>
-    resolveHand(h, fullDealerHand, handBets[i], tableRules)
+    resolveHand(h, fullDealerHand, handBets[i], tableRules, split)
   )
   const totalDelta = outcomes.reduce((sum, r) => sum + r.delta, 0)
   const priority: Outcome[] = ['blackjack', 'win', 'push', 'lose', 'bust']

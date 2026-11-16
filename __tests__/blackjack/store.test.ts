@@ -675,3 +675,30 @@ describe('Assist suggests only moves you can make, with the right fallback', () 
     expect(s().suggestedAction).toBe('stand')
   })
 })
+
+describe('a two-card 21 after a split', () => {
+  const k = (value: Card['value'], suit: Card['suit'] = '♠'): Card => ({ value, suit })
+  const s = () => useBlackjackStore.getState()
+  beforeEach(() => useProfileStore.setState({
+    profiles: [{ id: 'p1', name: 'T', bankrollMode: 'finite', balance: 1000, createdAt: 0, startingBalance: 1000,
+      trackingSince: 0, refills: [], stats: emptyStats() }],
+    activeProfileId: 'p1',
+  }))
+
+  test('is paid 1:1 as a win, not 3:2 as a blackjack', () => {
+    act(() => {
+      useBlackjackStore.setState({
+        phase: 'playing', activeHandIndex: 0, tableRules: DEFAULT_TABLE_RULES, assistEnabled: false,
+        dealerHand: [k('10'), { ...k('7'), faceDown: true }],
+        playerHands: [[k('K'), k('Q', '♥')]], handBets: [20], bet: 20, deck: [k('A'), k('5'), k('2')],
+      })
+      s().split()
+      jest.runAllTimers()
+    })
+    expect(s().playerHands.map(h => h.map(c => c.value))).toEqual([['K', 'A'], ['Q', '5']])
+    act(() => { s().stand(); s().stand(); jest.runAllTimers() })
+    // Hand 1: 21 vs 17 wins $20 (not $30); hand 2: 15 vs 17 loses $20.
+    expect(s().lastDelta).toBe(0)
+    expect(s().lastOutcome).toBe('win')
+  })
+})
