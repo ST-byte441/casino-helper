@@ -4,8 +4,8 @@ import { AssistInfo } from '../../features/craps/components/AssistInfo'
 
 describe('AssistInfo', () => {
   test('explains the bet quality colours and paying exactly', () => {
-    const { getByText, getByTestId } = render(<AssistInfo visible view="table" onClose={jest.fn()} />)
-    expect(getByText('What Assist shows')).toBeTruthy()
+    const { getByText, getAllByText, getByTestId } = render(<AssistInfo visible view="table" onClose={jest.fn()} />)
+    expect(getAllByText('What Assist shows')).toHaveLength(2) // its tab and the page title: it opens on this tab
     for (const w of ['Best', 'Fine', 'Poor', 'Avoid']) expect(getByText(w)).toBeTruthy()
     expect(getByTestId('assist-info')).toHaveTextContent(/\$15 on the 6 wins \$17/)
     expect(getByTestId('assist-info')).toHaveTextContent(/Place 6 and 8 in \$6s/)

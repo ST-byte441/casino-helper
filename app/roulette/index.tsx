@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { View, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native'
 import { Text } from '../../components/Text'
 import { BackButton } from '../../components/BackButton'
+import { InfoButton } from '../../components/InfoSheet'
+import { HowToPlay } from '../../features/roulette/components/HowToPlay'
 import { FlashingBalance } from '../../components/FlashingBalance'
 import { shownBalanceFor } from '../../lib/bankroll'
 import { totalStake } from '../../features/roulette/engine'
@@ -33,6 +35,7 @@ const NEGATIVE = '#ff5555'
 export default function RouletteScreen() {
   const router = useRouter()
   const [setupDone, setSetupDone] = useState(false)
+  const [howOpen, setHowOpen] = useState(false)
 
   const store = useRouletteStore()
   const { profiles, activeProfileId } = useProfileStore()
@@ -73,7 +76,10 @@ export default function RouletteScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <BackButton onPress={() => router.back()} style={styles.back} />
-        <Text style={styles.pill}>{pill}</Text>
+        <View style={styles.titleGroup}>
+          <Text style={styles.pill}>{pill}</Text>
+          <InfoButton testID="how-to-play-info" label="How to play" onPress={() => setHowOpen(true)} style={styles.info} />
+        </View>
         <FlashingBalance testID="balance" value={shown} color={isNegative ? NEGATIVE : BALANCE} style={styles.balance}>
           {balance}
         </FlashingBalance>
@@ -98,6 +104,7 @@ export default function RouletteScreen() {
       {phase === 'result' && result !== null && (
         <ResultPanel result={result} net={store.lastNet} onBack={store.backToTable} />
       )}
+      <HowToPlay visible={howOpen} onClose={() => setHowOpen(false)} />
     </SafeAreaView>
   )
 }
@@ -108,6 +115,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 1, borderColor: '#2a2a3e' },
   back: { color: '#fff', fontSize: 15 },
   pill: { color: '#FFD700', fontSize: 12, fontWeight: '600' },
+  titleGroup: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  info: { color: '#FFD700', fontSize: 16 },
   balance: { fontSize: 15, fontWeight: '700' },
   // Flex-bounded so the wheel's onLayout sizing grows and shrinks with rotation.
   wheelArea: { flex: 1, padding: 12 },

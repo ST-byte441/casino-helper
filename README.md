@@ -13,6 +13,7 @@ Get the latest APK from the [Releases page](../../releases/latest).
 - **Multiple player profiles** — create profiles with a real bankroll or infinite chips for pure practice
 - **Profile detail & stats** — tap a profile to set a picture (20 bundled avatars or your own photo), add money, and see bankroll and per-game stats (hands, win rate, net result; craps points made, seven-outs and longest roll). Stakes are capped by your balance. In every game the balance you see drops by each chip you put down and comes back when you take it off or win, like a casino machine; it flashes red when it drops and green when it rises
 - **Lobby header** — the Games tab shows the active profile's picture next to its name; tap either to open that profile's stats page
+- **How to play** — every table game has a short guide to its rules and payouts: "ⓘ How to play" on the blackjack, craps and roulette setup screens; in play, the ⓘ beside Assist (blackjack, craps) opens it as a tab next to "What Assist shows", roulette has an ⓘ beside its title and baccarat one left of Squeeze
 - **In-app update notifications** — prompted to download a newer version on launch if one is available
 
 ### Blackjack

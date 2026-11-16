@@ -1,5 +1,7 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { View, TouchableOpacity, Switch, StyleSheet } from 'react-native'
+import { HowToPlayButton } from '../../../components/InfoSheet'
+import { HowToPlay } from './HowToPlay'
 import { Text } from '../../../components/Text'
 import { CrapsTableRules, CrapsVariant, OddsMultiple } from '../../../lib/types'
 
@@ -17,11 +19,17 @@ const VARIANTS: { value: CrapsVariant; label: string }[] = [
 const ODDS: OddsMultiple[] = ['1x', '2x', '3-4-5x', '5x', '10x']
 
 export function TableSetup({ rules, onConfirm }: Props) {
+  const [howOpen, setHowOpen] = useState(false)
   const [local, setLocal] = React.useState<CrapsTableRules>(rules)
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Table Setup</Text>
+      {/* As the other setup screens: title on the left, How to play on the right. */}
+      <View style={styles.titleRow}>
+        <Text style={styles.title} numberOfLines={1}>Table Setup</Text>
+        <HowToPlayButton onPress={() => setHowOpen(true)} />
+      </View>
+      <HowToPlay visible={howOpen} onClose={() => setHowOpen(false)} />
 
       <Text style={styles.label}>Variant</Text>
       <View style={styles.row}>
@@ -67,7 +75,8 @@ export function TableSetup({ rules, onConfirm }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 24, backgroundColor: '#13131f', justifyContent: 'center' },
-  title: { color: '#fff', fontSize: 22, fontWeight: '700', marginBottom: 24, textAlign: 'center' },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 24 },
+  title: { color: '#fff', fontSize: 22, fontWeight: '700', flexShrink: 1 },
   label: { color: '#aaa', fontSize: 13, marginBottom: 8, marginTop: 16 },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: '#2a2a3e' },

@@ -184,7 +184,7 @@ exports[`phone portrait list (must not change) come-out, no bets 1`] = `
         }
       >
         <View
-          accessibilityLabel="What Assist shows"
+          accessibilityLabel="How to play and what Assist shows"
           accessibilityState={
             {
               "busy": undefined,
@@ -1644,7 +1644,7 @@ exports[`phone portrait list (must not change) crapless table 1`] = `
         }
       >
         <View
-          accessibilityLabel="What Assist shows"
+          accessibilityLabel="How to play and what Assist shows"
           accessibilityState={
             {
               "busy": undefined,
@@ -3030,7 +3030,7 @@ exports[`phone portrait list (must not change) easy table 1`] = `
         }
       >
         <View
-          accessibilityLabel="What Assist shows"
+          accessibilityLabel="How to play and what Assist shows"
           accessibilityState={
             {
               "busy": undefined,
@@ -4194,7 +4194,7 @@ exports[`phone portrait list (must not change) point 6 with pass + odds, place 8
         }
       >
         <View
-          accessibilityLabel="What Assist shows"
+          accessibilityLabel="How to play and what Assist shows"
           accessibilityState={
             {
               "busy": undefined,

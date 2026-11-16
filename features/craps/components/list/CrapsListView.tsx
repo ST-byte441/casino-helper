@@ -151,7 +151,7 @@ export function CrapsListView() {
         <Text style={styles.headerTitle} numberOfLines={1}>CRAPS · {tableRules.oddsMultiple}</Text>
         <View style={styles.assistGroup}>
           {/* Left of Assist, clear of its on/off dot. */}
-          <InfoButton testID="assist-info-button" label="What Assist shows" onPress={() => setInfoOpen(true)} style={styles.info} />
+          <InfoButton testID="assist-info-button" label="How to play and what Assist shows" onPress={() => setInfoOpen(true)} style={styles.info} />
           <TouchableOpacity onPress={store.toggleAssist}>
             <Text style={[styles.assist, assistEnabled && styles.assistOn]}>Assist {assistEnabled ? '●' : '○'}</Text>
           </TouchableOpacity>

@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { View, TouchableOpacity, StyleSheet } from 'react-native'
+import { HowToPlayButton } from '../../../components/InfoSheet'
+import { HowToPlay } from './HowToPlay'
 import { Text } from '../../../components/Text'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { RouletteSettings, RouletteSpeed, RouletteWheel } from '../../../lib/types'
@@ -43,11 +45,16 @@ function RuleRow<T extends string>({ label, note, options, value, onChange }: Ro
 }
 
 export function RouletteSetup({ initial, onStart }: Props) {
+  const [howOpen, setHowOpen] = useState(false)
   const [settings, setSettings] = useState<RouletteSettings>(initial)
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Roulette Table</Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.title} numberOfLines={1}>Roulette Table</Text>
+        <HowToPlayButton onPress={() => setHowOpen(true)} />
+      </View>
+      <HowToPlay visible={howOpen} onClose={() => setHowOpen(false)} />
       <View style={styles.body}>
         <RuleRow<RouletteWheel>
           label="Wheel" note={WHEEL_NOTES[settings.wheel]}
@@ -73,7 +80,8 @@ export function RouletteSetup({ initial, onStart }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#13131f' },
-  title: { color: '#fff', fontSize: 24, fontWeight: '700', padding: 16 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingRight: 16 },
+  title: { color: '#fff', fontSize: 24, fontWeight: '700', padding: 16, flexShrink: 1 },
   body: { flex: 1, paddingHorizontal: 16 },
   ruleRow: { marginBottom: 20 },
   ruleInfo: { marginBottom: 8 },

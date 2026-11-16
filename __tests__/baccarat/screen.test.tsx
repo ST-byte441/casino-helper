@@ -349,3 +349,19 @@ describe('the squeeze card is scrolled into view on large screens', () => {
     expect(screen.getByTestId('baccarat-table').props.onContentSizeChange).toBeUndefined()
   })
 })
+
+describe('How to play', () => {
+  const { fireEvent } = require('@testing-library/react-native')
+  beforeEach(() => useBaccaratStore.getState().newHand())
+
+  test('an ⓘ sits left of Squeeze and opens the baccarat guide', () => {
+    const screen = render(<BaccaratScreen />)
+    const order = screen.getAllByText(/^(ⓘ|Squeeze)/).map(n => String([].concat(n.props.children)[0]))
+    expect(order[0]).toBe('ⓘ')
+    expect(order[1]).toMatch(/^Squeeze/)
+    fireEvent.press(screen.getByTestId('how-to-play-info'))
+    expect(screen.getByTestId('how-to-play')).toHaveTextContent(/How to play baccarat/)
+    fireEvent.press(screen.getByTestId('how-to-play-close'))
+    expect(screen.queryByTestId('how-to-play')).toBeNull()
+  })
+})

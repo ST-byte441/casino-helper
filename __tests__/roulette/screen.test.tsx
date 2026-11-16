@@ -136,3 +136,20 @@ test('the Back button leaves the screen', () => {
   fireEvent.press(screen.getByText('Back'))
   expect(mockBack).toHaveBeenCalled()
 })
+
+describe('How to play', () => {
+  test('the setup screen has "ⓘ How to play", which opens the roulette guide', () => {
+    const screen = render(<RouletteScreen />)
+    expect(screen.getByText('Roulette Table')).toBeTruthy()
+    fireEvent.press(screen.getByTestId('how-to-play-button'))
+    expect(screen.getByTestId('how-to-play')).toHaveTextContent(/How to play roulette/)
+    fireEvent.press(screen.getByTestId('how-to-play-close'))
+    expect(screen.queryByTestId('how-to-play')).toBeNull()
+  })
+
+  test('at the table, an ⓘ beside the header title opens it too', () => {
+    const screen = startTable()
+    fireEvent.press(screen.getByTestId('how-to-play-info'))
+    expect(screen.getByTestId('how-to-play')).toHaveTextContent(/How to play roulette/)
+  })
+})
