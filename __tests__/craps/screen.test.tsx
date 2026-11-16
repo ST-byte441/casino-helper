@@ -135,6 +135,14 @@ function chipWidth(getByTestId: (id: string) => any): number {
   return StyleSheet.flatten(face.props.style).width
 }
 
+describe('phone portrait list balance', () => {
+  test('shows the bankroll less the chips on the table', () => {
+    seedTable({ phase: 'point', point: 6, bets: [bet('pass', 10, { odds: 20 }), bet('field', 5)] })
+    const { getByTestId } = render(<CrapsScreen />)
+    expect(getByTestId('craps-balance')).toHaveTextContent('Balance: $965')
+  })
+})
+
 describe('pickCrapsView', () => {
   test.each([
     ['compact', 'portrait', 'list'],

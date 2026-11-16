@@ -286,19 +286,21 @@ describe('CrapsTable chrome', () => {
     jest.useFakeTimers()
     jest.spyOn(Math, 'random').mockReturnValueOnce(2.5 / 6).mockReturnValueOnce(3.5 / 6)
     const { getByTestId, queryByTestId, getByText, queryByText } = utils
-    expect(getByText('$1,000')).toBeTruthy()
+    // $1,000 less the $5 Pass and the $6 Place on the table.
+    expect(getByText('$989')).toBeTruthy()
     fireEvent.press(getByText('ROLL'))
     expect(store().bets.map(b => b.type)).toEqual(['place'])
     expect(useProfileStore.getState().profiles[0].balance).toBe(1005)
     // Still the pre-roll picture.
     expect(queryByTestId('stack-pass-5-')).toBeTruthy()
     expect(getByTestId('craps-dice')).toHaveTextContent(/= 5/)
-    expect(getByText('$1,000')).toBeTruthy()
-    expect(queryByText('$1,005')).toBeNull()
+    expect(getByText('$989')).toBeTruthy()
+    expect(queryByText('$999')).toBeNull()
     act(() => { jest.advanceTimersByTime(1100) })
+    // The Pass came down with its $5 win: $1,005 settled less the $6 Place still up.
+    expect(getByText('$999')).toBeTruthy()
     expect(queryByTestId('stack-pass-5-')).toBeNull()
     expect(getByTestId('craps-dice')).toHaveTextContent(/= 7/)
-    expect(getByText('$1,005')).toBeTruthy()
   })
 
   test('a point-setting roll moves the puck only once the dice land', async () => {
@@ -374,6 +376,19 @@ describe('CrapsTable chrome', () => {
     const { getByText } = await mount()
     expect(getByText('CRAPS · 3-4-5x')).toBeTruthy()
     expect(getByText('$1,000')).toBeTruthy()
+  })
+
+  test('the header balance is the bankroll less the chips on the table', async () => {
+    const { getByTestId } = await mount()
+    expect(getByTestId('craps-balance')).toHaveTextContent('$1,000')
+    await act(async () => { store().placeBet('field', 10) })
+    expect(getByTestId('craps-balance')).toHaveTextContent('$990')
+    await act(async () => { store().placeBet('pass', 25) })
+    expect(getByTestId('craps-balance')).toHaveTextContent('$965')
+    await act(async () => { store().removeBet(store().bets.find(b => b.type === 'field')!.id) })
+    expect(getByTestId('craps-balance')).toHaveTextContent('$975')
+    // The settled bankroll never moved.
+    expect(useProfileStore.getState().profiles[0].balance).toBe(1000)
   })
 })
 

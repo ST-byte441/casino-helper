@@ -18,7 +18,7 @@ npx jest <path>   # single file
 npx tsc --noEmit  # type check only
 ```
 
-1506 tests cover the game engines, the shared chip helpers, strategy lookup, roulette and craps felt layouts, roulette wheel maths, screens, profile store and stats, and update utility.
+1514 tests cover the game engines, the shared chip helpers, strategy lookup, roulette and craps felt layouts, roulette wheel maths, screens, profile store and stats, and update utility.
 
 ## Project Structure
 
@@ -51,6 +51,7 @@ features/
     engine.ts     # Pure TS: dice, phase helpers, bet validity, odds helpers, payout calc, roll resolution
     strategy.ts   # Pure TS: getBetQuality — rates any bet type as optimal/acceptable/poor/avoid
     layout.ts     # Pure TS: felt geometry per variant (areas, box stack slots packed per box (`packBox`: puck top-right, Don't Come top-left, come/lay bottom corners, place bottom-centre or as near as fits, odds chips (≥20dp, amount ≥8pt) against their flat bet; no two overlap; stacks shrink to 22dp at the least until the number reaches 16pt and 3/4 of the font a roomy box's middle band allows; the number — `boxLabels` text box — takes the biggest font clear of them, spelled SIX/NINE only when that costs little; tiny felts fall back without throwing), pucks, `labelRect` label boxes (line labels left of centre with their odds strip to the right; box numbers under the puck row), `diceRect` — the dice + ROLL block at the Pass Line band's right end, the props box running to the felt's right edge — the More bets strip `moreRect` under the props cells for World/Hi-Lo/hop stacks), hitCraps, slotFor, stackSizeFor/puckSizeFor; table chrome (TABLE_CHROME regular/large, tableFeltSize)
+    bankroll.ts   # Pure TS: atRisk(bets), shownBalance — the balance shown is the settled balance less the chips on the table (display only; the persisted balance moves only on settled rolls); affordability uses it too
     spots.ts      # Pure TS: spotAction/stackTapAction resolve a dropped or tapped spot/stack to a store call
     store.ts      # Session Zustand store (phase, dice, point, bets, roll, assist toggle)
     components/   # UI components (TableSetup, DiceDisplay, BetCategoryPanel, BetRow, OddsRow, HopBetGrid, RollButton, RollResultBanner)
@@ -92,6 +93,7 @@ lib/
 components/
   Text.tsx        # Text/TextInput wrappers that cap font scaling at 1.3x; import these, not react-native's
   UpdateModal.tsx # In-app update prompt modal
+  FlashingBalance.tsx # Balance text that flashes green when its value rises, red when it drops (~0.9s); used by both craps views
   chips/          # Shared chip table: chips.ts (colours, sizes, drag lift), ChipFace, DragHandle (drag/tap race), ChipTray (row or column), useChipTable (origins, ghost, highlight/flash, board tap); used by roulette and the craps table. `chipSize` (default CHIP_SIZE 44) scales the tray, the ghost and the drag lift (`dragLift(size)`); roulette uses the default
 assets/
   avatars/        # Bundled 256px profile pictures + default (originals in gitignored assets/profile-pictures/)

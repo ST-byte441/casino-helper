@@ -87,7 +87,7 @@ describe('negative balances on game screens', () => {
     useCrapsStore.getState().setTableRules({ variant: 'craps', oddsMultiple: '3-4-5x', fieldPays3on12: false })
     const { getByText, getByTestId } = render(<CrapsScreen />)
     expect(getByTestId('craps-board')).toBeTruthy()
-    expect(colorOf(getByText('−$50'))).toBe('#ff5555')
+    expect(colorOf(getByText('−$50'))).toBe('rgba(255, 85, 85, 1)')
   })
 
   test('positive balances use the same $X format and are not red', () => {

@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { View, ScrollView, StyleSheet, TouchableOpacity, Animated } from 'react-native'
-import { Text, MAX_FONT_SCALE } from '../../../../components/Text'
+import React, { useState, useRef } from 'react'
+import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native'
+import { Text } from '../../../../components/Text'
+import { FlashingBalance } from '../../../../components/FlashingBalance'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useCrapsStore } from '../../store'
+import { shownBalance } from '../../bankroll'
 import { useProfileStore } from '../../../profile/store'
 import { formatMoney } from '../../../profile/format'
 import { getBetQuality } from '../../strategy'
@@ -27,13 +29,13 @@ export function CrapsListView() {
   const { profiles, activeProfileId } = useProfileStore()
   const active = profiles.find(p => p.id === activeProfileId)
   const isInfinite = active?.bankrollMode === 'infinite'
-  const numericBalance = isInfinite ? Infinity : (active?.balance ?? 0)
-  const balance = active ? (isInfinite ? '∞' : formatMoney(active.balance)) : '—'
+  // The balance less the chips on the table, as on a digital craps machine.
+  const shown = active && !isInfinite ? shownBalance(active.balance, store.bets) : null
+  const balance = !active ? '—' : shown == null ? '∞' : formatMoney(shown)
 
   const [showBanner, setShowBanner] = useState(false)
   const [showFundsWarning, setFundsWarning] = useState(false)
   const fundsTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const balanceFlash = useRef(new Animated.Value(0)).current
 
   function triggerFundsWarning() {
     setFundsWarning(true)
@@ -42,15 +44,6 @@ export function CrapsListView() {
   }
 
   const { phase, dice, point, bets, tableRules, assistEnabled, lastRoll, lastDelta } = store
-
-  useEffect(() => {
-    if (!lastRoll || lastDelta <= 0) return
-    Animated.sequence([
-      Animated.timing(balanceFlash, { toValue: 1, duration: 150, useNativeDriver: false }),
-      Animated.delay(400),
-      Animated.timing(balanceFlash, { toValue: 0, duration: 350, useNativeDriver: false }),
-    ]).start()
-  }, [lastRoll])
 
   const variant = tableRules.variant
   const passBet = bets.find(b => b.type === 'pass')
@@ -78,8 +71,7 @@ export function CrapsListView() {
   }
 
   function tryPlaceBet(type: BetType, amount: number, num?: number, hopDice?: [number, number]) {
-    const totalBets = bets.reduce((s, b) => s + b.amount + (b.odds ?? 0), 0)
-    if (!isInfinite && totalBets + amount > numericBalance) {
+    if (active && !isInfinite && amount > shownBalance(active.balance, bets)) {
       triggerFundsWarning()
       return
     }
@@ -324,9 +316,10 @@ export function CrapsListView() {
 
       <View style={styles.footer}>
         {showFundsWarning && <Text style={styles.fundsWarning}>Insufficient funds</Text>}
-        <Animated.Text maxFontSizeMultiplier={MAX_FONT_SCALE} style={[styles.balanceText, { color: balanceFlash.interpolate({ inputRange: [0, 1], outputRange: [numericBalance < 0 ? '#ff5555' : '#aaa', '#2ecc71'] }) }]}>
+        <FlashingBalance testID="craps-balance" value={shown} color={shown != null && shown < 0 ? '#ff5555' : '#aaa'}
+          style={styles.balanceText}>
           Balance: {balance}
-        </Animated.Text>
+        </FlashingBalance>
         <RollButton onRoll={handleRoll} disabled={bets.length === 0} />
       </View>
 

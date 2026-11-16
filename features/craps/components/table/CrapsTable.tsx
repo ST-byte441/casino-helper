@@ -25,13 +25,15 @@ import { CrapsFelt, feltStacks } from './CrapsFelt'
 import { StackMenu } from './StackMenu'
 import { MoreBetsSheet } from './MoreBetsSheet'
 import { RollOverlay } from './RollOverlay'
+import { FlashingBalance } from '../../../../components/FlashingBalance'
+import { shownBalance } from '../../bankroll'
 
 export const CRAPS_CHIPS = [1, 5, 25, 100] as const
 
 /** A roll being shown: the rolled dice, and the table as it stood before the roll. */
 type Rolling = {
   dice: [number, number]
-  before: { bets: ActiveBet[]; point: number | null; dice: [number, number] | null; balance: string; negative: boolean }
+  before: { bets: ActiveBet[]; point: number | null; dice: [number, number] | null; balance: number | null }
 }
 
 type Props = {
@@ -55,6 +57,10 @@ const STACK_PREFIX = 'stack:'
  * The target under board-local (x, y): a drawn stack within its radius first (the nearest), as roulette's
  * tapTarget does, else the smallest area. Odds areas only count once a point is set (they aren't drawn before).
  */
+/** Header balance colours; the balance flashes green / red over these when it changes. */
+const BALANCE = '#fff'
+const NEGATIVE = '#ff5555'
+
 export function tableTarget(
   layout: CrapsLayout, bets: ActiveBet[], point: number | null, x: number, y: number,
 ): TableTarget | null {
@@ -164,10 +170,11 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
   const selectedChip = useCrapsStore(s => s.selectedChip)
   const selectChip = useCrapsStore(s => s.selectChip)
   const active = useProfileStore(s => s.profiles.find(p => p.id === s.activeProfileId))
-  const liveBalance = active ? (active.bankrollMode === 'infinite' ? '∞' : formatMoney(active.balance)) : '—'
-  const liveNegative = !!active && active.bankrollMode !== 'infinite' && active.balance < 0
-  const balance = rolling ? rolling.before.balance : liveBalance
-  const isNegative = rolling ? rolling.before.negative : liveNegative
+  // The balance less the chips on the table (null: infinite bankroll or no profile).
+  const liveBalance = active && active.bankrollMode !== 'infinite' ? shownBalance(active.balance, liveBets) : null
+  const balanceValue = rolling ? rolling.before.balance : liveBalance
+  const balance = !active ? '—' : balanceValue == null ? '∞' : formatMoney(balanceValue)
+  const isNegative = balanceValue != null && balanceValue < 0
 
   const targetAt = (x: number, y: number) => {
     const s = useCrapsStore.getState()
@@ -235,7 +242,7 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
 
   function handleRoll() {
     const s0 = useCrapsStore.getState()
-    const before = { bets: s0.bets, point: s0.point, dice: s0.dice, balance: liveBalance, negative: liveNegative }
+    const before = { bets: s0.bets, point: s0.point, dice: s0.dice, balance: liveBalance }
     setShowBanner(false)
     onRoll()
     const s1 = useCrapsStore.getState()
@@ -314,7 +321,8 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
         <TouchableOpacity onPress={toggleAssist} hitSlop={8}>
           <Text style={[styles.assist, assistEnabled && styles.assistOn]}>Assist {assistEnabled ? '●' : '○'}</Text>
         </TouchableOpacity>
-        <Text style={[styles.balance, isNegative && styles.negative]}>{balance}</Text>
+        <FlashingBalance testID="craps-balance" value={balanceValue} color={isNegative ? NEGATIVE : BALANCE}
+          style={styles.balance}>{balance}</FlashingBalance>
       </View>
 
       {portrait ? (
@@ -363,8 +371,7 @@ function makeSheets(c: Record<TableSize, TableChrome>) {
     assist: { color: '#aaa', fontSize: 13 },
     assistOn: { color: '#FFD700' },
     dimmed: { opacity: 0.4 },
-    balance: { color: '#fff', fontWeight: '700', fontSize: 13 },
-    negative: { color: '#ff5555' },
+    balance: { fontWeight: '700', fontSize: 13 },
     body: { flex: 1, flexDirection: 'row' },
     boardFrame: { flex: 1, margin: c.regular.margin },
     // Large portrait: full width, landscape-shaped (tableFeltSize gives the same felt).

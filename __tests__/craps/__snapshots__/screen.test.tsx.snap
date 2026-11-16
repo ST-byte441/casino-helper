@@ -1195,6 +1195,7 @@ exports[`phone portrait list (must not change) come-out, no bets 1`] = `
             "textAlign": "center",
           }
         }
+        testID="craps-balance"
       >
         Balance: 
         $1,000
@@ -2378,6 +2379,7 @@ exports[`phone portrait list (must not change) crapless table 1`] = `
             "textAlign": "center",
           }
         }
+        testID="craps-balance"
       >
         Balance: 
         $1,000
@@ -3339,6 +3341,7 @@ exports[`phone portrait list (must not change) easy table 1`] = `
             "textAlign": "center",
           }
         }
+        testID="craps-balance"
       >
         Balance: 
         $1,000
@@ -4930,9 +4933,10 @@ exports[`phone portrait list (must not change) point 6 with pass + odds, place 8
             "textAlign": "center",
           }
         }
+        testID="craps-balance"
       >
         Balance: 
-        $1,000
+        $953
       </Text>
       <View
         accessibilityState={

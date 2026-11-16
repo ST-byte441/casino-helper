@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid/non-secure'
 import { ActiveBet, BetType, CrapsPhase, CrapsTableRules } from '../../lib/types'
 import { resolveRoll, canRemoveBet, minBuyLayAmount, placementRefusal, oddsCap } from './engine'
 import { useProfileStore } from '../profile/store'
+import { shownBalance } from './bankroll'
 
 const DEFAULT_RULES: CrapsTableRules = { variant: 'craps', oddsMultiple: '3-4-5x', fieldPays3on12: false }
 
@@ -85,8 +86,7 @@ export const useCrapsStore = create<CrapsState & CrapsActions>((set, get) => ({
     const ps = useProfileStore.getState()
     const profile = ps.profiles.find(p => p.id === ps.activeProfileId)
     if (profile && profile.bankrollMode !== 'infinite') {
-      const totalBets = bets.reduce((s, b) => s + b.amount + (b.odds ?? 0), 0)
-      if (totalBets + amount > profile.balance) {
+      if (amount > shownBalance(profile.balance, bets)) {
         set({ notice: 'Not enough balance' })
         return false
       }
@@ -139,8 +139,7 @@ export const useCrapsStore = create<CrapsState & CrapsActions>((set, get) => ({
     const ps = useProfileStore.getState()
     const profile = ps.profiles.find(p => p.id === ps.activeProfileId)
     if (!profile || profile.bankrollMode === 'infinite') return true
-    const atRisk = get().bets.reduce((s, b) => s + b.amount + (b.odds ?? 0), 0)
-    return atRisk + amount <= profile.balance
+    return amount <= shownBalance(profile.balance, get().bets)
   },
 
   addOdds(betId, amount) {
