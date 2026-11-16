@@ -18,9 +18,9 @@ Get the latest APK from the [Releases page](../../releases/latest).
 
 ### Blackjack
 
-- **Configurable table rules** — payout (3:2 / 6:5), dealer soft 17 (H17/S17), double after split, re-split aces, surrender mode, deck count, and continuous shuffle (CSM)
+- **Configurable table rules** — payout (3:2 / 6:5), dealer soft 17 (H17/S17), double after split, re-split aces, surrender mode, deck count, and continuous shuffle (CSM). Split aces get one card each (re-split aces decides whether another ace can split again), a two-card 21 after a split pays 1:1, and early surrender lets you surrender before the dealer checks for blackjack
 - **Chip denominations** — $15 / $25 / $50 (standard Vegas table minimums)
-- **Vegas-style dealer play** — the dealer peeks for blackjack and ends the hand immediately on a natural; if you bust (or are dealt a natural), the dealer only flips the hole card instead of drawing out
+- **Vegas-style dealer play** — the dealer peeks for blackjack and ends the hand immediately on a natural (with early surrender, after you decide whether to surrender); if you bust (or are dealt a natural), the dealer only flips the hole card instead of drawing out
 - **Soft totals** — soft hands show both counts (e.g. `7/17`)
 - **Large screens** — on a Galaxy Fold's inner screen or a tablet, bigger cards and buttons with split hands side by side; in landscape the felt sits on the left and a control panel on the right
 - **Basic strategy assist** — gold highlight on the statistically optimal action at any time; the ⓘ left of Assist explains how it decides, with a few plays to remember

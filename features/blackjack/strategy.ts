@@ -15,6 +15,18 @@ function cardTenValue(v: Card['value']): boolean {
 }
 
 // Surrender: 16 vs 9/10/A, 15 vs 10
+/**
+ * Early surrender (decided before the dealer checks for blackjack): hard 5–7 and 12–17 against an ace, hard 14–16
+ * against a ten. Pairs count as their hard total (3-3, 6-6, 7-7, 8-8). Soft hands never. Basic strategy for early
+ * surrender (Wizard of Odds); the late-surrender hands are a subset.
+ */
+function isEarlySurrender(score: number, soft: boolean, dk: DealerKey): boolean {
+  if (soft) return false
+  if (dk === 11) return (score >= 5 && score <= 7) || (score >= 12 && score <= 17)
+  if (dk === 10) return score >= 14 && score <= 16
+  return false
+}
+
 function getSurrenderAction(score: number, dk: DealerKey, rules: TableRules): Action | null {
   if (rules.surrender === 'none') return null
   if (score === 16 && (dk === 9 || dk === 10 || dk === 11)) return 'surrender'
@@ -87,7 +99,11 @@ export function getOptimalAction(
   const score = scoreHand(playerHand)
   const soft = isSoft(playerHand)
 
-  // Always-split pairs take priority over surrender
+  // Early surrender comes first: it is decided before anything else, even splitting 8s.
+  if (allowed.surrender && rules.surrender === 'early' && canSurrender(playerHand, rules)
+    && isEarlySurrender(score, soft, dk)) return 'surrender'
+
+  // Always-split pairs take priority over (late) surrender
   if (allowed.split && canSplit(playerHand)) {
     const v = playerHand[0].value
     if (v === 'A' || v === '8') return 'split'

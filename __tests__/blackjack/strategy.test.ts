@@ -121,3 +121,45 @@ describe('getOptimalAction — when a move isn’t allowed, the right fallback',
     expect(getOptimalAction([card('8'), card('8')], card('6'), rules)).toBe('split')
   })
 })
+
+describe('getOptimalAction — early surrender', () => {
+  const early: TableRules = { ...rules, surrender: 'early' }
+  const late: TableRules = { ...rules, surrender: 'late' }
+
+  test('vs an ace: hard 5–7 and 12–17 surrender (late surrender would not)', () => {
+    for (const [a, b] of [['4', '2'], ['3', '2'], ['5', '2'], ['8', '4'], ['8', '5'], ['10', '5'], ['10', '7']] as const) {
+      expect(getOptimalAction([card(a), card(b)], card('A'), early)).toBe('surrender')
+    }
+    expect(getOptimalAction([card('8'), card('5')], card('A'), late)).toBe('hit')
+  })
+
+  test('vs a ten: hard 14–16 surrender', () => {
+    for (const [a, b] of [['9', '5'], ['9', '6'], ['9', '7']] as const) {
+      expect(getOptimalAction([card(a), card(b)], card('K'), early)).toBe('surrender')
+    }
+    expect(getOptimalAction([card('9'), card('5')], card('K'), late)).toBe('hit')
+  })
+
+  test('pairs surrender as their hard total, before splitting: 8-8 and 7-7 vs a ten or ace', () => {
+    expect(getOptimalAction([card('8'), card('8')], card('A'), early)).toBe('surrender')
+    expect(getOptimalAction([card('8'), card('8')], card('K'), early)).toBe('surrender')
+    expect(getOptimalAction([card('7'), card('7')], card('K'), early)).toBe('surrender')
+    expect(getOptimalAction([card('8'), card('8')], card('A'), late)).toBe('split')
+  })
+
+  test('never soft hands, aces, totals outside the ranges, or other up cards', () => {
+    expect(getOptimalAction([card('A'), card('6')], card('A'), early)).not.toBe('surrender')
+    expect(getOptimalAction([card('A'), card('A')], card('A'), early)).toBe('split')
+    expect(getOptimalAction([card('6'), card('5')], card('A'), early)).not.toBe('surrender')
+    expect(getOptimalAction([card('10'), card('8')], card('A'), early)).toBe('stand')
+    expect(getOptimalAction([card('9'), card('4')], card('K'), early)).not.toBe('surrender')
+    expect(getOptimalAction([card('10'), card('6')], card('9'), early)).toBe('surrender') // late rule still applies
+    expect(getOptimalAction([card('10'), card('5')], card('9'), early)).not.toBe('surrender')
+  })
+
+  test('only on the first two cards, and only when surrender is allowed', () => {
+    expect(getOptimalAction([card('4'), card('5'), card('4')], card('A'), early)).not.toBe('surrender')
+    expect(getOptimalAction([card('8'), card('5')], card('A'), early, { double: true, split: true, surrender: false }))
+      .not.toBe('surrender')
+  })
+})

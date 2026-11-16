@@ -771,3 +771,94 @@ describe('split aces: one card each; resplit only with the option', () => {
     expect(vals()[0]).toEqual(['8', '2', '4'])
   })
 })
+
+describe('early surrender: decide before the dealer checks for blackjack', () => {
+  const k = (value: Card['value'], suit: Card['suit'] = '♠'): Card => ({ value, suit })
+  const s = () => useBlackjackStore.getState()
+  const stats = () => useProfileStore.getState().profiles[0].stats.blackjack
+  beforeEach(() => useProfileStore.setState({
+    profiles: [{ id: 'p1', name: 'T', bankrollMode: 'finite', balance: 1000, createdAt: 0, startingBalance: 1000,
+      trackingSince: 0, refills: [], stats: emptyStats() }],
+    activeProfileId: 'p1',
+  }))
+  // Deal order: player, dealer up card, player, dealer hole card. One deck so a short stack doesn't reshuffle.
+  function dealFrom(top: Card['value'][], surrender: 'early' | 'late' = 'early') {
+    act(() => {
+      useBlackjackStore.setState({
+        deck: [...top.map(v => k(v)), ...Array(20).fill(k('2'))], bet: 15, assistEnabled: true,
+        tableRules: { ...DEFAULT_TABLE_RULES, deckCount: 1, continuousShuffle: false, surrender },
+      })
+      s().deal()
+      jest.runAllTimers()
+    })
+  }
+  const hole = () => s().dealerHand[1]
+
+  test('a dealer blackjack under an ace doesn’t end the hand at the deal: you can still surrender for half', () => {
+    dealFrom(['10', 'A', '6', 'K']) // you 16, dealer A-K
+    expect(s().phase).toBe('playing')
+    expect(hole().faceDown).toBe(true)
+    expect(s().suggestedAction).toBe('surrender')
+    act(() => { s().surrender() })
+    expect(s().phase).toBe('result')
+    expect(s().lastDelta).toBe(-7)
+    expect(hole().faceDown).toBe(false) // the hole card is shown
+    expect(stats().net).toBe(-7)
+  })
+
+  test('any other move first checks for the blackjack: you lose the original bet, and the move isn’t made', () => {
+    dealFrom(['10', 'A', '6', 'K'])
+    expect(s().phase).toBe('playing')
+    act(() => { s().hit() })
+    expect(s().phase).toBe('result')
+    expect(s().playerHands[0]).toHaveLength(2)
+    expect(s().lastOutcome).toBe('lose')
+    expect(s().lastDelta).toBe(-15)
+    expect(hole().faceDown).toBe(false)
+    expect(stats().net).toBe(-15)
+  })
+
+  test('doubling into a dealer blackjack loses only the original bet', () => {
+    dealFrom(['5', 'K', '6', 'A']) // you 11, dealer K-A
+    expect(s().phase).toBe('playing')
+    expect(s().canDoubleNow()).toBe(true)
+    act(() => { s().doubleDown() })
+    expect(s().phase).toBe('result')
+    expect(s().handBets).toEqual([15])
+    expect(s().lastDelta).toBe(-15)
+  })
+
+  test('standing does the same', () => {
+    dealFrom(['10', 'A', '9', 'K'])
+    expect(s().phase).toBe('playing')
+    act(() => { s().stand() })
+    expect(s().phase).toBe('result')
+    expect(s().lastDelta).toBe(-15)
+  })
+
+  test('your blackjack against the dealer’s still pushes at once', () => {
+    dealFrom(['A', 'A', 'K', 'K'])
+    expect(s().phase).toBe('result')
+    expect(s().lastOutcome).toBe('push')
+  })
+
+  test('no dealer blackjack: the hand plays as normal', () => {
+    dealFrom(['10', 'A', '6', '7'])
+    act(() => { s().hit() })
+    expect(s().playerHands[0]).toHaveLength(3)
+  })
+
+  test('late surrender keeps the check at the deal: a dealer blackjack ends the hand', () => {
+    dealFrom(['10', 'A', '6', 'K'], 'late')
+    expect(s().phase).toBe('result')
+    expect(s().lastDelta).toBe(-15)
+  })
+
+  test('leaving with the check still pending settles it as a loss', () => {
+    dealFrom(['10', 'A', '6', 'K'])
+    expect(s().phase).toBe('playing')
+    act(() => { s().abandonHand() })
+    expect(stats().net).toBe(-15)
+    expect(s().phase).toBe('betting')
+  })
+})

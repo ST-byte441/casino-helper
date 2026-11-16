@@ -17,7 +17,8 @@ describe('How to play guides', () => {
   test('blackjack', () => {
     const t = text(<Blackjack visible onClose={jest.fn()} />)
     expect(t).toHaveTextContent(/How to play blackjack/)
-    for (const re of [/closer to 21/, /3 to 2/, /6 to 5/, /push/, /soft 17/, /Hit/, /Stand/, /Double/, /Split/, /Surrender/])
+    for (const re of [/closer to 21/, /3 to 2/, /6 to 5/, /push/, /soft 17/, /Hit/, /Stand/, /Double/, /Split/, /Surrender/,
+      /Split aces get one card each/, /early surrender comes\s+before/, /after a split is an ordinary 21: 1 to 1/])
       expect(t).toHaveTextContent(re)
   })
 
