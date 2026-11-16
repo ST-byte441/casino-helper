@@ -1,7 +1,7 @@
 import React from 'react'
 import { StyleSheet } from 'react-native'
 import { render } from '@testing-library/react-native'
-import { CrapsFelt } from '../../features/craps/components/table/CrapsFelt'
+import { CrapsFelt, moreBetsTotal } from '../../features/craps/components/table/CrapsFelt'
 import { buildCrapsLayout, labelRect, CrapsLayout, Rect } from '../../features/craps/layout'
 import { ActiveBet, CrapsVariant } from '../../lib/types'
 
@@ -151,6 +151,27 @@ describe.each(cases)('%s at %dx%d', (variant, width, height) => {
     for (const h of drawn) inStrip(`stack-${h.id}`, r)
     inStrip('more-bets-overflow', r)
     expect(r.getByTestId('more-bets-overflow')).toHaveTextContent(`+${hops.length - drawn.length}`)
+  })
+})
+
+describe('More bets strip indicator', () => {
+  const L = buildCrapsLayout('craps', 880, 320)
+  const label = (r: ReturnType<typeof draw>) => r.getByTestId('more-bets-strip-label')
+  const strip = (r: ReturnType<typeof draw>) => StyleSheet.flatten(r.getByTestId('more-bets-strip').props.style)
+
+  it('is plain with no More bets chips down (line and place bets do not count)', () => {
+    const r = draw(L, { point: 6, bets: [bet({ id: 'p', type: 'pass', odds: 10 }), bet({ id: 'pl', type: 'place', number: 8 })] })
+    expect(label(r)).toHaveTextContent('MORE BETS ›')
+    expect(strip(r).borderColor).not.toBe('#FFD700')
+  })
+
+  it('lights up with the total once Buy, Lay, World, Hi-Lo or hops are down', () => {
+    const bets = [bet({ id: 'b', type: 'buy', number: 4, amount: 20 }), bet({ id: 'w', type: 'world' }),
+      bet({ id: 'e', type: 'hop-easy', hopDice: [2, 5], amount: 1 }), bet({ id: 'p', type: 'pass' })]
+    expect(moreBetsTotal(bets)).toBe(26)
+    const r = draw(L, { bets })
+    expect(label(r)).toHaveTextContent('MORE BETS · $26 ›')
+    expect(strip(r).borderColor).toBe('#FFD700')
   })
 })
 

@@ -185,6 +185,14 @@ const tagFor = (b: ActiveBet): string | undefined =>
 
 type Drawn = { key: string; amount: number; at: Pt; size: number; tag?: string; dim?: boolean }
 
+/** The bets placed from the More bets panel: Buy, Lay, World, Hi-Lo and Hops. */
+const MORE_BET_TYPES: ReadonlySet<ActiveBet['type']> = new Set(['buy', 'lay', 'world', 'hi-lo', 'hop-easy', 'hop-hard'])
+
+/** The chips down on More bets panel bets (flat plus odds), 0 when there are none. */
+export function moreBetsTotal(bets: ActiveBet[]): number {
+  return bets.filter(b => MORE_BET_TYPES.has(b.type)).reduce((sum, b) => sum + b.amount + (b.odds ?? 0), 0)
+}
+
 /** Room left for a chip's tag under it in the More bets strip. */
 const STRIP_PAD = 2
 
@@ -254,6 +262,8 @@ export function CrapsFelt({ layout, bets, point, highlight, quality, payoutRings
   const puckSize = puckSizeFor(layout)
   const m = layout.moreRect
   const overflow = moreBetsRow(layout, bets).overflow
+  // The strip opens the More bets panel; it lights up while chips are down on that panel's bets.
+  const moreTotal = moreBetsTotal(bets)
 
   return (
     <View testID="craps-felt" style={[styles.felt, { width: layout.width, height: layout.height }]}>
@@ -266,8 +276,11 @@ export function CrapsFelt({ layout, bets, point, highlight, quality, payoutRings
         )
       })}
       <View testID="more-bets-strip" pointerEvents="none"
-        style={[styles.strip, { left: m.x, top: m.y, width: m.w, height: m.h }]}>
-        <Text numberOfLines={1} style={[styles.stripText, { fontSize: fit(9, m.w, m.h, 0.3, 12) }]}>MORE BETS</Text>
+        style={[styles.strip, moreTotal > 0 && styles.stripOn, { left: m.x, top: m.y, width: m.w, height: m.h }]}>
+        <Text testID="more-bets-strip-label" numberOfLines={1} adjustsFontSizeToFit
+          style={[styles.stripText, moreTotal > 0 && styles.stripTextOn, { fontSize: fit(9, m.w, m.h, 0.3, 12) }]}>
+          {moreTotal > 0 ? `MORE BETS · $${moreTotal} ›` : 'MORE BETS ›'}
+        </Text>
       </View>
       {puckSlot
         ? <Puck on at={puckSlot} size={puckSize} />
@@ -305,7 +318,9 @@ const styles = StyleSheet.create({
   tagText: { color: YELLOW, fontWeight: '800' },
   strip: { position: 'absolute', borderWidth: 1, borderColor: LINE, alignItems: 'center', justifyContent: 'center',
     overflow: 'hidden' },
-  stripText: { color: 'rgba(255,255,255,0.45)', fontWeight: '800', letterSpacing: 0.5 },
+  stripText: { color: 'rgba(255,255,255,0.6)', fontWeight: '800', letterSpacing: 0.5 },
+  stripOn: { borderWidth: 2, borderColor: YELLOW, backgroundColor: 'rgba(255,215,0,0.14)' },
+  stripTextOn: { color: YELLOW },
   overflow: { position: 'absolute', alignItems: 'center', justifyContent: 'center', backgroundColor: '#000',
     borderWidth: 1.5, borderColor: YELLOW },
   puck: { position: 'absolute', alignItems: 'center', justifyContent: 'center', borderWidth: 2 },

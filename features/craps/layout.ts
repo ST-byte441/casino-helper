@@ -25,7 +25,8 @@ import type { TableSize } from '../../lib/tableSize'
  * box is too small for them at full size.
  *
  * More bets strip: a thin band at the bottom of the props box (`moreRect`, not an area: it takes no chip) where the
- * More bets panel's World, Hi-Lo and Hop stacks are drawn, so they never sit on a props cell.
+ * More bets panel's World, Hi-Lo and Hop stacks are drawn, so they never sit on a props cell. A tap on it (off a
+ * stack) opens the More bets panel.
  *
  * Off puck: in the Don't Come box. Without Don't Come (crapless, easy) it sits at the Pass Line's right end, past
  * its odds.
