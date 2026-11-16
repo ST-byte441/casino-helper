@@ -20,6 +20,7 @@ import { placeFromSheet } from '../../features/craps/components/table/MoreBetsSh
 import { QUALITY_COLORS, feltStacks } from '../../features/craps/components/table/CrapsFelt'
 import { buildCrapsLayout, tableFeltSize, SpotKey } from '../../features/craps/layout'
 import { useCrapsStore } from '../../features/craps/store'
+import { ROLL_ANIM_MS } from '../../features/craps/components/table/RollOverlay'
 import { useProfileStore } from '../../features/profile/store'
 import { emptyStats } from '../../features/profile/stats'
 import { ActiveBet, BetType, CrapsTableRules } from '../../lib/types'
@@ -266,9 +267,9 @@ describe('CrapsTable chrome', () => {
     expect(getByTestId('craps-roll')).toBeDisabled()
   })
 
-  test('after about a second the overlay gives way to the result banner', async () => {
+  test('the dice rest on the result, then the overlay gives way to the result banner', async () => {
     const { queryByTestId, getByText, queryByText, getByTestId } = await rollNatural()
-    act(() => { jest.advanceTimersByTime(900) })
+    act(() => { jest.advanceTimersByTime(ROLL_ANIM_MS - 100) })
     expect(queryByTestId('craps-roll-overlay')).toBeTruthy()
     expect(queryByText('Natural!')).toBeNull()
     act(() => { jest.advanceTimersByTime(200) })
@@ -296,7 +297,7 @@ describe('CrapsTable chrome', () => {
     expect(getByTestId('craps-dice')).toHaveTextContent(/= 5/)
     expect(getByText('$989')).toBeTruthy()
     expect(queryByText('$999')).toBeNull()
-    act(() => { jest.advanceTimersByTime(1100) })
+    act(() => { jest.advanceTimersByTime(ROLL_ANIM_MS + 100) })
     // The Pass came down with its $5 win: $1,005 settled less the $6 Place still up.
     expect(getByText('$999')).toBeTruthy()
     expect(queryByTestId('stack-pass-5-')).toBeNull()

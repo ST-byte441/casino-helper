@@ -4,17 +4,27 @@ import Animated, { Easing, SharedValue, useAnimatedStyle, useSharedValue, withTi
 import { FACES } from '../DiceDisplay'
 
 /*
- * The table view's roll: two large dice tumbling over the felt for about a second (faces cycling, a spin and a
- * swell), landing on the rolled values. The store has already rolled; this is presentation only. A tap skips it.
+ * The table view's roll: two large dice tumbling over the felt (faces cycling, a spin and a swell), landing on the
+ * rolled values and resting there for REST_MS so the result can be read. The store has already rolled; this is
+ * presentation only. A tap skips it.
  *
  * Each die draws all six faces stacked and shows one by opacity, driven by one progress value (0 → 1). The face
  * sequence starts and ends on the rolled value, so a frozen progress (the Jest mock, which never runs the
  * timing) still shows the roll, and a finished one always does.
  */
 
-/** How long the overlay stays up before the result banner (the dice rest for the last part of it). */
-export const ROLL_ANIM_MS = 1000
-const TUMBLE_MS = 850
+/** The tumble: faces cycling, spin and swell. */
+export const TUMBLE_MS = 850
+/** How long the dice rest on the result before the banner, so the player can read it. */
+export const REST_MS = 1200
+/** How long the overlay stays up before the result banner. */
+export const ROLL_ANIM_MS = TUMBLE_MS + REST_MS
+/**
+ * Progress at which the rolled face comes up and stays. Earlier the last face only showed at progress 1, while
+ * the eased spin had all but stopped on the face before it (always a different one) from ~470 ms: players read
+ * that wrong face as the landing.
+ */
+export const LAND_AT = 0.8
 /** Faces shown while tumbling, between the first and last (both the rolled value). */
 const TUMBLE_FACES = 10
 
@@ -38,12 +48,18 @@ function tumbleFaces(value: number): number[] {
   return seq
 }
 
+/** Index into a face sequence of length n at progress p: the last (rolled) face from LAND_AT on. */
+export function faceIndexAt(p: number, n: number): number {
+  'worklet'
+  if (p >= LAND_AT) return n - 1
+  return Math.min(n - 2, Math.floor((p / LAND_AT) * (n - 1)))
+}
+
 function FaceLayer({ face, faces, progress, size, testID }: {
   face: number; faces: number[]; progress: SharedValue<number>; size: number; testID: string
 }) {
   const shown = useAnimatedStyle(() => {
-    const i = Math.min(faces.length - 1, Math.floor(progress.value * (faces.length - 1)))
-    return { opacity: faces[i] === face ? 1 : 0 }
+    return { opacity: faces[faceIndexAt(progress.value, faces.length)] === face ? 1 : 0 }
   })
   const dot = size * 0.17
   return (
