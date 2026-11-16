@@ -107,24 +107,30 @@ export function isBlackjack(hand: Card[]): boolean {
   return hand.length === 2 && scoreHand(hand) === 21
 }
 
+/**
+ * Settles one hand. `afterSplit`: the hand came from a split, so a two-card 21 is an ordinary 21 paid 1:1, not a
+ * blackjack (casino rule).
+ */
 export function resolveHand(
   playerHand: Card[],
   dealerHand: Card[],
   bet: number,
-  rules: TableRules
+  rules: TableRules,
+  afterSplit = false,
 ): { outcome: Outcome; delta: number } {
   const playerScore = scoreHand(playerHand)
   const dealerScore = scoreHand(dealerHand)
+  const natural = !afterSplit && isBlackjack(playerHand)
 
   if (playerScore > 21) return { outcome: 'bust', delta: -bet }
 
-  if (isBlackjack(playerHand) && !isBlackjack(dealerHand)) {
+  if (natural && !isBlackjack(dealerHand)) {
     const multiplier = rules.payoutMode === '3:2' ? 1.5 : 1.2
     // Math.floor: all supported chip denominations (15/25/50) produce whole-number payouts.
     return { outcome: 'blackjack', delta: Math.floor(bet * multiplier) }
   }
 
-  if (isBlackjack(dealerHand) && !isBlackjack(playerHand)) {
+  if (isBlackjack(dealerHand) && !natural) {
     return { outcome: 'lose', delta: -bet }
   }
 

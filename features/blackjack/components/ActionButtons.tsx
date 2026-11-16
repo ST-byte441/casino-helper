@@ -5,6 +5,8 @@ import { sizedStyles, TableSize } from '../../../lib/tableSize'
 
 type Props = {
   suggestedAction: Action | null
+  /** False on a hand that can't take a card (a split ace); default true. */
+  canHit?: boolean
   canDouble: boolean
   canSplit: boolean
   canSurrender: boolean
@@ -27,7 +29,7 @@ const ACTIONS: { key: Action; label: string }[] = [
 ]
 
 export function ActionButtons({
-  suggestedAction, canDouble, canSplit, canSurrender,
+  suggestedAction, canHit = true, canDouble, canSplit, canSurrender,
   onHit, onStand, onDouble, onSplit, onSurrender, size = 'regular', direction = 'row',
 }: Props) {
   const s = SHEETS[size]
@@ -35,7 +37,7 @@ export function ActionButtons({
     hit: onHit, stand: onStand, double: onDouble, split: onSplit, surrender: onSurrender,
   }
   const enabled: Record<Action, boolean> = {
-    hit: true, stand: true, double: canDouble, split: canSplit, surrender: canSurrender,
+    hit: canHit, stand: true, double: canDouble, split: canSplit, surrender: canSurrender,
   }
 
   return (

@@ -39,6 +39,11 @@ type BlackjackState = {
   suggestedAction: Action | null
   lastOutcome: Outcome | null
   lastDelta: number
+  /**
+   * Early surrender: the dealer has blackjack, but checks only after the player decides. Surrender loses half; any
+   * other move first settles the blackjack (the original bet lost) and isn't made.
+   */
+  peekPending: boolean
 }
 
 type BlackjackActions = {
@@ -58,6 +63,10 @@ type BlackjackActions = {
   canAffordExtra: () => boolean
   /** Double is allowed on the active hand now: two cards, DAS after a split, and affordable. */
   canDoubleNow: () => boolean
+  /** Hit is allowed on the active hand now (not on a split ace). */
+  canHitNow: () => boolean
+  /** Split is allowed on the active hand now: a pair, affordable, and a split ace only with resplitAces. */
+  canSplitNow: () => boolean
 }
 
 const initialState: BlackjackState = {
@@ -73,6 +82,7 @@ const initialState: BlackjackState = {
   suggestedAction: null,
   lastOutcome: null,
   lastDelta: 0,
+  peekPending: false,
 }
 
 /** Whether the balance covers another stake the size of hand `index`'s (a double or a split). */
@@ -84,6 +94,11 @@ function affordsExtra(handBets: number[], index: number): boolean {
   return total + (handBets[index] ?? 0) <= profile.balance
 }
 
+/** A split ace: after a split, a hand whose first card (the pair card) is an ace. It gets one card only. */
+function isSplitAceHand(playerHands: Card[][], index: number): boolean {
+  return playerHands.length > 1 && playerHands[index]?.[0]?.value === 'A'
+}
+
 /**
  * What the player may do with hand `index` right now: double on two cards (after a split only with DAS) when
  * affordable, split when affordable, surrender only on the original hand. The Double button, doubleDown and Assist
@@ -92,9 +107,12 @@ function affordsExtra(handBets: number[], index: number): boolean {
 function allowedMoves(playerHands: Card[][], index: number, handBets: number[], rules: TableRules): AllowedMoves {
   const hand = playerHands[index] ?? []
   const afford = affordsExtra(handBets, index)
+  // Split aces get one card each: no hit or double, and a new ace splits again only with resplitAces.
+  const splitAce = isSplitAceHand(playerHands, index)
   return {
-    double: canDouble(hand, playerHands.length > 1, rules) && afford,
-    split: afford,
+    hit: !splitAce,
+    double: !splitAce && canDouble(hand, playerHands.length > 1, rules) && afford,
+    split: afford && (!splitAce || rules.resplitAces),
     surrender: playerHands.length === 1,
   }
 }
@@ -144,14 +162,31 @@ export function stakeOnTable(s: Pick<BlackjackState, 'phase' | 'bet' | 'handBets
 type Store = BlackjackState & BlackjackActions
 type SetState = (partial: Partial<Store>) => void
 
+/**
+ * Early surrender's deferred dealer check: when one is pending, shows the hole card and settles the dealer's
+ * blackjack (the player loses the original bet, or pushes a blackjack). Returns true when it ended the hand, so the
+ * move that triggered it is not made.
+ */
+function settlePendingPeek(get: () => Store, set: SetState): boolean {
+  const { peekPending, playerHands, dealerHand, handBets, tableRules } = get()
+  if (!peekPending) return false
+  const revealed = dealerHand.map(c => ({ ...c, faceDown: false }))
+  const { outcome, delta } = resolveHand(playerHands[0], revealed, handBets[0], tableRules)
+  useProfileStore.getState().recordHands('blackjack', [{ result: classifyBlackjack(outcome), delta }])
+  set({ dealerHand: revealed, phase: 'result', lastOutcome: outcome, lastDelta: delta, suggestedAction: null,
+    peekPending: false })
+  return true
+}
+
 // Dealer plays out, every hand settles on its own stake and the round is recorded once.
 // Animated: dealer cards are revealed one at a time and the result lands after the last one.
 function settleRound(get: () => Store, set: SetState, animate: boolean) {
   const { deck, dealerHand, playerHands, handBets, tableRules } = get()
   const { deck: newDeck, dealerHand: fullDealerHand } = runDealer(deck, dealerHand, playerHands, tableRules)
 
+  const split = playerHands.length > 1
   const outcomes: Array<{ outcome: Outcome; delta: number }> = playerHands.map((h, i) =>
-    resolveHand(h, fullDealerHand, handBets[i], tableRules)
+    resolveHand(h, fullDealerHand, handBets[i], tableRules, split)
   )
   const totalDelta = outcomes.reduce((sum, r) => sum + r.delta, 0)
   const priority: Outcome[] = ['blackjack', 'win', 'push', 'lose', 'bust']
@@ -215,8 +250,19 @@ export const useBlackjackStore = create<Store>((set, get) => ({
   },
 
   canDoubleNow: () => {
-    const { playerHands, activeHandIndex, handBets, tableRules } = get()
-    return allowedMoves(playerHands, activeHandIndex, handBets, tableRules).double
+    const { phase, playerHands, activeHandIndex, handBets, tableRules } = get()
+    return phase === 'playing' && allowedMoves(playerHands, activeHandIndex, handBets, tableRules).double
+  },
+
+  canHitNow: () => {
+    const { phase, playerHands, activeHandIndex, handBets, tableRules } = get()
+    return phase === 'playing' && allowedMoves(playerHands, activeHandIndex, handBets, tableRules).hit !== false
+  },
+
+  canSplitNow: () => {
+    const { phase, playerHands, activeHandIndex, handBets, tableRules } = get()
+    return phase === 'playing' && canSplit(playerHands[activeHandIndex] ?? [])
+      && allowedMoves(playerHands, activeHandIndex, handBets, tableRules).split
   },
 
   deal: () => {
@@ -242,6 +288,14 @@ export const useBlackjackStore = create<Store>((set, get) => ({
       pendingFinish = null
       const { assistEnabled, handBets } = get()
       const playerHands = [[c1, c3]]
+      // Early surrender: with a dealer blackjack (and none for the player), the player decides first; the check
+      // comes with the next move (settlePendingPeek).
+      if (isBlackjack([c2, c4]) && tableRules.surrender === 'early' && !isBlackjack(playerHands[0])) {
+        const dealerHand = [c2, { ...c4, faceDown: true }]
+        const suggestedAction = computeSuggestion(playerHands, 0, dealerHand, assistEnabled, tableRules, get().handBets)
+        set({ playerHands, dealerHand, phase: 'playing', suggestedAction, peekPending: true })
+        return
+      }
       // Dealer peek: a dealer natural ends the hand before the player acts
       if (isBlackjack([c2, c4])) {
         const revealed = [c2, { ...c4, faceDown: false }]
@@ -262,6 +316,8 @@ export const useBlackjackStore = create<Store>((set, get) => ({
   },
 
   hit: () => {
+    if (!get().canHitNow()) return
+    if (settlePendingPeek(get, set)) return
     let { deck, playerHands, activeHandIndex, tableRules, assistEnabled, dealerHand } = get()
     let card: Card
     ;[card, deck] = dealCard(deck)
@@ -278,12 +334,15 @@ export const useBlackjackStore = create<Store>((set, get) => ({
   },
 
   stand: () => {
+    if (settlePendingPeek(get, set)) return
     const { playerHands, activeHandIndex } = get()
     if (activeHandIndex < playerHands.length - 1) {
       const next = activeHandIndex + 1
       const { assistEnabled, dealerHand, tableRules } = get()
       const suggestedAction = computeSuggestion(playerHands, next, dealerHand, assistEnabled, tableRules, get().handBets)
       set({ activeHandIndex: next, suggestedAction })
+      // A split ace that can't be split again has its one card: it stands at once.
+      if (isSplitAceHand(playerHands, next) && !get().canSplitNow()) get().stand()
       return
     }
     // All hands done — dealer plays out, cards revealed one at a time
@@ -292,6 +351,7 @@ export const useBlackjackStore = create<Store>((set, get) => ({
 
   doubleDown: () => {
     if (!get().canDoubleNow()) return
+    if (settlePendingPeek(get, set)) return
     let { deck, playerHands, activeHandIndex, handBets } = get()
     let card: Card
     ;[card, deck] = dealCard(deck)
@@ -305,8 +365,8 @@ export const useBlackjackStore = create<Store>((set, get) => ({
     const { phase, playerHands, activeHandIndex } = get()
     if (phase !== 'playing') return
     const hand = playerHands[activeHandIndex]
-    if (!canSplit(hand)) return
-    if (!get().canAffordExtra()) return
+    if (!get().canSplitNow()) return
+    if (settlePendingPeek(get, set)) return
     let { deck, handBets } = get()
     let c1: Card, c2: Card
     ;[c1, deck] = dealCard(deck)
@@ -337,6 +397,8 @@ export const useBlackjackStore = create<Store>((set, get) => ({
         i === activeHandIndex ? [hand[0], c1] : i === activeHandIndex + 1 ? [hand[1], c2] : h)
       const suggestedAction = computeSuggestion(newHands, activeHandIndex, dealerHand, assistEnabled, tableRules, get().handBets)
       set({ playerHands: newHands, suggestedAction, phase: 'playing' })
+      // Split aces get one card each: unless it can split again, the hand stands (and so on down the hands).
+      if (isSplitAceHand(newHands, activeHandIndex) && !get().canSplitNow()) get().stand()
     }
     scheduleStep(finishSplit, D * 2)
     pendingFinish = finishSplit
@@ -351,7 +413,9 @@ export const useBlackjackStore = create<Store>((set, get) => ({
     if (!canSurrender(hand, tableRules)) return
     const delta = -Math.floor(get().handBets[activeHandIndex] / 2)
     useProfileStore.getState().recordHands('blackjack', [{ result: 'loss', delta }])
-    set({ phase: 'result', lastOutcome: 'lose', lastDelta: delta })
+    // Early surrender before the dealer's check: show the blackjack it avoided.
+    const dealerHand = get().peekPending ? get().dealerHand.map(c => ({ ...c, faceDown: false })) : get().dealerHand
+    set({ phase: 'result', lastOutcome: 'lose', lastDelta: delta, dealerHand, peekPending: false })
   },
 
   newHand: () => {

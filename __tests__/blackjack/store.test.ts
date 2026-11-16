@@ -621,16 +621,17 @@ describe('Assist suggests only moves you can make, with the right fallback', () 
     expect(s().suggestedAction).toBe('stand')
   })
 
-  test('after a split at a no-DAS table: A-7 vs 5 stands, and Double is off on the first hand too', () => {
+  // 7s split vs 5, then an ace: 7-A is soft 18 (split aces would just stand, so they can't show this).
+  test('after a split at a no-DAS table: 7-A vs 5 stands, and Double is off on the first hand too', () => {
     act(() => {
       playing('5', {
         tableRules: { ...DEFAULT_TABLE_RULES, doubleAfterSplit: false },
-        playerHands: [[k('A'), k('A', '♥')]], handBets: [20], bet: 20, deck: [k('7'), k('9'), k('2')],
+        playerHands: [[k('7'), k('7', '♥')]], handBets: [20], bet: 20, deck: [k('A'), k('9'), k('2')],
       })
       s().split()
       jest.runAllTimers()
     })
-    expect(s().playerHands[0].map(c => c.value)).toEqual(['A', '7'])
+    expect(s().playerHands[0].map(c => c.value)).toEqual(['7', 'A'])
     expect(s().suggestedAction).toBe('stand')
     expect(s().canDoubleNow()).toBe(false)
     act(() => { s().doubleDown() })
@@ -640,10 +641,11 @@ describe('Assist suggests only moves you can make, with the right fallback', () 
 
   test('with DAS the same hand doubles', () => {
     act(() => {
-      playing('5', { playerHands: [[k('A'), k('A', '♥')]], handBets: [20], bet: 20, deck: [k('7'), k('9'), k('2')] })
+      playing('5', { playerHands: [[k('7'), k('7', '♥')]], handBets: [20], bet: 20, deck: [k('A'), k('9'), k('2')] })
       s().split()
       jest.runAllTimers()
     })
+    expect(s().playerHands[0].map(c => c.value)).toEqual(['7', 'A'])
     expect(s().suggestedAction).toBe('double')
     expect(s().canDoubleNow()).toBe(true)
   })
@@ -673,5 +675,190 @@ describe('Assist suggests only moves you can make, with the right fallback', () 
     act(() => { playing('6', { playerHands: [[k('8'), k('8', '♥')]], handBets: [20], bet: 20 }) })
     reAssist()
     expect(s().suggestedAction).toBe('stand')
+  })
+})
+
+describe('a two-card 21 after a split', () => {
+  const k = (value: Card['value'], suit: Card['suit'] = '♠'): Card => ({ value, suit })
+  const s = () => useBlackjackStore.getState()
+  beforeEach(() => useProfileStore.setState({
+    profiles: [{ id: 'p1', name: 'T', bankrollMode: 'finite', balance: 1000, createdAt: 0, startingBalance: 1000,
+      trackingSince: 0, refills: [], stats: emptyStats() }],
+    activeProfileId: 'p1',
+  }))
+
+  test('is paid 1:1 as a win, not 3:2 as a blackjack', () => {
+    act(() => {
+      useBlackjackStore.setState({
+        phase: 'playing', activeHandIndex: 0, tableRules: DEFAULT_TABLE_RULES, assistEnabled: false,
+        dealerHand: [k('10'), { ...k('7'), faceDown: true }],
+        playerHands: [[k('K'), k('Q', '♥')]], handBets: [20], bet: 20, deck: [k('A'), k('5'), k('2')],
+      })
+      s().split()
+      jest.runAllTimers()
+    })
+    expect(s().playerHands.map(h => h.map(c => c.value))).toEqual([['K', 'A'], ['Q', '5']])
+    act(() => { s().stand(); s().stand(); jest.runAllTimers() })
+    // Hand 1: 21 vs 17 wins $20 (not $30); hand 2: 15 vs 17 loses $20.
+    expect(s().lastDelta).toBe(0)
+    expect(s().lastOutcome).toBe('win')
+  })
+})
+
+describe('split aces: one card each; resplit only with the option', () => {
+  const k = (value: Card['value'], suit: Card['suit'] = '♠'): Card => ({ value, suit })
+  const s = () => useBlackjackStore.getState()
+  const vals = () => s().playerHands.map(h => h.map(c => c.value))
+  beforeEach(() => useProfileStore.setState({
+    profiles: [{ id: 'p1', name: 'T', bankrollMode: 'finite', balance: 1000, createdAt: 0, startingBalance: 1000,
+      trackingSince: 0, refills: [], stats: emptyStats() }],
+    activeProfileId: 'p1',
+  }))
+  function splitAces(resplitAces: boolean, deck: Card['value'][]) {
+    act(() => {
+      useBlackjackStore.setState({
+        phase: 'playing', activeHandIndex: 0, assistEnabled: true,
+        tableRules: { ...DEFAULT_TABLE_RULES, resplitAces },
+        dealerHand: [k('10'), { ...k('7'), faceDown: true }],
+        playerHands: [[k('A'), k('A', '♥')]], handBets: [20], bet: 20, deck: deck.map(v => k(v)),
+      })
+      s().split()
+      jest.runAllTimers()
+    })
+  }
+
+  test('each split ace gets one card and stands: the round settles with no moves', () => {
+    splitAces(false, ['K', '5', '2', '3'])
+    expect(vals()).toEqual([['A', 'K'], ['A', '5']])
+    expect(s().phase).toBe('result')
+  })
+
+  test('a second ace can’t be split again when Resplit aces is off: it stands too', () => {
+    splitAces(false, ['A', '5', '2', '3'])
+    expect(vals()).toEqual([['A', 'A'], ['A', '5']])
+    expect(s().phase).toBe('result')
+  })
+
+  test('with Resplit aces on, A-A may split again, but never hit or double', () => {
+    splitAces(true, ['A', '5', '9', '6', '2', '3'])
+    expect(vals()).toEqual([['A', 'A'], ['A', '5']])
+    expect(s().phase).toBe('playing')
+    expect(s().canSplitNow()).toBe(true)
+    expect(s().canHitNow()).toBe(false)
+    expect(s().canDoubleNow()).toBe(false)
+    expect(s().suggestedAction).toBe('split')
+    act(() => { s().hit() })
+    act(() => { s().doubleDown() })
+    expect(vals()).toEqual([['A', 'A'], ['A', '5']])
+    act(() => { s().split(); jest.runAllTimers() })
+    expect(vals()).toEqual([['A', '9'], ['A', '6'], ['A', '5']])
+    expect(s().phase).toBe('result')
+  })
+
+  test('other split pairs play on as before', () => {
+    act(() => {
+      useBlackjackStore.setState({
+        phase: 'playing', activeHandIndex: 0, assistEnabled: false, tableRules: DEFAULT_TABLE_RULES,
+        dealerHand: [k('10'), { ...k('7'), faceDown: true }],
+        playerHands: [[k('8'), k('8', '♥')]], handBets: [20], bet: 20, deck: [k('2'), k('3'), k('4'), k('5')],
+      })
+      s().split()
+      jest.runAllTimers()
+    })
+    expect(s().phase).toBe('playing')
+    expect(s().canHitNow()).toBe(true)
+    act(() => { s().hit() })
+    expect(vals()[0]).toEqual(['8', '2', '4'])
+  })
+})
+
+describe('early surrender: decide before the dealer checks for blackjack', () => {
+  const k = (value: Card['value'], suit: Card['suit'] = '♠'): Card => ({ value, suit })
+  const s = () => useBlackjackStore.getState()
+  const stats = () => useProfileStore.getState().profiles[0].stats.blackjack
+  beforeEach(() => useProfileStore.setState({
+    profiles: [{ id: 'p1', name: 'T', bankrollMode: 'finite', balance: 1000, createdAt: 0, startingBalance: 1000,
+      trackingSince: 0, refills: [], stats: emptyStats() }],
+    activeProfileId: 'p1',
+  }))
+  // Deal order: player, dealer up card, player, dealer hole card. One deck so a short stack doesn't reshuffle.
+  function dealFrom(top: Card['value'][], surrender: 'early' | 'late' = 'early') {
+    act(() => {
+      useBlackjackStore.setState({
+        deck: [...top.map(v => k(v)), ...Array(20).fill(k('2'))], bet: 15, assistEnabled: true,
+        tableRules: { ...DEFAULT_TABLE_RULES, deckCount: 1, continuousShuffle: false, surrender },
+      })
+      s().deal()
+      jest.runAllTimers()
+    })
+  }
+  const hole = () => s().dealerHand[1]
+
+  test('a dealer blackjack under an ace doesn’t end the hand at the deal: you can still surrender for half', () => {
+    dealFrom(['10', 'A', '6', 'K']) // you 16, dealer A-K
+    expect(s().phase).toBe('playing')
+    expect(hole().faceDown).toBe(true)
+    expect(s().suggestedAction).toBe('surrender')
+    act(() => { s().surrender() })
+    expect(s().phase).toBe('result')
+    expect(s().lastDelta).toBe(-7)
+    expect(hole().faceDown).toBe(false) // the hole card is shown
+    expect(stats().net).toBe(-7)
+  })
+
+  test('any other move first checks for the blackjack: you lose the original bet, and the move isn’t made', () => {
+    dealFrom(['10', 'A', '6', 'K'])
+    expect(s().phase).toBe('playing')
+    act(() => { s().hit() })
+    expect(s().phase).toBe('result')
+    expect(s().playerHands[0]).toHaveLength(2)
+    expect(s().lastOutcome).toBe('lose')
+    expect(s().lastDelta).toBe(-15)
+    expect(hole().faceDown).toBe(false)
+    expect(stats().net).toBe(-15)
+  })
+
+  test('doubling into a dealer blackjack loses only the original bet', () => {
+    dealFrom(['5', 'K', '6', 'A']) // you 11, dealer K-A
+    expect(s().phase).toBe('playing')
+    expect(s().canDoubleNow()).toBe(true)
+    act(() => { s().doubleDown() })
+    expect(s().phase).toBe('result')
+    expect(s().handBets).toEqual([15])
+    expect(s().lastDelta).toBe(-15)
+  })
+
+  test('standing does the same', () => {
+    dealFrom(['10', 'A', '9', 'K'])
+    expect(s().phase).toBe('playing')
+    act(() => { s().stand() })
+    expect(s().phase).toBe('result')
+    expect(s().lastDelta).toBe(-15)
+  })
+
+  test('your blackjack against the dealer’s still pushes at once', () => {
+    dealFrom(['A', 'A', 'K', 'K'])
+    expect(s().phase).toBe('result')
+    expect(s().lastOutcome).toBe('push')
+  })
+
+  test('no dealer blackjack: the hand plays as normal', () => {
+    dealFrom(['10', 'A', '6', '7'])
+    act(() => { s().hit() })
+    expect(s().playerHands[0]).toHaveLength(3)
+  })
+
+  test('late surrender keeps the check at the deal: a dealer blackjack ends the hand', () => {
+    dealFrom(['10', 'A', '6', 'K'], 'late')
+    expect(s().phase).toBe('result')
+    expect(s().lastDelta).toBe(-15)
+  })
+
+  test('leaving with the check still pending settles it as a loss', () => {
+    dealFrom(['10', 'A', '6', 'K'])
+    expect(s().phase).toBe('playing')
+    act(() => { s().abandonHand() })
+    expect(stats().net).toBe(-15)
+    expect(s().phase).toBe('betting')
   })
 })

@@ -21,7 +21,10 @@ export function HowToPlayContent() {
 
       <Text style={styles.heading}>The deal</Text>
       <Bullet>Place your bet, then press Deal. You get two cards face up; the dealer gets one up and one down.</Bullet>
-      <Bullet>If the dealer has blackjack, the hand ends at once and you lose (unless you have one too: a push).</Bullet>
+      <Bullet>
+        If the dealer has blackjack, you lose (unless you have one too: a push). Usually the dealer checks at once and
+        the hand ends; at an early-surrender table you may surrender first.
+      </Bullet>
 
       <Text style={styles.heading}>Your moves</Text>
       <Bullet><Text style={styles.strong}>Hit</Text>: take another card. Go over 21 and you bust and lose.</Bullet>
@@ -29,11 +32,13 @@ export function HowToPlayContent() {
       <Bullet><Text style={styles.strong}>Double</Text>: on your first two cards, double your bet and take exactly one more card.</Bullet>
       <Bullet>
         <Text style={styles.strong}>Split</Text>: with two cards of the same value, split them into two hands, each
-        with its own bet equal to the first.
+        with its own bet equal to the first. Split aces get one card each and stand; another ace can be split again
+        only where the table allows resplitting aces.
       </Bullet>
       <Bullet>
         <Text style={styles.strong}>Surrender</Text>: where the table allows it, give up your first two cards and
-        get half your bet back.
+        get half your bet back. Late surrender comes after the dealer checks for blackjack; early surrender comes
+        before, so it also saves half against a dealer blackjack.
       </Bullet>
 
       <Text style={styles.heading}>The dealer</Text>
@@ -46,7 +51,7 @@ export function HowToPlayContent() {
       <Bullet>Beat the dealer, or the dealer busts: you win 1 to 1.</Bullet>
       <Bullet>
         Blackjack (an ace and a ten-value card as your first two cards) pays 3 to 2, or 6 to 5 at tables set that
-        way.
+        way. 21 on two cards after a split is an ordinary 21: 1 to 1.
       </Bullet>
       <Bullet>The same total as the dealer is a push: you get your bet back.</Bullet>
     </>
