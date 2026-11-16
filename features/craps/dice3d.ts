@@ -25,18 +25,27 @@ export const FACE_DEFS: Record<number, { n: Vec3; r: Vec3; d: Vec3 }> = {
   4: { n: [-1, 0, 0], r: [0, 0, 1], d: [0, 1, 0] },
 }
 
-/** The camera tilt at rest: the top and right sides show beside the rolled face. */
-const TILT_X = -0.42 // radians, about x: tips the top toward the viewer
-const TILT_Y = -0.38 // about y: turns the right side toward the viewer
 /** Camera distance in die edges: lower is stronger perspective. */
 const CAMERA = 4.5
-/** Light from the front, a little top left: the rolled face reads brightest. */
-// Normalised by hand: the worklet plugin turns function declarations into consts, so normalize isn't defined yet.
-const LIGHT: Vec3 = [-0.2506, -0.3509, 0.9023]
-/** Face inset (the darker body shows round it as a bevelled edge) and corner rounding, in face units. */
-const INSET = 0.9
-const CORNER = 0.16
+/**
+ * Light comes from the viewer: a face square to the viewer is drawn in exactly the dice colour, and a face turned
+ * away darkens toward SHADE_MIN of it. That shading is all that separates faces: there is no outline.
+ */
+const SHADE_MIN = 0.45
+/** Face corner rounding, in face units. Faces are drawn full size, so the die is one colour edge to edge. */
+const CORNER = 0.12
 const PIP_R = 0.085
+
+/** The dice's colours: the face colour (every face is a shade of it) and the pips. Hex #rrggbb. */
+export type DiceColors = { face: string; pips: string }
+/** Ivory dice, near-black pips. A future dice-colour setting supplies its own DiceColors. */
+export const DEFAULT_DICE_COLORS: DiceColors = { face: '#faf7ee', pips: '#13131f' }
+
+/** #rrggbb as [r, g, b], 0–255, for projectDie's shading. */
+export function faceRgb(hex: string): Vec3 {
+  const n = parseInt(hex.replace('#', ''), 16)
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+}
 
 export function dot(a: Vec3, b: Vec3): number {
   'worklet'
@@ -88,13 +97,12 @@ export function axisAngle(axis: Vec3, angle: number): Mat3 {
   ]
 }
 
-/** Resting: the rolled face toward the viewer and upright, under the camera tilt. */
+/** Resting: the rolled face square to the viewer and upright, as seen from directly above the table. */
 export function restOrientation(value: number): Mat3 {
   'worklet'
   const { r, d, n } = FACE_DEFS[value]
   // Rows r, d, n map that face's frame onto the screen's x, y, z.
-  const face: Mat3 = [r[0], r[1], r[2], d[0], d[1], d[2], n[0], n[1], n[2]]
-  return mul(mul(axisAngle([1, 0, 0], TILT_X), axisAngle([0, 1, 0], TILT_Y)), face)
+  return [r[0], r[1], r[2], d[0], d[1], d[2], n[0], n[1], n[2]]
 }
 
 /** Orientation at eased progress e (0 → 1): the spin unwinds, so e = 1 is exactly the rest orientation. */
@@ -152,7 +160,8 @@ export function throwOffset(e: number, dx: number, dy: number): { x: number; y: 
 
 function project(p: Vec3, size: number): string {
   'worklet'
-  const k = CAMERA / (CAMERA - p[2])
+  // Scaled so the resting top face (half an edge nearer the camera) is exactly `size` across.
+  const k = (CAMERA - 0.5) / (CAMERA - p[2])
   return (p[0] * k * size).toFixed(1) + ' ' + (p[1] * k * size).toFixed(1)
 }
 
@@ -173,7 +182,7 @@ function polygon(pts: string[]): string {
 /** The rounded, inset face outline in face coordinates: four quarter arcs of three steps. */
 function roundedOutline(): Array<[number, number]> {
   'worklet'
-  const lo = (1 - INSET) / 2 + CORNER
+  const lo = CORNER
   const hi = 1 - lo
   const corners: Array<[number, number, number]> = [[hi, lo, -Math.PI / 2], [hi, hi, 0], [lo, hi, Math.PI / 2], [lo, lo, Math.PI]]
   const out: Array<[number, number]> = []
@@ -188,24 +197,21 @@ function roundedOutline(): Array<[number, number]> {
 
 function shade(m: Mat3, v: number): number {
   'worklet'
-  return 0.6 + 0.4 * Math.max(0, dot(apply(m, FACE_DEFS[v].n), LIGHT))
+  return SHADE_MIN + (1 - SHADE_MIN) * Math.max(0, facing(m, v))
 }
 
 export type DieFrame = {
-  /** The visible faces at full size, filled darker: shows round the inset faces as the die's bevelled edges. */
-  body: string
-  /** Per face (index value − 1): its inset rounded outline ('' when hidden) and lit fill. */
+  /** Per face (index value − 1): its rounded outline ('' when hidden) and shaded fill. */
   faces: Array<{ d: string; fill: string }>
   /** Every visible pip, one subpath each. */
   pips: string
 }
 
-/** The die drawn at rotation m with edge `size`, centred on (0, 0). */
-export function projectDie(m: Mat3, size: number): DieFrame {
+/** The die drawn at rotation m with edge `size`, centred on (0, 0), its faces shades of `rgb` (see faceRgb). */
+export function projectDie(m: Mat3, size: number, rgb: Vec3): DieFrame {
   'worklet'
   const vis = visibleFaces(m)
   const outline = roundedOutline()
-  let body = ''
   let pips = ''
   const faces: Array<{ d: string; fill: string }> = []
   for (let v = 1; v <= 6; v++) {
@@ -215,11 +221,9 @@ export function projectDie(m: Mat3, size: number): DieFrame {
       continue
     }
     const b = shade(m, v)
-    const quad = [[0, 0], [1, 0], [1, 1], [0, 1]].map(([x, y]) => project(facePoint(m, v, x, y), size))
-    body += polygon(quad)
     faces.push({
       d: polygon(outline.map(([x, y]) => project(facePoint(m, v, x, y), size))),
-      fill: 'rgb(' + Math.round(250 * b) + ',' + Math.round(247 * b) + ',' + Math.round(238 * b) + ')',
+      fill: 'rgb(' + Math.round(rgb[0] * b) + ',' + Math.round(rgb[1] * b) + ',' + Math.round(rgb[2] * b) + ')',
     })
     for (const [px, py] of FACES[v]) {
       const ring: string[] = []
@@ -230,5 +234,5 @@ export function projectDie(m: Mat3, size: number): DieFrame {
       pips += polygon(ring)
     }
   }
-  return { body, faces, pips }
+  return { faces, pips }
 }

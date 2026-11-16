@@ -1,9 +1,10 @@
 import {
-  FACE_DEFS, Mat3, Vec3, apply, cross, dot, frontFace, projectDie, restOrientation, tumbleOrientation,
+  DEFAULT_DICE_COLORS, faceRgb, FACE_DEFS, Mat3, Vec3, apply, cross, dot, frontFace, projectDie, restOrientation, tumbleOrientation,
   visibleFaces, throwOffset, axisAngle, mul,
 } from '../../features/craps/dice3d'
 
 const close = (a: number[], b: number[]) => a.forEach((v, i) => expect(v).toBeCloseTo(b[i], 9))
+const RGB = faceRgb('#faf7ee')
 const SPIN = { a1: [0.3, 0.8, 0.5] as Vec3, t1: 9, a2: [0.9, -0.2, 0.4] as Vec3, t2: 7 }
 
 describe('die geometry', () => {
@@ -25,14 +26,11 @@ describe('die geometry', () => {
 })
 
 describe('rest orientation', () => {
-  test.each([1, 2, 3, 4, 5, 6])('%i rests front-most, with two side faces visible and three hidden', v => {
+  test.each([1, 2, 3, 4, 5, 6])('%i rests square to the viewer, seen from directly above: only that face shows', v => {
     const R = restOrientation(v)
     expect(frontFace(R)).toBe(v)
-    expect(apply(R, FACE_DEFS[v].n)[2]).toBeGreaterThan(0.8)
-    const vis = visibleFaces(R)
-    expect(vis).toHaveLength(3)
-    expect(vis).toContain(v)
-    expect(vis).not.toContain(7 - v)
+    expect(apply(R, FACE_DEFS[v].n)[2]).toBeCloseTo(1, 9)
+    expect(visibleFaces(R)).toEqual([v])
   })
 })
 
@@ -57,28 +55,42 @@ describe('tumble', () => {
 describe('projection', () => {
   test('hidden faces draw nothing; the pips path holds one subpath per visible pip', () => {
     const R = restOrientation(6)
-    const frame = projectDie(R, 100)
-    const vis = visibleFaces(R)
-    for (let v = 1; v <= 6; v++) expect(frame.faces[v - 1].d === '').toBe(!vis.includes(v))
-    const pips = (frame.pips.match(/M/g) ?? []).length
-    expect(pips).toBe(vis.reduce((s, v) => s + v, 0))
-    expect(frame.body).not.toBe('')
+    const R2 = tumbleOrientation(6, 0.6, SPIN)
+    for (const m of [R, R2]) {
+      const frame = projectDie(m, 100, RGB)
+      const vis = visibleFaces(m)
+      for (let v = 1; v <= 6; v++) expect(frame.faces[v - 1].d === '').toBe(!vis.includes(v))
+      expect((frame.pips.match(/M/g) ?? []).length).toBe(vis.reduce((s, v) => s + v, 0))
+    }
   })
 
   test('every face fill is a colour Reanimated can parse, hidden faces included (never "none")', () => {
     // Reanimated runs animated `fill` through its colour parser; "none" throws "Invalid color value" on device.
     for (let v = 1; v <= 6; v++) {
-      for (const f of projectDie(tumbleOrientation(v, 0.3, SPIN), 100).faces) expect(f.fill).toMatch(/^rgba?\(/)
+      for (const f of projectDie(tumbleOrientation(v, 0.3, SPIN), 100, RGB).faces) expect(f.fill).toMatch(/^rgba?\(/)
     }
   })
 
-  test('the front face is the brightest and the drawing stays inside the box', () => {
-    const R = restOrientation(1)
-    const frame = projectDie(R, 100)
-    const lum = (fill: string) => Number(fill.match(/\d+/)![0])
-    const vis = visibleFaces(R)
-    for (const v of vis) if (v !== 1) expect(lum(frame.faces[0].fill)).toBeGreaterThan(lum(frame.faces[v - 1].fill))
-    const nums = frame.body.match(/-?\d+(\.\d+)?/g)!.map(Number)
-    for (const n of nums) expect(Math.abs(n)).toBeLessThan(100)
+  test('at rest the face is drawn in exactly the dice colour, a square of the die edge', () => {
+    const frame = projectDie(restOrientation(1), 100, faceRgb('#c0392b'))
+    expect(frame.faces[0].fill).toBe('rgb(192,57,43)')
+    const nums = frame.faces[0].d.match(/-?\d+(\.\d+)?/g)!.map(Number)
+    expect(Math.max(...nums)).toBeCloseTo(50, 0)
+    expect(Math.min(...nums)).toBeCloseTo(-50, 0)
+  })
+
+  test('mid-tumble, faces turned away from the viewer are darker shades of the dice colour', () => {
+    const m = tumbleOrientation(3, 0.4, SPIN)
+    const frame = projectDie(m, 100, faceRgb('#ffffff'))
+    for (const v of visibleFaces(m)) {
+      const [r, g, b] = frame.faces[v - 1].fill.match(/\d+/g)!.map(Number)
+      expect(r).toBe(g); expect(g).toBe(b)
+      expect(r).toBeLessThanOrEqual(255)
+    }
+  })
+
+  test('the default dice are ivory with near-black pips', () => {
+    expect(DEFAULT_DICE_COLORS).toEqual({ face: '#faf7ee', pips: '#13131f' })
+    expect(faceRgb('#faf7ee')).toEqual([250, 247, 238])
   })
 })
