@@ -646,6 +646,11 @@ describe('Payout assist', () => {
 })
 
 describe('Assist info', () => {
+  test('the ⓘ sits left of Assist, away from its on/off dot', async () => {
+    const { getAllByText } = await mount()
+    expect(getAllByText(/^(ⓘ|Assist)/).map(n => String([].concat(n.props.children)[0]))).toEqual(['ⓘ', 'Assist '])
+  })
+
   test('the ⓘ beside Assist opens the info sheet, with Assist on or off', async () => {
     const { getByTestId, queryByTestId } = await mount()
     expect(queryByTestId('assist-info')).toBeNull()

@@ -146,11 +146,12 @@ export function CrapsListView() {
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>CRAPS · {tableRules.oddsMultiple}</Text>
         <View style={styles.assistGroup}>
-          <TouchableOpacity onPress={store.toggleAssist}>
-            <Text style={[styles.assist, assistEnabled && styles.assistOn]}>Assist {assistEnabled ? '●' : '○'}</Text>
-          </TouchableOpacity>
+          {/* Left of Assist, clear of its on/off dot. */}
           <TouchableOpacity testID="assist-info-button" accessibilityLabel="What Assist shows" onPress={() => setInfoOpen(true)} hitSlop={10}>
             <Text style={styles.info}>ⓘ</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={store.toggleAssist}>
+            <Text style={[styles.assist, assistEnabled && styles.assistOn]}>Assist {assistEnabled ? '●' : '○'}</Text>
           </TouchableOpacity>
         </View>
       </View>

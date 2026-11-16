@@ -339,11 +339,12 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
         <TouchableOpacity testID="craps-more-bets" disabled={rolling !== null} onPress={() => { useCrapsStore.getState().setNotice(null); setMoreOpen(true) }} hitSlop={8}>
           <Text style={[styles.assist, rolling && styles.dimmed]}>More bets</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={toggleAssist} hitSlop={8}>
-          <Text style={[styles.assist, assistEnabled && styles.assistOn]}>Assist {assistEnabled ? '●' : '○'}</Text>
-        </TouchableOpacity>
+        {/* Left of Assist, clear of its on/off dot. */}
         <TouchableOpacity testID="assist-info-button" accessibilityLabel="What Assist shows" onPress={() => setInfoOpen(true)} hitSlop={10}>
           <Text style={styles.info}>ⓘ</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={toggleAssist} hitSlop={8}>
+          <Text style={[styles.assist, assistEnabled && styles.assistOn]}>Assist {assistEnabled ? '●' : '○'}</Text>
         </TouchableOpacity>
         <FlashingBalance testID="craps-balance" value={balanceValue} color={isNegative ? NEGATIVE : BALANCE}
           style={styles.balance}>{balance}</FlashingBalance>

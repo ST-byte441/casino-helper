@@ -32,4 +32,11 @@ describe('AssistInfo', () => {
     fireEvent.press(getByTestId('assist-info-backdrop'))
     expect(onClose).toHaveBeenCalledTimes(2)
   })
+
+  test('the card doesn’t take touches, so its text scrolls (a pressable card stole the scroll in landscape)', () => {
+    const { getByTestId } = render(<AssistInfo visible view="table" onClose={jest.fn()} />)
+    const card = getByTestId('assist-info')
+    expect(card.props.onStartShouldSetResponder).toBeUndefined()
+    expect(card.props.onClick).toBeUndefined()
+  })
 })

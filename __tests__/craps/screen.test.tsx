@@ -193,6 +193,12 @@ describe('phone portrait list balance', () => {
 })
 
 describe('phone portrait list assist info', () => {
+  test('the ⓘ sits left of Assist', () => {
+    seedTable({})
+    const { getAllByText } = render(<CrapsScreen />)
+    expect(getAllByText(/^(ⓘ|Assist)/).map(n => String([].concat(n.props.children)[0]))).toEqual(['ⓘ', 'Assist '])
+  })
+
   test('the ⓘ beside Assist opens the list version of the info sheet', () => {
     const { fireEvent } = require('@testing-library/react-native')
     seedTable({})

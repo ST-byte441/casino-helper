@@ -31,8 +31,10 @@ function Bullet({ children }: { children: React.ReactNode }) {
 export function AssistInfo({ visible, view, onClose }: Props) {
   return (
     <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
-      <Pressable testID="assist-info-backdrop" style={styles.backdrop} onPress={onClose}>
-        <Pressable testID="assist-info" style={styles.card} onPress={() => {}}>
+      <View style={styles.backdrop}>
+        {/* Behind the card, not round it: a pressable card takes the touch and its text won't scroll. */}
+        <Pressable testID="assist-info-backdrop" style={StyleSheet.absoluteFill} onPress={onClose} />
+        <View testID="assist-info" style={styles.card}>
           <ScrollView contentContainerStyle={styles.content}>
             <Text style={styles.title}>What Assist shows</Text>
             <Text style={styles.body}>
@@ -84,8 +86,8 @@ export function AssistInfo({ visible, view, onClose }: Props) {
           <TouchableOpacity testID="assist-info-close" style={styles.close} onPress={onClose}>
             <Text style={styles.closeText}>Got it</Text>
           </TouchableOpacity>
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   )
 }
