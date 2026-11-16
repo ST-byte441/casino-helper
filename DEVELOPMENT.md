@@ -20,6 +20,8 @@ npx tsc --noEmit  # type check only
 
 1613 tests cover the game engines, the shared chip helpers, strategy lookup, roulette and craps felt layouts, roulette wheel maths, screens, profile store and stats, and update utility.
 
+**Async handlers in tests:** when a press starts async work that then sets state (e.g. the picture picker's Upload), press inside `await act(async () => { fireEvent.press(…) })` and assert directly. Don't poll with `waitFor`: the update lands outside `act`, React delivers it late (~400ms alone, over `waitFor`'s 1s limit under the full suite), and the test flakes.
+
 ## Project Structure
 
 ```

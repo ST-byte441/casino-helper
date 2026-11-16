@@ -11,7 +11,7 @@ jest.mock('../../features/profile/pictures', () => {
 })
 
 import React from 'react'
-import { render, fireEvent, waitFor } from '@testing-library/react-native'
+import { render, fireEvent, act } from '@testing-library/react-native'
 import { PicturePicker } from '../../features/profile/components/PicturePicker'
 import { AddMoneyModal } from '../../features/profile/components/AddMoneyModal'
 import { PRESET_PICTURES, pickAndStoreUpload } from '../../features/profile/pictures'
@@ -32,12 +32,14 @@ test('picker saves selected preset', () => {
   expect(onSave).toHaveBeenCalledWith({ kind: 'preset', id: PRESET_PICTURES[2].id })
 })
 
+// Upload awaits the picker, then sets state. Press inside `await act(async …)` so that update lands inside act: left
+// to waitFor, React delivered it ~400ms late alone and over waitFor's 1s limit under the full suite (a flaky test).
 test('picker upload failure keeps picker usable', async () => {
   ;(pickAndStoreUpload as jest.Mock).mockRejectedValueOnce(new Error('copy failed'))
   const onSave = jest.fn()
   const { getByText } = render(<PicturePicker visible current={undefined} onClose={jest.fn()} onSave={onSave} />)
-  fireEvent.press(getByText('Upload'))
-  await waitFor(() => getByText('Could not save that photo'))
+  await act(async () => { fireEvent.press(getByText('Upload')) })
+  expect(getByText('Could not save that photo')).toBeTruthy()
   expect(onSave).not.toHaveBeenCalled()
 })
 
@@ -45,10 +47,10 @@ test('picker upload selects uploaded uri', async () => {
   ;(pickAndStoreUpload as jest.Mock).mockResolvedValueOnce('file:///a.jpg')
   const onSave = jest.fn()
   const { getByText, queryByText } = render(<PicturePicker visible current={undefined} onClose={jest.fn()} onSave={onSave} />)
-  fireEvent.press(getByText('Upload'))
-  await waitFor(() => expect(queryByText('Upload')).toBeNull())
+  await act(async () => { fireEvent.press(getByText('Upload')) })
+  expect(queryByText('Upload')).toBeNull()
   fireEvent.press(getByText('Save'))
-  await waitFor(() => expect(onSave).toHaveBeenCalledWith({ kind: 'upload', uri: 'file:///a.jpg' }))
+  expect(onSave).toHaveBeenCalledWith({ kind: 'upload', uri: 'file:///a.jpg' })
 })
 
 test('add money button disabled until valid', () => {
