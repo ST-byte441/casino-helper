@@ -18,7 +18,7 @@ npx jest <path>   # single file
 npx tsc --noEmit  # type check only
 ```
 
-1597 tests cover the game engines, the shared chip helpers, strategy lookup, roulette and craps felt layouts, roulette wheel maths, screens, profile store and stats, and update utility.
+1601 tests cover the game engines, the shared chip helpers, strategy lookup, roulette and craps felt layouts, roulette wheel maths, screens, profile store and stats, and update utility.
 
 ## Project Structure
 
@@ -96,6 +96,7 @@ lib/
 components/
   Text.tsx        # Text/TextInput wrappers that cap font scaling at 1.3x; import these, not react-native's
   UpdateModal.tsx # In-app update prompt modal
+  BackButton.tsx  # The header back button on every screen: a drawn SVG arrow (not the left-arrow character, which Roboto lacks, so Android drew it from a fallback font, low) sized from the label's font size and the system font scale (capped at 1.3x), centred on "Back" and moved by CAP_MIDDLE_OFFSET (measured from Roboto's metrics) so its middle is on the middle of the "B". A guard test fails if any screen draws the left-arrow character
   InfoSheet.tsx   # InfoSheet (scrolling info pop-up; the backdrop sits behind the card so the text scrolls), InfoButton (the ⓘ, placed left of a toggle), Bullet, infoStyles; used by craps and blackjack AssistInfo
   FlashingBalance.tsx # Balance text that flashes green when its value rises, red when it drops (0.5s, `FLASH_MS`); used by every game's balance
   chips/          # Shared chip table: chips.ts (colours, sizes, drag lift), ChipFace, DragHandle (drag/tap race), ChipTray (row or column), useChipTable (origins, ghost, highlight/flash, board tap); used by roulette and the craps table. `chipSize` (default CHIP_SIZE 44) scales the tray, the ghost and the drag lift (`dragLift(size)`); roulette uses the default

@@ -4,6 +4,7 @@ import { GestureDetector } from 'react-native-gesture-handler'
 import Animated from 'react-native-reanimated'
 import { useRouter } from 'expo-router'
 import { Text } from '../../../../components/Text'
+import { BackButton } from '../../../../components/BackButton'
 import { ChipFace } from '../../../../components/chips/ChipFace'
 import { ChipTray } from '../../../../components/chips/ChipTray'
 import { DragHandle } from '../../../../components/chips/DragHandle'
@@ -331,9 +332,7 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
   return (
     <View ref={rootRef} style={styles.root} onLayout={onRootLayout}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
-          <Text style={styles.back}>← Back</Text>
-        </TouchableOpacity>
+        <BackButton onPress={() => router.back()} style={styles.back} hitSlop={8} />
         <Text style={styles.title} numberOfLines={1}>CRAPS · {tableRules.oddsMultiple}</Text>
         {/* In landscape the reason line lives in the slim header so the felt keeps its height. */}
         {portrait ? <View style={styles.spacer} /> : reason}

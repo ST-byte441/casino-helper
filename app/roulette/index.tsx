@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { View, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native'
 import { Text } from '../../components/Text'
+import { BackButton } from '../../components/BackButton'
 import { FlashingBalance } from '../../components/FlashingBalance'
 import { shownBalanceFor } from '../../lib/bankroll'
 import { totalStake } from '../../features/roulette/engine'
@@ -71,9 +72,7 @@ export default function RouletteScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.back}>← Back</Text>
-        </TouchableOpacity>
+        <BackButton onPress={() => router.back()} style={styles.back} />
         <Text style={styles.pill}>{pill}</Text>
         <FlashingBalance testID="balance" value={shown} color={isNegative ? NEGATIVE : BALANCE} style={styles.balance}>
           {balance}

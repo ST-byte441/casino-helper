@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react'
 import { View, ScrollView, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native'
 import { Text } from '../../../../components/Text'
+import { BackButton } from '../../../../components/BackButton'
 import { FlashingBalance } from '../../../../components/FlashingBalance'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
@@ -142,9 +143,7 @@ export function CrapsListView() {
   return (
     <SafeAreaView style={styles.root}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.back}>← Back</Text>
-        </TouchableOpacity>
+        <BackButton onPress={() => router.back()} style={styles.back} />
         <Text style={styles.headerTitle} numberOfLines={1}>CRAPS · {tableRules.oddsMultiple}</Text>
         <View style={styles.assistGroup}>
           {/* Left of Assist, clear of its on/off dot. */}

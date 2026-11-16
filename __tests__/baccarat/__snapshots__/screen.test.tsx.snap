@@ -66,10 +66,86 @@ exports[`phone layout (must not change) betting, $15 on Player 1`] = `
         onStartShouldSetResponder={[Function]}
         style={
           {
+            "alignItems": "center",
+            "flexDirection": "row",
+            "gap": 4.05,
             "opacity": 1,
           }
         }
       >
+        <RNSVGSvgView
+          align="xMidYMid"
+          bbHeight={9.3}
+          bbWidth={12}
+          focusable={false}
+          height={9.3}
+          meetOrSlice={0}
+          minX={0}
+          minY={0}
+          style={
+            [
+              {
+                "backgroundColor": "transparent",
+                "borderWidth": 0,
+              },
+              {
+                "transform": [
+                  {
+                    "translateY": -0.21,
+                  },
+                ],
+              },
+              {
+                "flex": 0,
+                "height": 9,
+                "width": 12,
+              },
+            ]
+          }
+          testID="back-arrow"
+          transform={
+            [
+              {
+                "translateY": -0.21,
+              },
+            ]
+          }
+          vbHeight={9.3}
+          vbWidth={12}
+          width={12}
+        >
+          <RNSVGGroup
+            fill={
+              {
+                "payload": 4278190080,
+                "type": 0,
+              }
+            }
+          >
+            <RNSVGPath
+              d="M11.32 4.65 H0.68 M5.33 0.68 L0.68 4.65 L5.33 8.62"
+              fill={null}
+              propList={
+                [
+                  "fill",
+                  "stroke",
+                  "strokeWidth",
+                  "strokeLinecap",
+                  "strokeLinejoin",
+                ]
+              }
+              stroke={
+                {
+                  "payload": 4289374890,
+                  "type": 0,
+                }
+              }
+              strokeLinecap={1}
+              strokeLinejoin={1}
+              strokeWidth={1.35}
+            />
+          </RNSVGGroup>
+        </RNSVGSvgView>
         <Text
           maxFontSizeMultiplier={1.3}
           style={
@@ -79,7 +155,7 @@ exports[`phone layout (must not change) betting, $15 on Player 1`] = `
             }
           }
         >
-          ← Back
+          Back
         </Text>
       </View>
       <Text
@@ -1277,10 +1353,86 @@ exports[`phone layout (must not change) betting, empty 1`] = `
         onStartShouldSetResponder={[Function]}
         style={
           {
+            "alignItems": "center",
+            "flexDirection": "row",
+            "gap": 4.05,
             "opacity": 1,
           }
         }
       >
+        <RNSVGSvgView
+          align="xMidYMid"
+          bbHeight={9.3}
+          bbWidth={12}
+          focusable={false}
+          height={9.3}
+          meetOrSlice={0}
+          minX={0}
+          minY={0}
+          style={
+            [
+              {
+                "backgroundColor": "transparent",
+                "borderWidth": 0,
+              },
+              {
+                "transform": [
+                  {
+                    "translateY": -0.21,
+                  },
+                ],
+              },
+              {
+                "flex": 0,
+                "height": 9,
+                "width": 12,
+              },
+            ]
+          }
+          testID="back-arrow"
+          transform={
+            [
+              {
+                "translateY": -0.21,
+              },
+            ]
+          }
+          vbHeight={9.3}
+          vbWidth={12}
+          width={12}
+        >
+          <RNSVGGroup
+            fill={
+              {
+                "payload": 4278190080,
+                "type": 0,
+              }
+            }
+          >
+            <RNSVGPath
+              d="M11.32 4.65 H0.68 M5.33 0.68 L0.68 4.65 L5.33 8.62"
+              fill={null}
+              propList={
+                [
+                  "fill",
+                  "stroke",
+                  "strokeWidth",
+                  "strokeLinecap",
+                  "strokeLinejoin",
+                ]
+              }
+              stroke={
+                {
+                  "payload": 4289374890,
+                  "type": 0,
+                }
+              }
+              strokeLinecap={1}
+              strokeLinejoin={1}
+              strokeWidth={1.35}
+            />
+          </RNSVGGroup>
+        </RNSVGSvgView>
         <Text
           maxFontSizeMultiplier={1.3}
           style={
@@ -1290,7 +1442,7 @@ exports[`phone layout (must not change) betting, empty 1`] = `
             }
           }
         >
-          ← Back
+          Back
         </Text>
       </View>
       <Text
@@ -2436,10 +2588,86 @@ exports[`phone layout (must not change) compact 320×700, betting 1`] = `
         onStartShouldSetResponder={[Function]}
         style={
           {
+            "alignItems": "center",
+            "flexDirection": "row",
+            "gap": 4.05,
             "opacity": 1,
           }
         }
       >
+        <RNSVGSvgView
+          align="xMidYMid"
+          bbHeight={9.3}
+          bbWidth={12}
+          focusable={false}
+          height={9.3}
+          meetOrSlice={0}
+          minX={0}
+          minY={0}
+          style={
+            [
+              {
+                "backgroundColor": "transparent",
+                "borderWidth": 0,
+              },
+              {
+                "transform": [
+                  {
+                    "translateY": -0.21,
+                  },
+                ],
+              },
+              {
+                "flex": 0,
+                "height": 9,
+                "width": 12,
+              },
+            ]
+          }
+          testID="back-arrow"
+          transform={
+            [
+              {
+                "translateY": -0.21,
+              },
+            ]
+          }
+          vbHeight={9.3}
+          vbWidth={12}
+          width={12}
+        >
+          <RNSVGGroup
+            fill={
+              {
+                "payload": 4278190080,
+                "type": 0,
+              }
+            }
+          >
+            <RNSVGPath
+              d="M11.32 4.65 H0.68 M5.33 0.68 L0.68 4.65 L5.33 8.62"
+              fill={null}
+              propList={
+                [
+                  "fill",
+                  "stroke",
+                  "strokeWidth",
+                  "strokeLinecap",
+                  "strokeLinejoin",
+                ]
+              }
+              stroke={
+                {
+                  "payload": 4289374890,
+                  "type": 0,
+                }
+              }
+              strokeLinecap={1}
+              strokeLinejoin={1}
+              strokeWidth={1.35}
+            />
+          </RNSVGGroup>
+        </RNSVGSvgView>
         <Text
           maxFontSizeMultiplier={1.3}
           style={
@@ -2449,7 +2677,7 @@ exports[`phone layout (must not change) compact 320×700, betting 1`] = `
             }
           }
         >
-          ← Back
+          Back
         </Text>
       </View>
       <Text
@@ -3595,10 +3823,86 @@ exports[`phone layout (must not change) flip, first card 1`] = `
         onStartShouldSetResponder={[Function]}
         style={
           {
+            "alignItems": "center",
+            "flexDirection": "row",
+            "gap": 4.05,
             "opacity": 1,
           }
         }
       >
+        <RNSVGSvgView
+          align="xMidYMid"
+          bbHeight={9.3}
+          bbWidth={12}
+          focusable={false}
+          height={9.3}
+          meetOrSlice={0}
+          minX={0}
+          minY={0}
+          style={
+            [
+              {
+                "backgroundColor": "transparent",
+                "borderWidth": 0,
+              },
+              {
+                "transform": [
+                  {
+                    "translateY": -0.21,
+                  },
+                ],
+              },
+              {
+                "flex": 0,
+                "height": 9,
+                "width": 12,
+              },
+            ]
+          }
+          testID="back-arrow"
+          transform={
+            [
+              {
+                "translateY": -0.21,
+              },
+            ]
+          }
+          vbHeight={9.3}
+          vbWidth={12}
+          width={12}
+        >
+          <RNSVGGroup
+            fill={
+              {
+                "payload": 4278190080,
+                "type": 0,
+              }
+            }
+          >
+            <RNSVGPath
+              d="M11.32 4.65 H0.68 M5.33 0.68 L0.68 4.65 L5.33 8.62"
+              fill={null}
+              propList={
+                [
+                  "fill",
+                  "stroke",
+                  "strokeWidth",
+                  "strokeLinecap",
+                  "strokeLinejoin",
+                ]
+              }
+              stroke={
+                {
+                  "payload": 4289374890,
+                  "type": 0,
+                }
+              }
+              strokeLinecap={1}
+              strokeLinejoin={1}
+              strokeWidth={1.35}
+            />
+          </RNSVGGroup>
+        </RNSVGSvgView>
         <Text
           maxFontSizeMultiplier={1.3}
           style={
@@ -3608,7 +3912,7 @@ exports[`phone layout (must not change) flip, first card 1`] = `
             }
           }
         >
-          ← Back
+          Back
         </Text>
       </View>
       <Text
@@ -4153,10 +4457,86 @@ exports[`phone layout (must not change) result, three cards each 1`] = `
         onStartShouldSetResponder={[Function]}
         style={
           {
+            "alignItems": "center",
+            "flexDirection": "row",
+            "gap": 4.05,
             "opacity": 1,
           }
         }
       >
+        <RNSVGSvgView
+          align="xMidYMid"
+          bbHeight={9.3}
+          bbWidth={12}
+          focusable={false}
+          height={9.3}
+          meetOrSlice={0}
+          minX={0}
+          minY={0}
+          style={
+            [
+              {
+                "backgroundColor": "transparent",
+                "borderWidth": 0,
+              },
+              {
+                "transform": [
+                  {
+                    "translateY": -0.21,
+                  },
+                ],
+              },
+              {
+                "flex": 0,
+                "height": 9,
+                "width": 12,
+              },
+            ]
+          }
+          testID="back-arrow"
+          transform={
+            [
+              {
+                "translateY": -0.21,
+              },
+            ]
+          }
+          vbHeight={9.3}
+          vbWidth={12}
+          width={12}
+        >
+          <RNSVGGroup
+            fill={
+              {
+                "payload": 4278190080,
+                "type": 0,
+              }
+            }
+          >
+            <RNSVGPath
+              d="M11.32 4.65 H0.68 M5.33 0.68 L0.68 4.65 L5.33 8.62"
+              fill={null}
+              propList={
+                [
+                  "fill",
+                  "stroke",
+                  "strokeWidth",
+                  "strokeLinecap",
+                  "strokeLinejoin",
+                ]
+              }
+              stroke={
+                {
+                  "payload": 4289374890,
+                  "type": 0,
+                }
+              }
+              strokeLinecap={1}
+              strokeLinejoin={1}
+              strokeWidth={1.35}
+            />
+          </RNSVGGroup>
+        </RNSVGSvgView>
         <Text
           maxFontSizeMultiplier={1.3}
           style={
@@ -4166,7 +4546,7 @@ exports[`phone layout (must not change) result, three cards each 1`] = `
             }
           }
         >
-          ← Back
+          Back
         </Text>
       </View>
       <Text
@@ -4910,10 +5290,86 @@ exports[`phone layout (must not change) squeeze, first card 1`] = `
         onStartShouldSetResponder={[Function]}
         style={
           {
+            "alignItems": "center",
+            "flexDirection": "row",
+            "gap": 4.05,
             "opacity": 1,
           }
         }
       >
+        <RNSVGSvgView
+          align="xMidYMid"
+          bbHeight={9.3}
+          bbWidth={12}
+          focusable={false}
+          height={9.3}
+          meetOrSlice={0}
+          minX={0}
+          minY={0}
+          style={
+            [
+              {
+                "backgroundColor": "transparent",
+                "borderWidth": 0,
+              },
+              {
+                "transform": [
+                  {
+                    "translateY": -0.21,
+                  },
+                ],
+              },
+              {
+                "flex": 0,
+                "height": 9,
+                "width": 12,
+              },
+            ]
+          }
+          testID="back-arrow"
+          transform={
+            [
+              {
+                "translateY": -0.21,
+              },
+            ]
+          }
+          vbHeight={9.3}
+          vbWidth={12}
+          width={12}
+        >
+          <RNSVGGroup
+            fill={
+              {
+                "payload": 4278190080,
+                "type": 0,
+              }
+            }
+          >
+            <RNSVGPath
+              d="M11.32 4.65 H0.68 M5.33 0.68 L0.68 4.65 L5.33 8.62"
+              fill={null}
+              propList={
+                [
+                  "fill",
+                  "stroke",
+                  "strokeWidth",
+                  "strokeLinecap",
+                  "strokeLinejoin",
+                ]
+              }
+              stroke={
+                {
+                  "payload": 4289374890,
+                  "type": 0,
+                }
+              }
+              strokeLinecap={1}
+              strokeLinejoin={1}
+              strokeWidth={1.35}
+            />
+          </RNSVGGroup>
+        </RNSVGSvgView>
         <Text
           maxFontSizeMultiplier={1.3}
           style={
@@ -4923,7 +5379,7 @@ exports[`phone layout (must not change) squeeze, first card 1`] = `
             }
           }
         >
-          ← Back
+          Back
         </Text>
       </View>
       <Text

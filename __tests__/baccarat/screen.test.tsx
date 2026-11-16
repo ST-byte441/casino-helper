@@ -219,7 +219,7 @@ describe('large portrait', () => {
     useBaccaratStore.getState().newHand()
     const { getByText } = render(<BaccaratScreen />)
     expect(flat(getByText('BACCARAT').props.style).fontSize).toBe(20)
-    expect(flat(getByText('← Back').props.style).fontSize).toBe(20)
+    expect(flat(getByText('Back').props.style).fontSize).toBe(20)
   })
 })
 

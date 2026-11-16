@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { View, TouchableOpacity, ScrollView, Modal, StyleSheet } from 'react-native'
 import { Text } from '../../components/Text'
+import { BackButton } from '../../components/BackButton'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Value, Card as CardType, TableRules, SoftSeven, SurrenderMode } from '../../lib/types'
@@ -98,10 +99,7 @@ export default function BlackjackSandboxScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={styles.backArrow}>←</Text>
-          <Text style={styles.backText}>Back</Text>
-        </TouchableOpacity>
+        <BackButton onPress={() => router.back()} style={styles.backText} />
         <Text style={styles.title} numberOfLines={1}>Blackjack Sandbox</Text>
         <TouchableOpacity onPress={() => setRulesOpen(true)}>
           <Text style={styles.gearIcon}>⚙️</Text>
@@ -191,8 +189,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#13131f' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     padding: 12, backgroundColor: '#0a4a24' },
-  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  backArrow: { color: '#fff', fontSize: 15, transform: [{ translateY: -1 }] },
   backText: { color: '#fff', fontSize: 15 },
   title: { color: '#fff', fontSize: 16, fontWeight: '700', flexShrink: 1, marginHorizontal: 8 },
   gearIcon: { fontSize: 22, padding: 8 },

@@ -60,27 +60,84 @@ exports[`phone layout is pinned compact 320x700 playing 1`] = `
         {
           "alignItems": "center",
           "flexDirection": "row",
-          "gap": 4,
+          "gap": 4.05,
           "opacity": 1,
         }
       }
     >
-      <Text
-        maxFontSizeMultiplier={1.3}
+      <RNSVGSvgView
+        align="xMidYMid"
+        bbHeight={9.3}
+        bbWidth={12}
+        focusable={false}
+        height={9.3}
+        meetOrSlice={0}
+        minX={0}
+        minY={0}
         style={
-          {
-            "color": "#fff",
-            "fontSize": 15,
-            "transform": [
-              {
-                "translateY": -1,
-              },
-            ],
-          }
+          [
+            {
+              "backgroundColor": "transparent",
+              "borderWidth": 0,
+            },
+            {
+              "transform": [
+                {
+                  "translateY": -0.21,
+                },
+              ],
+            },
+            {
+              "flex": 0,
+              "height": 9,
+              "width": 12,
+            },
+          ]
         }
+        testID="back-arrow"
+        transform={
+          [
+            {
+              "translateY": -0.21,
+            },
+          ]
+        }
+        vbHeight={9.3}
+        vbWidth={12}
+        width={12}
       >
-        ←
-      </Text>
+        <RNSVGGroup
+          fill={
+            {
+              "payload": 4278190080,
+              "type": 0,
+            }
+          }
+        >
+          <RNSVGPath
+            d="M11.32 4.65 H0.68 M5.33 0.68 L0.68 4.65 L5.33 8.62"
+            fill={null}
+            propList={
+              [
+                "fill",
+                "stroke",
+                "strokeWidth",
+                "strokeLinecap",
+                "strokeLinejoin",
+              ]
+            }
+            stroke={
+              {
+                "payload": 4294967295,
+                "type": 0,
+              }
+            }
+            strokeLinecap={1}
+            strokeLinejoin={1}
+            strokeWidth={1.35}
+          />
+        </RNSVGGroup>
+      </RNSVGSvgView>
       <Text
         maxFontSizeMultiplier={1.3}
         style={
@@ -939,27 +996,84 @@ exports[`phone layout is pinned phone betting 1`] = `
         {
           "alignItems": "center",
           "flexDirection": "row",
-          "gap": 4,
+          "gap": 4.05,
           "opacity": 1,
         }
       }
     >
-      <Text
-        maxFontSizeMultiplier={1.3}
+      <RNSVGSvgView
+        align="xMidYMid"
+        bbHeight={9.3}
+        bbWidth={12}
+        focusable={false}
+        height={9.3}
+        meetOrSlice={0}
+        minX={0}
+        minY={0}
         style={
-          {
-            "color": "#fff",
-            "fontSize": 15,
-            "transform": [
-              {
-                "translateY": -1,
-              },
-            ],
-          }
+          [
+            {
+              "backgroundColor": "transparent",
+              "borderWidth": 0,
+            },
+            {
+              "transform": [
+                {
+                  "translateY": -0.21,
+                },
+              ],
+            },
+            {
+              "flex": 0,
+              "height": 9,
+              "width": 12,
+            },
+          ]
         }
+        testID="back-arrow"
+        transform={
+          [
+            {
+              "translateY": -0.21,
+            },
+          ]
+        }
+        vbHeight={9.3}
+        vbWidth={12}
+        width={12}
       >
-        ←
-      </Text>
+        <RNSVGGroup
+          fill={
+            {
+              "payload": 4278190080,
+              "type": 0,
+            }
+          }
+        >
+          <RNSVGPath
+            d="M11.32 4.65 H0.68 M5.33 0.68 L0.68 4.65 L5.33 8.62"
+            fill={null}
+            propList={
+              [
+                "fill",
+                "stroke",
+                "strokeWidth",
+                "strokeLinecap",
+                "strokeLinejoin",
+              ]
+            }
+            stroke={
+              {
+                "payload": 4294967295,
+                "type": 0,
+              }
+            }
+            strokeLinecap={1}
+            strokeLinejoin={1}
+            strokeWidth={1.35}
+          />
+        </RNSVGGroup>
+      </RNSVGSvgView>
       <Text
         maxFontSizeMultiplier={1.3}
         style={
@@ -1645,27 +1759,84 @@ exports[`phone layout is pinned phone dealer phase 1`] = `
         {
           "alignItems": "center",
           "flexDirection": "row",
-          "gap": 4,
+          "gap": 4.05,
           "opacity": 1,
         }
       }
     >
-      <Text
-        maxFontSizeMultiplier={1.3}
+      <RNSVGSvgView
+        align="xMidYMid"
+        bbHeight={9.3}
+        bbWidth={12}
+        focusable={false}
+        height={9.3}
+        meetOrSlice={0}
+        minX={0}
+        minY={0}
         style={
-          {
-            "color": "#fff",
-            "fontSize": 15,
-            "transform": [
-              {
-                "translateY": -1,
-              },
-            ],
-          }
+          [
+            {
+              "backgroundColor": "transparent",
+              "borderWidth": 0,
+            },
+            {
+              "transform": [
+                {
+                  "translateY": -0.21,
+                },
+              ],
+            },
+            {
+              "flex": 0,
+              "height": 9,
+              "width": 12,
+            },
+          ]
         }
+        testID="back-arrow"
+        transform={
+          [
+            {
+              "translateY": -0.21,
+            },
+          ]
+        }
+        vbHeight={9.3}
+        vbWidth={12}
+        width={12}
       >
-        ←
-      </Text>
+        <RNSVGGroup
+          fill={
+            {
+              "payload": 4278190080,
+              "type": 0,
+            }
+          }
+        >
+          <RNSVGPath
+            d="M11.32 4.65 H0.68 M5.33 0.68 L0.68 4.65 L5.33 8.62"
+            fill={null}
+            propList={
+              [
+                "fill",
+                "stroke",
+                "strokeWidth",
+                "strokeLinecap",
+                "strokeLinejoin",
+              ]
+            }
+            stroke={
+              {
+                "payload": 4294967295,
+                "type": 0,
+              }
+            }
+            strokeLinecap={1}
+            strokeLinejoin={1}
+            strokeWidth={1.35}
+          />
+        </RNSVGGroup>
+      </RNSVGSvgView>
       <Text
         maxFontSizeMultiplier={1.3}
         style={
@@ -2254,27 +2425,84 @@ exports[`phone layout is pinned phone playing 1`] = `
         {
           "alignItems": "center",
           "flexDirection": "row",
-          "gap": 4,
+          "gap": 4.05,
           "opacity": 1,
         }
       }
     >
-      <Text
-        maxFontSizeMultiplier={1.3}
+      <RNSVGSvgView
+        align="xMidYMid"
+        bbHeight={9.3}
+        bbWidth={12}
+        focusable={false}
+        height={9.3}
+        meetOrSlice={0}
+        minX={0}
+        minY={0}
         style={
-          {
-            "color": "#fff",
-            "fontSize": 15,
-            "transform": [
-              {
-                "translateY": -1,
-              },
-            ],
-          }
+          [
+            {
+              "backgroundColor": "transparent",
+              "borderWidth": 0,
+            },
+            {
+              "transform": [
+                {
+                  "translateY": -0.21,
+                },
+              ],
+            },
+            {
+              "flex": 0,
+              "height": 9,
+              "width": 12,
+            },
+          ]
         }
+        testID="back-arrow"
+        transform={
+          [
+            {
+              "translateY": -0.21,
+            },
+          ]
+        }
+        vbHeight={9.3}
+        vbWidth={12}
+        width={12}
       >
-        ←
-      </Text>
+        <RNSVGGroup
+          fill={
+            {
+              "payload": 4278190080,
+              "type": 0,
+            }
+          }
+        >
+          <RNSVGPath
+            d="M11.32 4.65 H0.68 M5.33 0.68 L0.68 4.65 L5.33 8.62"
+            fill={null}
+            propList={
+              [
+                "fill",
+                "stroke",
+                "strokeWidth",
+                "strokeLinecap",
+                "strokeLinejoin",
+              ]
+            }
+            stroke={
+              {
+                "payload": 4294967295,
+                "type": 0,
+              }
+            }
+            strokeLinecap={1}
+            strokeLinejoin={1}
+            strokeWidth={1.35}
+          />
+        </RNSVGGroup>
+      </RNSVGSvgView>
       <Text
         maxFontSizeMultiplier={1.3}
         style={
@@ -3133,27 +3361,84 @@ exports[`phone layout is pinned phone playing split 1`] = `
         {
           "alignItems": "center",
           "flexDirection": "row",
-          "gap": 4,
+          "gap": 4.05,
           "opacity": 1,
         }
       }
     >
-      <Text
-        maxFontSizeMultiplier={1.3}
+      <RNSVGSvgView
+        align="xMidYMid"
+        bbHeight={9.3}
+        bbWidth={12}
+        focusable={false}
+        height={9.3}
+        meetOrSlice={0}
+        minX={0}
+        minY={0}
         style={
-          {
-            "color": "#fff",
-            "fontSize": 15,
-            "transform": [
-              {
-                "translateY": -1,
-              },
-            ],
-          }
+          [
+            {
+              "backgroundColor": "transparent",
+              "borderWidth": 0,
+            },
+            {
+              "transform": [
+                {
+                  "translateY": -0.21,
+                },
+              ],
+            },
+            {
+              "flex": 0,
+              "height": 9,
+              "width": 12,
+            },
+          ]
         }
+        testID="back-arrow"
+        transform={
+          [
+            {
+              "translateY": -0.21,
+            },
+          ]
+        }
+        vbHeight={9.3}
+        vbWidth={12}
+        width={12}
       >
-        ←
-      </Text>
+        <RNSVGGroup
+          fill={
+            {
+              "payload": 4278190080,
+              "type": 0,
+            }
+          }
+        >
+          <RNSVGPath
+            d="M11.32 4.65 H0.68 M5.33 0.68 L0.68 4.65 L5.33 8.62"
+            fill={null}
+            propList={
+              [
+                "fill",
+                "stroke",
+                "strokeWidth",
+                "strokeLinecap",
+                "strokeLinejoin",
+              ]
+            }
+            stroke={
+              {
+                "payload": 4294967295,
+                "type": 0,
+              }
+            }
+            strokeLinecap={1}
+            strokeLinejoin={1}
+            strokeWidth={1.35}
+          />
+        </RNSVGGroup>
+      </RNSVGSvgView>
       <Text
         maxFontSizeMultiplier={1.3}
         style={
@@ -4340,27 +4625,84 @@ exports[`phone layout is pinned phone result 1`] = `
         {
           "alignItems": "center",
           "flexDirection": "row",
-          "gap": 4,
+          "gap": 4.05,
           "opacity": 1,
         }
       }
     >
-      <Text
-        maxFontSizeMultiplier={1.3}
+      <RNSVGSvgView
+        align="xMidYMid"
+        bbHeight={9.3}
+        bbWidth={12}
+        focusable={false}
+        height={9.3}
+        meetOrSlice={0}
+        minX={0}
+        minY={0}
         style={
-          {
-            "color": "#fff",
-            "fontSize": 15,
-            "transform": [
-              {
-                "translateY": -1,
-              },
-            ],
-          }
+          [
+            {
+              "backgroundColor": "transparent",
+              "borderWidth": 0,
+            },
+            {
+              "transform": [
+                {
+                  "translateY": -0.21,
+                },
+              ],
+            },
+            {
+              "flex": 0,
+              "height": 9,
+              "width": 12,
+            },
+          ]
         }
+        testID="back-arrow"
+        transform={
+          [
+            {
+              "translateY": -0.21,
+            },
+          ]
+        }
+        vbHeight={9.3}
+        vbWidth={12}
+        width={12}
       >
-        ←
-      </Text>
+        <RNSVGGroup
+          fill={
+            {
+              "payload": 4278190080,
+              "type": 0,
+            }
+          }
+        >
+          <RNSVGPath
+            d="M11.32 4.65 H0.68 M5.33 0.68 L0.68 4.65 L5.33 8.62"
+            fill={null}
+            propList={
+              [
+                "fill",
+                "stroke",
+                "strokeWidth",
+                "strokeLinecap",
+                "strokeLinejoin",
+              ]
+            }
+            stroke={
+              {
+                "payload": 4294967295,
+                "type": 0,
+              }
+            }
+            strokeLinecap={1}
+            strokeLinejoin={1}
+            strokeWidth={1.35}
+          />
+        </RNSVGGroup>
+      </RNSVGSvgView>
       <Text
         maxFontSizeMultiplier={1.3}
         style={

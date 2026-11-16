@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { View, TouchableOpacity, ScrollView, StyleSheet } from 'react-native'
 import { Text } from '../../components/Text'
+import { BackButton } from '../../components/BackButton'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Card as CardType, Value, BaccaratBet } from '../../lib/types'
@@ -114,9 +115,7 @@ export default function BaccaratSandbox() {
   return (
     <SafeAreaView style={styles.root}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.back}>← Back</Text>
-        </TouchableOpacity>
+        <BackButton onPress={() => router.back()} style={styles.back} />
         <Text style={styles.title} numberOfLines={1}>Baccarat Sandbox</Text>
         <TouchableOpacity onPress={reset}>
           <Text style={styles.resetBtn}>Reset</Text>
