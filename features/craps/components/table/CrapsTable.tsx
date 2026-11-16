@@ -225,6 +225,15 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
       if (rollingRef.current) return
       const s = useCrapsStore.getState()
       const t = targetAt(x, y)
+      // A tap on the More bets strip (not on a stack in it) opens the More bets panel.
+      if (!t || t.kind === 'spot') {
+        const m = layout?.moreRect
+        if (m && x >= m.x && x <= m.x + m.w && y >= m.y && y <= m.y + m.h) {
+          s.setNotice(null)
+          setMoreOpen(true)
+          return
+        }
+      }
       if (!t) return
       if (s.selectedChip === null) {
         if (t.kind === 'stack') { s.setNotice(null); setMenuBet(t.bet); onStackMenu?.(t.bet) }
@@ -348,9 +357,6 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
         <Text style={styles.title} numberOfLines={1}>CRAPS · {tableRules.oddsMultiple}</Text>
         {/* In landscape the reason line lives in the slim header so the felt keeps its height. */}
         {portrait ? <View style={styles.spacer} /> : reason}
-        <TouchableOpacity testID="craps-more-bets" disabled={rolling !== null} onPress={() => { useCrapsStore.getState().setNotice(null); setMoreOpen(true) }} hitSlop={8}>
-          <Text style={[styles.assist, rolling && styles.dimmed]}>More bets</Text>
-        </TouchableOpacity>
         {/* Left of Assist, clear of its on/off dot. */}
         <InfoButton testID="assist-info-button" label="How to play and what Assist shows" onPress={() => setInfoOpen(true)} style={styles.info} />
         <TouchableOpacity onPress={toggleAssist} hitSlop={8}>

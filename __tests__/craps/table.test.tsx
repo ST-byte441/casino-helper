@@ -88,6 +88,8 @@ async function drag(id: string, p: { x: number; y: number }) {
 }
 
 const anchor = (key: SpotKey) => L.anchors[key]
+/** The More bets strip's bottom-left corner: clear of the stacks drawn along its middle. */
+const strip = { x: L.moreRect.x + 4, y: L.moreRect.y + L.moreRect.h - 4 }
 const stackAt = (id: string) => feltStacks(L, store().bets, store().point).find(s => s.key === id)!.at
 
 describe('CrapsTable taps', () => {
@@ -315,10 +317,10 @@ describe('CrapsTable chrome', () => {
     expect(utils.queryByTestId('puck-on')).toBeTruthy()
   })
 
-  test('no chips go down while the dice roll, and More bets is disabled', async () => {
+  test('no chips go down while the dice roll, and the More bets strip does not open', async () => {
     seed({ bets: [bet('pass', 5), bet('place', 6, { number: 6, working: false })] })
     jest.spyOn(Math, 'random').mockReturnValueOnce(2.5 / 6).mockReturnValueOnce(3.5 / 6)
-    const { getByText, getByTestId } = await mount({ onRoll: () => store().roll() })
+    const { getByText, getByTestId, queryByTestId } = await mount({ onRoll: () => store().roll() })
     fireEvent.press(getByText('ROLL'))
     expect(getByTestId('craps-roll-overlay')).toBeTruthy()
     const before = store().bets
@@ -326,7 +328,8 @@ describe('CrapsTable chrome', () => {
     await tap('tap-chip-5')
     await tap('tap-board', anchor('field'))
     expect(store().bets).toEqual(before)
-    expect(getByTestId('craps-more-bets')).toBeDisabled()
+    await tap('tap-board', strip)
+    expect(queryByTestId('more-bets-sheet')).toBeNull()
   })
 
   test('a ROLL the store refuses starts no overlay and replays no old roll', async () => {
@@ -486,9 +489,35 @@ describe('Stack menu', () => {
 describe('More bets sheet', () => {
   async function openSheet() {
     const utils = await mount()
-    fireEvent.press(utils.getByTestId('craps-more-bets'))
+    await tap('tap-board', strip)
     return utils
   }
+
+  test('the header has no More bets button; tapping the strip opens the sheet', async () => {
+    const utils = await mount()
+    expect(utils.queryByTestId('craps-more-bets')).toBeNull()
+    expect(utils.queryByTestId('more-bets-sheet')).toBeNull()
+    await tap('tap-board', strip)
+    expect(utils.getByTestId('more-bets-sheet')).toBeTruthy()
+  })
+
+  test('the strip opens the sheet with a chip selected, and places no chip', async () => {
+    useCrapsStore.setState({ selectedChip: 5 })
+    const utils = await mount()
+    await tap('tap-board', strip)
+    expect(utils.getByTestId('more-bets-sheet')).toBeTruthy()
+    expect(store().bets).toEqual([])
+  })
+
+  test('a tap on a stack in the strip opens its stack menu, not the sheet', async () => {
+    const world = bet('world', 5)
+    seed({ bets: [world] })
+    const utils = await mount()
+    const s = feltStacks(L, store().bets, null).find(x => x.key === world.id)!
+    await tap('tap-board', s.at)
+    expect(utils.onStackMenu).toHaveBeenCalledWith(world)
+    expect(utils.queryByTestId('more-bets-sheet')).toBeNull()
+  })
 
   test('places Buy 6 at the $20 minimum and a hop', async () => {
     seed({ phase: 'point', point: 5 })
