@@ -1,5 +1,6 @@
 import { View, TouchableOpacity, StyleSheet } from 'react-native'
 import { Text } from '../../../../components/Text'
+import { FlashingBalance } from '../../../../components/FlashingBalance'
 import { sizedStyles, TableSize } from '../../../../lib/tableSize'
 import { formatMoney } from '../../../profile/format'
 
@@ -11,12 +12,14 @@ type Props = {
   /** The main-bet minimum to hint at while it isn't met, or null. */
   minBet: number | null
   balanceText: string
+  /** The shown balance, for the red/green flash; null (infinite, no profile) never flashes. */
+  value: number | null
   negative: boolean
   /** Next Hand at the result, DEAL while betting, nothing while revealing. */
   action: { label: 'Next Hand' | 'DEAL'; disabled: boolean; onPress(): void } | null
 }
 
-export function Footer({ size, variant = 'bar', showFundsWarning, minBet, balanceText, negative, action }: Props) {
+export function Footer({ size, variant = 'bar', showFundsWarning, minBet, balanceText, value, negative, action }: Props) {
   const s = SHEETS[size]
   const info = (
     <View>
@@ -24,7 +27,9 @@ export function Footer({ size, variant = 'bar', showFundsWarning, minBet, balanc
       {minBet !== null && !showFundsWarning && (
         <Text style={s.minHint}>Min {formatMoney(minBet)} on Player or Banker</Text>
       )}
-      <Text style={[s.balance, negative && s.negative]}>Balance: {balanceText}</Text>
+      <FlashingBalance testID="balance" value={value} color={negative ? NEGATIVE : BALANCE} style={s.balance}>
+        Balance: {balanceText}
+      </FlashingBalance>
     </View>
   )
   // Same elements as the original footer: Next Hand is never disabled; DEAL dims below the table minimum.
@@ -58,11 +63,13 @@ export function Footer({ size, variant = 'bar', showFundsWarning, minBet, balanc
   )
 }
 
+const BALANCE = '#aaa'
+const NEGATIVE = '#ff5555'
+
 const base = StyleSheet.create({
   footer: { padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     minHeight: 80 },
-  balance: { color: '#aaa', fontSize: 14 },
-  negative: { color: '#ff5555' },
+  balance: { fontSize: 14 },
   fundsWarning: { color: '#e74c3c', fontSize: 12, fontWeight: '600', marginBottom: 2 },
   dealBtn: { backgroundColor: '#FFD700', borderRadius: 10, paddingHorizontal: 32, paddingVertical: 14 },
   dealDisabled: { opacity: 0.4 },

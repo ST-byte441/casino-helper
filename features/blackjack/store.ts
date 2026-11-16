@@ -112,6 +112,13 @@ function runDealer(
   return { deck: d, dealerHand: hand }
 }
 
+/** Money on the table: the bet while betting, every hand's stake (doubles and splits too) until the round settles. */
+export function stakeOnTable(s: Pick<BlackjackState, 'phase' | 'bet' | 'handBets'>): number {
+  if (s.phase === 'betting') return s.bet
+  if (s.phase === 'result') return 0
+  return s.handBets.reduce((a, b) => a + b, 0)
+}
+
 type Store = BlackjackState & BlackjackActions
 type SetState = (partial: Partial<Store>) => void
 

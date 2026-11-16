@@ -4,6 +4,11 @@ import { MAX_FONT_SCALE } from './Text'
 
 export const FLASH_UP = 'rgba(46, 204, 113, 1)'
 export const FLASH_DOWN = 'rgba(255, 85, 85, 1)'
+// 0.75 s in all: fade in, hold, fade out.
+const FLASH_IN = 125
+const FLASH_HOLD = 325
+const FLASH_OUT = 300
+export const FLASH_MS = FLASH_IN + FLASH_HOLD + FLASH_OUT
 
 type Props = {
   /** The number shown; null (infinite bankroll, no profile) never flashes. */
@@ -15,7 +20,7 @@ type Props = {
   children: React.ReactNode
 }
 
-/** Balance text that flashes green when `value` rises and red when it drops (~0.9 s), then settles back. */
+/** Balance text that flashes green when `value` rises and red when it drops (0.75 s), then settles back. */
 export function FlashingBalance({ value, color, style, testID, children }: Props) {
   const flash = useRef(new Animated.Value(0)).current
   const prev = useRef(value)
@@ -29,9 +34,9 @@ export function FlashingBalance({ value, color, style, testID, children }: Props
     flash.stopAnimation()
     flash.setValue(0)
     Animated.sequence([
-      Animated.timing(flash, { toValue: 1, duration: 150, useNativeDriver: false }),
-      Animated.delay(400),
-      Animated.timing(flash, { toValue: 0, duration: 350, useNativeDriver: false }),
+      Animated.timing(flash, { toValue: 1, duration: FLASH_IN, useNativeDriver: false }),
+      Animated.delay(FLASH_HOLD),
+      Animated.timing(flash, { toValue: 0, duration: FLASH_OUT, useNativeDriver: false }),
     ]).start()
   }, [value])
 

@@ -153,7 +153,7 @@ describe('large portrait', () => {
     const screen = renderTable(LARGE_PORTRAIT)
     setPhase(PLAYING)
     expect(flat(screen.getByText('Back').props.style).fontSize).toBe(20)
-    expect(flat(screen.getByText('Balance: $1,000').props.style).fontSize).toBe(18)
+    expect(flat(screen.getByText('Balance: $975').props.style).fontSize).toBe(18)
   })
 
   test('the result banner is large', () => {
@@ -178,7 +178,7 @@ describe('large landscape', () => {
     while (row && !(row.type === 'View' && flat(row.props.style)?.flexDirection)) row = row.parent
     expect(flat(row!.props.style).flexDirection).toBe('column')
     within(screen.getByTestId('bj-felt')).getByText('Dealer')
-    within(panel(screen)).getByText('Balance: $1,000')
+    within(panel(screen)).getByText('Balance: $975')
   })
 
   test('betting puts the chips and Deal in the panel', () => {
@@ -198,7 +198,7 @@ describe('large landscape', () => {
     const screen = renderTable(LARGE_LANDSCAPE)
     setPhase({ ...PLAYING, phase })
     const p = within(panel(screen))
-    p.getByText('Balance: $1,000')
+    p.getByText('Balance: $975')
     expect(p.queryByText('Hit')).toBeNull()
     expect(p.queryByText('Deal')).toBeNull()
     expect(p.queryByText('Next Hand')).toBeNull()

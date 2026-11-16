@@ -18,7 +18,7 @@ npx jest <path>   # single file
 npx tsc --noEmit  # type check only
 ```
 
-1514 tests cover the game engines, the shared chip helpers, strategy lookup, roulette and craps felt layouts, roulette wheel maths, screens, profile store and stats, and update utility.
+1521 tests cover the game engines, the shared chip helpers, strategy lookup, roulette and craps felt layouts, roulette wheel maths, screens, profile store and stats, and update utility.
 
 ## Project Structure
 
@@ -85,6 +85,7 @@ lib/
   types.ts        # Shared types
   constants.ts    # Suits, values, chip denominations, default table rules
   updates.ts      # GitHub release version check utility
+  bankroll.ts     # shownBalanceFor(profile, onTable): the balance every game screen shows, the settled balance less the stake on the table (null when infinite / no profile); each game supplies its stake (blackjack/baccarat `stakeOnTable` in their stores, roulette `totalStake`, craps `atRisk`)
   screenClass.ts  # Pure: size class (compact <360dp / regular / large >=600dp, by the shorter side) + orientation
   useScreenClass.ts # Hook wrapping screenClass with useWindowDimensions
   orientation.ts  # Orientation lock owner (useOrientationLock) + rotation-request store
@@ -93,7 +94,7 @@ lib/
 components/
   Text.tsx        # Text/TextInput wrappers that cap font scaling at 1.3x; import these, not react-native's
   UpdateModal.tsx # In-app update prompt modal
-  FlashingBalance.tsx # Balance text that flashes green when its value rises, red when it drops (~0.9s); used by both craps views
+  FlashingBalance.tsx # Balance text that flashes green when its value rises, red when it drops (0.75s, `FLASH_MS`); used by every game's balance
   chips/          # Shared chip table: chips.ts (colours, sizes, drag lift), ChipFace, DragHandle (drag/tap race), ChipTray (row or column), useChipTable (origins, ghost, highlight/flash, board tap); used by roulette and the craps table. `chipSize` (default CHIP_SIZE 44) scales the tray, the ghost and the drag lift (`dragLift(size)`); roulette uses the default
 assets/
   avatars/        # Bundled 256px profile pictures + default (originals in gitignored assets/profile-pictures/)

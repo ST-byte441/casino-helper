@@ -63,14 +63,14 @@ describe('negative balances on game screens', () => {
     setProfile('finite', -50)
     const { getByText } = render(<BlackjackScreen />)
     fireEvent.press(getByText('Play'))
-    expect(colorOf(getByText('Balance: −$50'))).toBe('#ff5555')
+    expect(colorOf(getByText('Balance: −$50'))).toBe('rgba(255, 85, 85, 1)')
   })
 
   test('baccarat footer shows −$X in red', () => {
     setProfile('finite', -50)
     useBaccaratStore.getState().newHand()
     const { getByText } = render(<BaccaratScreen />)
-    expect(colorOf(getByText('Balance: −$50'))).toBe('#ff5555')
+    expect(colorOf(getByText('Balance: −$50'))).toBe('rgba(255, 85, 85, 1)')
   })
 
   test('craps footer shows −$X in red', () => {

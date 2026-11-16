@@ -803,19 +803,18 @@ exports[`phone layout is pinned compact 320x700 playing 1`] = `
     }
   >
     <Text
+      collapsable={false}
       maxFontSizeMultiplier={1.3}
       style={
-        [
-          {
-            "color": "#aaa",
-            "fontSize": 14,
-          },
-          false,
-        ]
+        {
+          "color": "rgba(170, 170, 170, 1)",
+          "fontSize": 14,
+        }
       }
+      testID="balance"
     >
       Balance: 
-      $1,000
+      $975
     </Text>
   </View>
 </RNCSafeAreaView>
@@ -1451,19 +1450,18 @@ exports[`phone layout is pinned phone betting 1`] = `
     }
   >
     <Text
+      collapsable={false}
       maxFontSizeMultiplier={1.3}
       style={
-        [
-          {
-            "color": "#aaa",
-            "fontSize": 14,
-          },
-          false,
-        ]
+        {
+          "color": "rgba(170, 170, 170, 1)",
+          "fontSize": 14,
+        }
       }
+      testID="balance"
     >
       Balance: 
-      $1,000
+      $975
     </Text>
   </View>
 </RNCSafeAreaView>
@@ -2002,19 +2000,18 @@ exports[`phone layout is pinned phone dealer phase 1`] = `
     }
   >
     <Text
+      collapsable={false}
       maxFontSizeMultiplier={1.3}
       style={
-        [
-          {
-            "color": "#aaa",
-            "fontSize": 14,
-          },
-          false,
-        ]
+        {
+          "color": "rgba(170, 170, 170, 1)",
+          "fontSize": 14,
+        }
       }
+      testID="balance"
     >
       Balance: 
-      $1,000
+      $975
     </Text>
   </View>
 </RNCSafeAreaView>
@@ -2823,19 +2820,18 @@ exports[`phone layout is pinned phone playing 1`] = `
     }
   >
     <Text
+      collapsable={false}
       maxFontSizeMultiplier={1.3}
       style={
-        [
-          {
-            "color": "#aaa",
-            "fontSize": 14,
-          },
-          false,
-        ]
+        {
+          "color": "rgba(170, 170, 170, 1)",
+          "fontSize": 14,
+        }
       }
+      testID="balance"
     >
       Balance: 
-      $1,000
+      $975
     </Text>
   </View>
 </RNCSafeAreaView>
@@ -3972,19 +3968,18 @@ exports[`phone layout is pinned phone playing split 1`] = `
     }
   >
     <Text
+      collapsable={false}
       maxFontSizeMultiplier={1.3}
       style={
-        [
-          {
-            "color": "#aaa",
-            "fontSize": 14,
-          },
-          false,
-        ]
+        {
+          "color": "rgba(170, 170, 170, 1)",
+          "fontSize": 14,
+        }
       }
+      testID="balance"
     >
       Balance: 
-      $1,000
+      $925
     </Text>
   </View>
 </RNCSafeAreaView>
@@ -4600,16 +4595,15 @@ exports[`phone layout is pinned phone result 1`] = `
     }
   >
     <Text
+      collapsable={false}
       maxFontSizeMultiplier={1.3}
       style={
-        [
-          {
-            "color": "#aaa",
-            "fontSize": 14,
-          },
-          false,
-        ]
+        {
+          "color": "rgba(170, 170, 170, 1)",
+          "fontSize": 14,
+        }
       }
+      testID="balance"
     >
       Balance: 
       $1,000

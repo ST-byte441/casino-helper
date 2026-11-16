@@ -11,7 +11,7 @@ Get the latest APK from the [Releases page](../../releases/latest).
 ## Features
 
 - **Multiple player profiles** — create profiles with a real bankroll or infinite chips for pure practice
-- **Profile detail & stats** — tap a profile to set a picture (20 bundled avatars or your own photo), add money, and see bankroll and per-game stats (hands, win rate, net result; craps points made, seven-outs and longest roll). Stakes are capped by your balance
+- **Profile detail & stats** — tap a profile to set a picture (20 bundled avatars or your own photo), add money, and see bankroll and per-game stats (hands, win rate, net result; craps points made, seven-outs and longest roll). Stakes are capped by your balance. In every game the balance you see drops by each chip you put down and comes back when you take it off or win, like a casino machine; it flashes red when it drops and green when it rises
 - **Lobby header** — the Games tab shows the active profile's picture next to its name; tap either to open that profile's stats page
 - **In-app update notifications** — prompted to download a newer version on launch if one is available
 
@@ -31,7 +31,7 @@ Get the latest APK from the [Releases page](../../releases/latest).
 - **Full bet menu** — Pass/Don't Pass, Come/Don't Come, Place, Buy, Lay, Hardways, Field, Proposition bets, and all 21 Hop combinations
 - **Casino-accurate rules** — payouts, commissions and on/off rules follow a cited rules sheet (`assets/rules-docs/craps-rules.md`: the Venetian, the Nevada Gaming Control Board's crapless rules, Wikipedia and others). Buy and Lay take a 5% commission only on a win (on the win for Lay), with a $20 minimum buy and lays sized to win at least $20; Place and Buy are off on the come-out while Lay, Hardways and Big 6/8 keep working; Come bets open once a point is set
 - **Configurable odds** — 1x, 2x, 3-4-5x, 5x, or 10x free odds; optional 3:1 payout on Field 12
-- **Chips come out of your balance** — like a digital craps machine, the balance you see drops by every chip you put down and comes back when you take a bet down or it wins (stake plus winnings); it flashes red when it drops and green when it rises
+- **Chips come out of your balance** — like a digital craps machine: a bet that stays up after a win (Place, Buy…) keeps its stake out and pays you the winnings
 - **Place bet working toggle** — flip any Place bet ON/OFF between come-out and point phases
 - **Strategy assist** — colour-coded bet quality: gold (Pass + max odds), white (acceptable), orange (poor), red (avoid)
 - **The table with chips** — turn your phone to landscape for a drawn casino felt (Pass Line, Field, Come, the number boxes, Big 6/8 and the centre props box). Drag a $1 / $5 / $25 / $100 chip onto an area, or tap a chip and then tap areas. Tap a stack for Take down, Odds ($1 / $5 / $25 steps up to the cap) and ON/OFF; Buy/Lay, Hi-Lo, World and hops are under **More bets**, and their chips sit in a More bets strip under the props box. Press ROLL and two big dice tumble across the felt for about a second (tap to skip) before the result. Two Come bets in one roll stack as one bet. A refused bet explains why on the reason line. In portrait you get the bet list, with a "Rotate for the table" hint; your bets, point and chip carry over when you turn the phone

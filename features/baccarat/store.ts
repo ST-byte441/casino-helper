@@ -58,6 +58,11 @@ function applyDelta(delta: number, bets: Partial<Record<BaccaratBet, number>>) {
   useProfileStore.getState().recordHands('baccarat', [{ result: classifyNet(delta), delta }])
 }
 
+/** Money on the table: every bet until the hand settles (it stays out through the reveal). */
+export function stakeOnTable(s: Pick<BaccaratState, 'bets' | 'settled'>): number {
+  return s.settled ? 0 : Object.values(s.bets).reduce((sum, v) => sum + (v ?? 0), 0)
+}
+
 export const useBaccaratStore = create<BaccaratState & BaccaratActions>((set, get) => ({
   ...initialState,
   deck: buildDeck(),
