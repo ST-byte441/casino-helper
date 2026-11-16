@@ -21,6 +21,8 @@ import { QUALITY_COLORS, feltStacks } from '../../features/craps/components/tabl
 import { buildCrapsLayout, tableFeltSize, SpotKey } from '../../features/craps/layout'
 import { useCrapsStore } from '../../features/craps/store'
 import { ROLL_ANIM_MS } from '../../features/craps/components/RollOverlay'
+import { PAYOUT_RING } from '../../features/craps/components/table/CrapsFelt'
+import { EXACT_STEP_BG } from '../../features/craps/components/table/StackMenu'
 import { useProfileStore } from '../../features/profile/store'
 import { emptyStats } from '../../features/profile/stats'
 import { ActiveBet, BetType, CrapsTableRules } from '../../lib/types'
@@ -536,5 +538,109 @@ describe('Large table', () => {
     ])
     await flush()
     expect(store().bets).toEqual([expect.objectContaining({ type: 'field', amount: 5 })])
+  })
+})
+
+describe('Payout assist', () => {
+  const ringColor = (getByTestId: (id: string) => any, id: string) =>
+    StyleSheet.flatten(getByTestId(`ring-${id}`).props.style).borderColor
+  const assistOn = () => useCrapsStore.setState({ assistEnabled: true })
+
+  test('a ring round each Place stack and odds chip: green when it pays exactly, amber when it doesn’t', async () => {
+    seed({ phase: 'point', point: 8, bets: [
+      bet('place', 15, { number: 6 }), bet('place', 10, { number: 5 }),
+      bet('pass', 10, { odds: 12 }),
+    ] })
+    assistOn()
+    const { getByTestId, queryByTestId } = await mount()
+    expect(ringColor(getByTestId, 'place-15-6')).toBe(PAYOUT_RING.inexact)
+    expect(ringColor(getByTestId, 'place-10-5')).toBe(PAYOUT_RING.exact)
+    expect(ringColor(getByTestId, 'pass-10--odds')).toBe(PAYOUT_RING.inexact)
+    // The flat Pass bet itself isn't sized.
+    expect(queryByTestId('ring-pass-10-')).toBeNull()
+  })
+
+  test('no rings with Assist off', async () => {
+    seed({ phase: 'point', point: 8, bets: [bet('place', 15, { number: 6 })] })
+    const { queryByTestId } = await mount()
+    expect(queryByTestId('ring-place-15-6')).toBeNull()
+  })
+
+  test('a chip that leaves a Place bet paying inexactly puts the hint on the reason line', async () => {
+    seed({ phase: 'point', point: 5 })
+    assistOn()
+    const { getByTestId } = await mount()
+    await tap('tap-chip-5')
+    for (let i = 0; i < 3; i++) await tap('tap-board', L.boxSlots[6].place)
+    expect(store().bets[0].amount).toBe(15)
+    expect(getByTestId('craps-reason').props.children).toBe('Place 6 pays 7 to 6: try $12 or $18')
+  })
+
+  test('no hint with Assist off, or once the amount pays exactly', async () => {
+    seed({ phase: 'point', point: 5 })
+    const { getByTestId } = await mount()
+    await tap('tap-chip-5')
+    await tap('tap-board', L.boxSlots[6].place)
+    expect(getByTestId('craps-reason').props.children).toBe(' ')
+    await act(async () => { assistOn() })
+    await tap('tap-chip-1')
+    await tap('tap-board', L.boxSlots[6].place) // $6
+    expect(getByTestId('craps-reason').props.children).toBe(' ')
+  })
+
+  describe('in the stack menu', () => {
+    async function openMenu(b: ActiveBet) {
+      const utils = await mount()
+      await tap('tap-board', stackAt(b.id))
+      return utils
+    }
+
+    test('shows the hint and "Make it $18 (pays $21)", which sets the bet to $18', async () => {
+      const place = bet('place', 15, { number: 6 })
+      seed({ phase: 'point', point: 5, bets: [place] })
+      assistOn()
+      const { getByTestId } = await openMenu(place)
+      expect(getByTestId('stack-menu-hint')).toHaveTextContent('Place 6 pays 7 to 6: try $12 or $18')
+      expect(getByTestId('stack-fix')).toHaveTextContent('Make it $18 (pays $21)')
+      fireEvent.press(getByTestId('stack-fix'))
+      expect(store().bets).toEqual([expect.objectContaining({ type: 'place', number: 6, amount: 18 })])
+    })
+
+    test('the fix rounds down when the balance can’t go up', async () => {
+      useProfileStore.setState(s => ({ profiles: s.profiles.map(p => ({ ...p, balance: 16 })) }))
+      const place = bet('place', 15, { number: 6 })
+      seed({ phase: 'point', point: 5, bets: [place] })
+      assistOn()
+      const { getByTestId } = await openMenu(place)
+      expect(getByTestId('stack-fix')).toHaveTextContent('Make it $12 (pays $14)')
+      fireEvent.press(getByTestId('stack-fix'))
+      expect(store().bets[0].amount).toBe(12)
+    })
+
+    test('odds: the fix, green +$ steps that land exact, and Max exact', async () => {
+      const pass = bet('pass', 10, { odds: 10 })
+      seed({ phase: 'point', point: 8, bets: [pass] }) // 3-4-5x: cap $50 at 8
+      assistOn()
+      const { getByTestId, queryByTestId } = await openMenu(pass)
+      expect(queryByTestId('stack-fix')).toBeNull() // $10 odds on 8 pay exactly
+      const bg = (id: string) => StyleSheet.flatten(getByTestId(id).props.style).backgroundColor
+      expect(bg('stack-odds-plus-5')).toBe(EXACT_STEP_BG)
+      expect(bg('stack-odds-plus-25')).toBe(EXACT_STEP_BG)
+      expect(bg('stack-odds-plus-1')).not.toBe(EXACT_STEP_BG)
+      fireEvent.press(getByTestId('stack-odds-plus-1'))
+      expect(getByTestId('stack-fix')).toHaveTextContent('Make it $15 (pays $18)')
+      expect(getByTestId('stack-odds-max')).toHaveTextContent('Max exact $50')
+      fireEvent.press(getByTestId('stack-odds-max'))
+      expect(store().bets[0].odds).toBe(50)
+      expect(queryByTestId('stack-odds-max')).toBeNull()
+    })
+
+    test('none of it with Assist off', async () => {
+      const place = bet('place', 15, { number: 6 })
+      seed({ phase: 'point', point: 5, bets: [place] })
+      const { queryByTestId } = await openMenu(place)
+      expect(queryByTestId('stack-fix')).toBeNull()
+      expect(queryByTestId('stack-menu-hint')).toBeNull()
+    })
   })
 })

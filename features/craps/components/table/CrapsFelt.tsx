@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native'
 import { Text } from '../../../../components/Text'
 import { CHIP_COLORS, stackChip } from '../../../../components/chips/chips'
 import { ActiveBet, BetQuality } from '../../../../lib/types'
+import { payoutCheck } from '../../assist'
 import { Area, BoxLabel, CrapsLayout, Pt, Rect, SpotKey, fit, oddsSizeFor, puckSizeFor, slotFor, stackSizeFor } from '../../layout'
 
 /*
@@ -18,6 +19,8 @@ type Props = {
   highlight: SpotKey | null
   /** Assist: tints an area's border by the quality of its bet. */
   quality?: (key: SpotKey) => BetQuality | null
+  /** Assist: a ring round each Place stack and odds chip, green when it pays exactly, amber when it doesn't. */
+  payoutRings?: boolean
   fieldPays3on12: boolean
 }
 
@@ -111,12 +114,33 @@ function Label({ area, box, fieldPays3on12 }: { area: Area; box: Rect; fieldPays
   }
 }
 
-function Stack({ id, amount, at, size, tag, dim }: {
-  id: string; amount: number; at: Pt; size: number; tag?: string; dim?: boolean
+/** Payout ring colours (Assist): pays exactly / is rounded down. */
+export const PAYOUT_RING = { exact: '#2ecc71', inexact: '#f39c12' } as const
+
+/** Which payout ring a drawn stack gets: Place stacks on their amount, odds chips on the odds; null for the rest. */
+function ringFor(key: string, bets: ActiveBet[], point: number | null): keyof typeof PAYOUT_RING | null {
+  const odds = key.endsWith('-odds')
+  const bet = bets.find(b => b.id === (odds ? key.slice(0, -'-odds'.length) : key))
+  const check = bet ? payoutCheck(bet, point) : null
+  if (!check || (check.kind === 'place') === odds) return null
+  return check.exact ? 'exact' : 'inexact'
+}
+
+function Stack({ id, amount, at, size, tag, dim, ring }: {
+  id: string; amount: number; at: Pt; size: number; tag?: string; dim?: boolean; ring?: keyof typeof PAYOUT_RING | null
 }) {
   const chip = CHIP_COLORS[stackChip(amount)]
   const amountFont = Math.max(MIN_AMOUNT_FONT, size * 0.36)
+  const ringW = Math.max(2, size / 11)
+  const outer = size + 2 * ringW + 2
   return (
+    <>
+    {ring && (
+      <View testID={`ring-${id}`} pointerEvents="none" style={[styles.ring, {
+        left: at.x - outer / 2, top: at.y - outer / 2, width: outer, height: outer, borderRadius: outer / 2,
+        borderWidth: ringW, borderColor: PAYOUT_RING[ring],
+      }]} />
+    )}
     <View
       testID={`stack-${id}`}
       pointerEvents="none"
@@ -135,6 +159,7 @@ function Stack({ id, amount, at, size, tag, dim }: {
         </View>
       )}
     </View>
+    </>
   )
 }
 
@@ -222,7 +247,7 @@ export function feltStacks(layout: CrapsLayout, bets: ActiveBet[], point: number
   return out
 }
 
-export function CrapsFelt({ layout, bets, point, highlight, quality, fieldPays3on12 }: Props) {
+export function CrapsFelt({ layout, bets, point, highlight, quality, payoutRings, fieldPays3on12 }: Props) {
   const size = stackSizeFor(layout)
   const areas = point == null ? layout.areas.filter(a => a.tone !== 'odds') : layout.areas
   const puckSlot = point != null ? layout.boxSlots[point]?.puck : undefined
@@ -248,7 +273,8 @@ export function CrapsFelt({ layout, bets, point, highlight, quality, fieldPays3o
         ? <Puck on at={puckSlot} size={puckSize} />
         : <Puck on={false} at={layout.offPuck} size={puckSize} />}
       {feltStacks(layout, bets, point).map(s => (
-        <Stack key={s.key} id={s.key} amount={s.amount} at={s.at} size={s.size} tag={s.tag} dim={s.dim} />
+        <Stack key={s.key} id={s.key} amount={s.amount} at={s.at} size={s.size} tag={s.tag} dim={s.dim}
+          ring={payoutRings ? ringFor(s.key, bets, point) : null} />
       ))}
       {overflow && (
         <View testID="more-bets-overflow" pointerEvents="none" style={[styles.overflow, {
@@ -270,6 +296,7 @@ const styles = StyleSheet.create({
   label: { fontWeight: '800', textAlign: 'center', letterSpacing: 0.5 },
   labelBox: { position: 'absolute', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   fieldRow: { flexDirection: 'row', alignSelf: 'stretch', justifyContent: 'space-between', paddingHorizontal: 6 },
+  ring: { position: 'absolute' },
   stack: { position: 'absolute', borderStyle: 'dashed', borderColor: YELLOW, alignItems: 'center',
     justifyContent: 'center' },
   stackText: { fontWeight: '800' },

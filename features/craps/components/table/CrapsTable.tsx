@@ -27,6 +27,7 @@ import { MoreBetsSheet } from './MoreBetsSheet'
 import { RollOverlay } from '../RollOverlay'
 import { FlashingBalance } from '../../../../components/FlashingBalance'
 import { shownBalance } from '../../bankroll'
+import { payoutCheck, payoutHint } from '../../assist'
 
 export const CRAPS_CHIPS = [1, 5, 25, 100] as const
 
@@ -111,14 +112,32 @@ function applyChip(target: TableTarget, chip: number): boolean {
   const s = useCrapsStore.getState()
   const action = actionFor(target, s.bets, s.point)
   switch (action.kind) {
-    case 'place': return s.placeBet(action.type, chip * (action.units ?? 1), action.number, action.hopDice)
-    case 'odds': return s.addOdds(action.betId, chip)
+    case 'place': {
+      const ok = s.placeBet(action.type, chip * (action.units ?? 1), action.number, action.hopDice)
+      if (ok && action.type === 'place') hintPayout(b => b.type === 'place' && b.number === action.number)
+      return ok
+    }
+    case 'odds': {
+      const ok = s.addOdds(action.betId, chip)
+      if (ok) hintPayout(b => b.id === action.betId)
+      return ok
+    }
     case 'none': {
       const why = target.kind === 'spot' ? NO_LINE_BET[target.key] : undefined
       if (why) s.setNotice(why)
       return false
     }
   }
+}
+
+/** Assist: after a chip, the reason line says when the bet it went on is paid rounded down, and what pays exactly. */
+function hintPayout(which: (b: ActiveBet) => boolean) {
+  const s = useCrapsStore.getState()
+  if (!s.assistEnabled) return
+  const bet = s.bets.find(which)
+  const check = bet ? payoutCheck(bet, s.point) : null
+  const hint = check ? payoutHint(check) : null
+  if (hint) s.setNotice(hint)
 }
 
 /** DiceDisplay at its natural size, scaled down (never up) to fit width × height. */
@@ -272,7 +291,7 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
             {layout && (
               <>
                 <CrapsFelt layout={layout} bets={bets} point={point} highlight={lit}
-                  quality={assistEnabled ? quality : undefined} fieldPays3on12={tableRules.fieldPays3on12} />
+                  quality={assistEnabled ? quality : undefined} payoutRings={assistEnabled} fieldPays3on12={tableRules.fieldPays3on12} />
                 {feltStacks(layout, bets, point).filter(s => bets.some(b => b.id === s.key)).map(s => (
                   <DragHandle
                     key={s.key}
@@ -346,7 +365,7 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
       )}
 
       {menuBet && (
-        <StackMenu bet={menuBet} phase={phase} point={point} rules={tableRules} onClose={() => setMenuBet(null)} />
+        <StackMenu bet={menuBet} phase={phase} point={point} rules={tableRules} assist={assistEnabled} onClose={() => setMenuBet(null)} />
       )}
       <MoreBetsSheet visible={moreOpen} onClose={() => setMoreOpen(false)} />
 
