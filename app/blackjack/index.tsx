@@ -18,7 +18,7 @@ import { pickLayout } from '../../lib/tableLayout'
 import { TableSize } from '../../lib/tableSize'
 import { useScreenClass } from '../../lib/useScreenClass'
 import { TableRules } from '../../lib/types'
-import { canDouble, canSplit, canSurrender, scoreHand } from '../../features/blackjack/engine'
+import { canSplit, canSurrender, scoreHand } from '../../features/blackjack/engine'
 
 export default function BlackjackScreen() {
   const router = useRouter()
@@ -101,7 +101,7 @@ export default function BlackjackScreen() {
     phase: store.phase,
     actions: {
       suggestedAction: store.suggestedAction,
-      canDouble: canDouble(activeHand, store.activeHandIndex > 0, rules) && store.canAffordExtra(),
+      canDouble: store.canDoubleNow(),
       canSplit: canSplit(activeHand) && store.canAffordExtra(),
       canSurrender: canSurrender(activeHand, rules) && store.playerHands.length === 1,
       onHit: store.hit,

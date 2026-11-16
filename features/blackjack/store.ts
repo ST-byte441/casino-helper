@@ -21,8 +21,8 @@ function finishPendingSteps() {
 }
 import { Card, Action, Outcome, Phase, TableRules } from '../../lib/types'
 import { DEFAULT_TABLE_RULES } from '../../lib/constants'
-import { canSplit, canSurrender, createDeck, dealCard, isBlackjack, needsReshuffle, resolveHand, scoreHand, shouldDealerHit } from './engine'
-import { getOptimalAction } from './strategy'
+import { canDouble, canSplit, canSurrender, createDeck, dealCard, isBlackjack, needsReshuffle, resolveHand, scoreHand, shouldDealerHit } from './engine'
+import { AllowedMoves, getOptimalAction } from './strategy'
 import { useProfileStore } from '../profile/store'
 import { classifyBlackjack } from '../profile/stats'
 
@@ -56,6 +56,8 @@ type BlackjackActions = {
   newHand: () => void
   abandonHand: () => void
   canAffordExtra: () => boolean
+  /** Double is allowed on the active hand now: two cards, DAS after a split, and affordable. */
+  canDoubleNow: () => boolean
 }
 
 const initialState: BlackjackState = {
@@ -73,23 +75,43 @@ const initialState: BlackjackState = {
   lastDelta: 0,
 }
 
+/** Whether the balance covers another stake the size of hand `index`'s (a double or a split). */
+function affordsExtra(handBets: number[], index: number): boolean {
+  const ps = useProfileStore.getState()
+  const profile = ps.profiles.find(p => p.id === ps.activeProfileId)
+  if (!profile || profile.bankrollMode === 'infinite') return true
+  const total = handBets.reduce((a, b) => a + b, 0)
+  return total + (handBets[index] ?? 0) <= profile.balance
+}
+
+/**
+ * What the player may do with hand `index` right now: double on two cards (after a split only with DAS) when
+ * affordable, split when affordable, surrender only on the original hand. The Double button, doubleDown and Assist
+ * all go by this, so Assist never suggests a move the buttons won't allow.
+ */
+function allowedMoves(playerHands: Card[][], index: number, handBets: number[], rules: TableRules): AllowedMoves {
+  const hand = playerHands[index] ?? []
+  const afford = affordsExtra(handBets, index)
+  return {
+    double: canDouble(hand, playerHands.length > 1, rules) && afford,
+    split: afford,
+    surrender: playerHands.length === 1,
+  }
+}
+
 function computeSuggestion(
   playerHands: Card[][],
   activeHandIndex: number,
   dealerHand: Card[],
   assistEnabled: boolean,
-  tableRules: TableRules
+  tableRules: TableRules,
+  handBets: number[],
 ): Action | null {
   if (!assistEnabled) return null
   const hand = playerHands[activeHandIndex]
   const upcard = dealerHand[0]
   if (!hand || hand.length < 2 || !upcard) return null
-  const action = getOptimalAction(hand, upcard, tableRules)
-  if (action === 'double') {
-    if (hand.length > 2) return 'hit'
-    if (playerHands.length > 1 && !tableRules.doubleAfterSplit) return 'hit'
-  }
-  return action
+  return getOptimalAction(hand, upcard, tableRules, allowedMoves(playerHands, activeHandIndex, handBets, tableRules))
 }
 
 function runDealer(
@@ -173,7 +195,7 @@ export const useBlackjackStore = create<Store>((set, get) => ({
   toggleAssist: () => {
     const { assistEnabled, playerHands, activeHandIndex, dealerHand, tableRules } = get()
     const newAssist = !assistEnabled
-    const suggestedAction = computeSuggestion(playerHands, activeHandIndex, dealerHand, newAssist, tableRules)
+    const suggestedAction = computeSuggestion(playerHands, activeHandIndex, dealerHand, newAssist, tableRules, get().handBets)
     set({ assistEnabled: newAssist, suggestedAction })
   },
 
@@ -188,12 +210,13 @@ export const useBlackjackStore = create<Store>((set, get) => ({
   clearBet: () => set({ bet: 0 }),
 
   canAffordExtra: () => {
-    const ps = useProfileStore.getState()
-    const profile = ps.profiles.find(p => p.id === ps.activeProfileId)
-    if (!profile || profile.bankrollMode === 'infinite') return true
     const { handBets, activeHandIndex } = get()
-    const total = handBets.reduce((a, b) => a + b, 0)
-    return total + handBets[activeHandIndex] <= profile.balance
+    return affordsExtra(handBets, activeHandIndex)
+  },
+
+  canDoubleNow: () => {
+    const { playerHands, activeHandIndex, handBets, tableRules } = get()
+    return allowedMoves(playerHands, activeHandIndex, handBets, tableRules).double
   },
 
   deal: () => {
@@ -228,7 +251,7 @@ export const useBlackjackStore = create<Store>((set, get) => ({
         return
       }
       const dealerHand = [c2, { ...c4, faceDown: true }]
-      const suggestedAction = computeSuggestion(playerHands, 0, dealerHand, assistEnabled, tableRules)
+      const suggestedAction = computeSuggestion(playerHands, 0, dealerHand, assistEnabled, tableRules, get().handBets)
       set({ playerHands, dealerHand, phase: 'playing', suggestedAction })
       if (scoreHand(playerHands[0]) === 21 && playerHands[0].length === 2) {
         get().stand()
@@ -245,7 +268,7 @@ export const useBlackjackStore = create<Store>((set, get) => ({
     const newHands = playerHands.map((h, i) => i === activeHandIndex ? [...h, card] : h)
     const newScore = scoreHand(newHands[activeHandIndex])
     const suggestedAction = newScore <= 21
-      ? computeSuggestion(newHands, activeHandIndex, dealerHand, assistEnabled, tableRules)
+      ? computeSuggestion(newHands, activeHandIndex, dealerHand, assistEnabled, tableRules, get().handBets)
       : null
     set({ deck, playerHands: newHands, suggestedAction })
     // If busted, advance to next hand or run dealer (same logic as stand)
@@ -259,7 +282,7 @@ export const useBlackjackStore = create<Store>((set, get) => ({
     if (activeHandIndex < playerHands.length - 1) {
       const next = activeHandIndex + 1
       const { assistEnabled, dealerHand, tableRules } = get()
-      const suggestedAction = computeSuggestion(playerHands, next, dealerHand, assistEnabled, tableRules)
+      const suggestedAction = computeSuggestion(playerHands, next, dealerHand, assistEnabled, tableRules, get().handBets)
       set({ activeHandIndex: next, suggestedAction })
       return
     }
@@ -268,7 +291,7 @@ export const useBlackjackStore = create<Store>((set, get) => ({
   },
 
   doubleDown: () => {
-    if (!get().canAffordExtra()) return
+    if (!get().canDoubleNow()) return
     let { deck, playerHands, activeHandIndex, handBets } = get()
     let card: Card
     ;[card, deck] = dealCard(deck)
@@ -312,7 +335,7 @@ export const useBlackjackStore = create<Store>((set, get) => ({
       const { assistEnabled, dealerHand, tableRules } = get()
       const newHands = get().playerHands.map((h, i) =>
         i === activeHandIndex ? [hand[0], c1] : i === activeHandIndex + 1 ? [hand[1], c2] : h)
-      const suggestedAction = computeSuggestion(newHands, activeHandIndex, dealerHand, assistEnabled, tableRules)
+      const suggestedAction = computeSuggestion(newHands, activeHandIndex, dealerHand, assistEnabled, tableRules, get().handBets)
       set({ playerHands: newHands, suggestedAction, phase: 'playing' })
     }
     scheduleStep(finishSplit, D * 2)

@@ -18,7 +18,7 @@ npx jest <path>   # single file
 npx tsc --noEmit  # type check only
 ```
 
-1582 tests cover the game engines, the shared chip helpers, strategy lookup, roulette and craps felt layouts, roulette wheel maths, screens, profile store and stats, and update utility.
+1597 tests cover the game engines, the shared chip helpers, strategy lookup, roulette and craps felt layouts, roulette wheel maths, screens, profile store and stats, and update utility.
 
 ## Project Structure
 
@@ -43,7 +43,7 @@ app/
 features/
   blackjack/
     engine.ts     # Pure TS: deck, scoring, rule checks, hand resolution
-    strategy.ts   # Pure TS: basic strategy lookup table
+    strategy.ts   # Pure TS: basic strategy lookup table; getOptimalAction takes the AllowedMoves (double/split/surrender) and falls back correctly: unsplittable pairs play as totals, "double, else stand" for soft 18/19, otherwise hit. The store's `allowedMoves` (two cards, DAS after a split, affordability, no surrender after a split) drives Assist, `canDoubleNow()` (the Double button) and `doubleDown`
     store.ts      # Session Zustand store
     components/   # UI components (Card — sizes regular/medium/large, also used by baccarat; Hand, ActionButtons, BetControls, TableSetup, AssistInfo — the ⓘ pop-up beside Assist (TableHeader owns its open state))
       table/      # Screen pieces shared by every layout (TableHeader, DealerArea, HandsArea, ResultBanner, Controls, BalanceFooter)

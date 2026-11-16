@@ -68,27 +68,38 @@ function getHardAction(score: number, dk: DealerKey): Action {
   return 'hit'
 }
 
+/** Which moves the player can make right now (rules, cards, split hands and balance all considered). */
+export type AllowedMoves = { double: boolean; split: boolean; surrender: boolean }
+const ALL_MOVES: AllowedMoves = { double: true, split: true, surrender: true }
+
+/**
+ * The basic strategy play for this hand, given only moves that are `allowed`. A pair that can't be split is played
+ * as its total; when doubling isn't allowed, soft 18 and 19 fall back to Stand ("double, else stand") and every other
+ * double to Hit.
+ */
 export function getOptimalAction(
   playerHand: Card[],
   dealerUpcard: Card,
-  rules: TableRules
+  rules: TableRules,
+  allowed: AllowedMoves = ALL_MOVES,
 ): Action {
   const dk = dealerKey(dealerUpcard)
   const score = scoreHand(playerHand)
   const soft = isSoft(playerHand)
 
   // Always-split pairs take priority over surrender
-  if (canSplit(playerHand)) {
+  if (allowed.split && canSplit(playerHand)) {
     const v = playerHand[0].value
     if (v === 'A' || v === '8') return 'split'
   }
 
-  const surrender = getSurrenderAction(score, dk, rules)
+  const surrender = allowed.surrender ? getSurrenderAction(score, dk, rules) : null
   if (surrender && canSurrender(playerHand, rules)) return surrender
 
-  const split = getSplitAction(playerHand, dk)
+  const split = allowed.split ? getSplitAction(playerHand, dk) : null
   if (split) return split
 
-  if (soft) return getSoftAction(score, dk, rules)
-  return getHardAction(score, dk)
+  const action = soft ? getSoftAction(score, dk, rules) : getHardAction(score, dk)
+  if (action === 'double' && !allowed.double) return soft && score >= 18 ? 'stand' : 'hit'
+  return action
 }

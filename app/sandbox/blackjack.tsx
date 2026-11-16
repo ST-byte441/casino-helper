@@ -67,11 +67,12 @@ export default function BlackjackSandboxScreen() {
   const dealerCard: CardType | null = dealerRank ? { suit: '♠', value: dealerRank } : null
   const playerHand: CardType[] = playerCards.map(c => ({ suit: '♠', value: c.value }))
 
-  const rawAction =
+  // Doubling needs the first two cards; past them the strategy gives its fallback (soft 18/19 stand, else hit).
+  const optimalAction =
     dealerCard && playerHand.length >= 2
-      ? getOptimalAction(playerHand, dealerCard, tableRules)
+      ? getOptimalAction(playerHand, dealerCard, tableRules,
+        { double: playerHand.length === 2, split: true, surrender: true })
       : null
-  const optimalAction = rawAction === 'double' && playerHand.length > 2 ? 'hit' : rawAction
 
   function handlePickerSelect(value: Value) {
     if (pickerTarget === 'dealer') {

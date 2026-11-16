@@ -592,3 +592,86 @@ describe('abandonHand (leaving the table)', () => {
     expect(recorded()).toBe(0)
   })
 })
+
+describe('Assist suggests only moves you can make, with the right fallback', () => {
+  const k = (value: Card['value'], suit: Card['suit'] = '♠'): Card => ({ value, suit })
+  function setBalance(balance: number) {
+    useProfileStore.setState({
+      profiles: [{
+        id: 'p1', name: 'T', bankrollMode: 'finite', balance, createdAt: 0,
+        startingBalance: balance, trackingSince: 0, refills: [], stats: emptyStats(),
+      }],
+      activeProfileId: 'p1',
+    })
+  }
+  const playing = (up: Card['value'], extra: object) => useBlackjackStore.setState({
+    phase: 'playing', activeHandIndex: 0, tableRules: DEFAULT_TABLE_RULES, assistEnabled: true,
+    dealerHand: [k(up), { ...k('7'), faceDown: true }], ...extra,
+  })
+  const s = () => useBlackjackStore.getState()
+  /** Recompute the suggestion as the store does when Assist is switched on. */
+  const reAssist = () => act(() => { s().toggleAssist(); s().toggleAssist() })
+
+  beforeEach(() => setBalance(1000))
+
+  test('three-card soft 18 vs 5 (A-2 then a 5): Stand, not Hit', () => {
+    act(() => { playing('5', { playerHands: [[k('A'), k('2')]], handBets: [20], bet: 20, deck: [k('5'), k('9')] }) })
+    act(() => { s().hit() })
+    expect(s().playerHands[0].map(c => c.value)).toEqual(['A', '2', '5'])
+    expect(s().suggestedAction).toBe('stand')
+  })
+
+  test('after a split at a no-DAS table: A-7 vs 5 stands, and Double is off on the first hand too', () => {
+    act(() => {
+      playing('5', {
+        tableRules: { ...DEFAULT_TABLE_RULES, doubleAfterSplit: false },
+        playerHands: [[k('A'), k('A', '♥')]], handBets: [20], bet: 20, deck: [k('7'), k('9'), k('2')],
+      })
+      s().split()
+      jest.runAllTimers()
+    })
+    expect(s().playerHands[0].map(c => c.value)).toEqual(['A', '7'])
+    expect(s().suggestedAction).toBe('stand')
+    expect(s().canDoubleNow()).toBe(false)
+    act(() => { s().doubleDown() })
+    expect(s().handBets).toEqual([20, 20])
+    expect(s().playerHands[0]).toHaveLength(2)
+  })
+
+  test('with DAS the same hand doubles', () => {
+    act(() => {
+      playing('5', { playerHands: [[k('A'), k('A', '♥')]], handBets: [20], bet: 20, deck: [k('7'), k('9'), k('2')] })
+      s().split()
+      jest.runAllTimers()
+    })
+    expect(s().suggestedAction).toBe('double')
+    expect(s().canDoubleNow()).toBe(true)
+  })
+
+  test('no surrender after a split: 8-7 vs K hits', () => {
+    act(() => {
+      playing('K', { playerHands: [[k('8'), k('8', '♥')]], handBets: [20], bet: 20, deck: [k('7'), k('2'), k('3')] })
+      s().split()
+      jest.runAllTimers()
+    })
+    expect(s().playerHands[0].map(c => c.value)).toEqual(['8', '7'])
+    expect(s().suggestedAction).toBe('hit')
+  })
+
+  test('a double you can’t afford: 11 vs 6 hits', () => {
+    setBalance(30)
+    act(() => { playing('6', { playerHands: [[k('6'), k('5')]], handBets: [20], bet: 20 }) })
+    reAssist()
+    expect(s().suggestedAction).toBe('hit')
+    setBalance(1000)
+    reAssist()
+    expect(s().suggestedAction).toBe('double')
+  })
+
+  test('a split you can’t afford: 8-8 vs 6 is played as 16 (stand)', () => {
+    setBalance(30)
+    act(() => { playing('6', { playerHands: [[k('8'), k('8', '♥')]], handBets: [20], bet: 20 }) })
+    reAssist()
+    expect(s().suggestedAction).toBe('stand')
+  })
+})

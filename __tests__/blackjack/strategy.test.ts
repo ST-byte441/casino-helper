@@ -82,3 +82,42 @@ describe('getOptimalAction — surrender', () => {
     expect(getOptimalAction([card('7'), card('3'), card('6')], card('9'), rules)).not.toBe('surrender')
   })
 })
+
+describe('getOptimalAction — when a move isn’t allowed, the right fallback', () => {
+  const noDouble = { double: false, split: true, surrender: true }
+  const s17: TableRules = { ...rules, dealerSoft17: 'S17' }
+
+  test('soft 18 is "double, else stand": A-2-5 vs 5 stands', () => {
+    expect(getOptimalAction([card('A'), card('2'), card('5')], card('5'), rules, noDouble)).toBe('stand')
+    expect(getOptimalAction([card('A'), card('7')], card('4'), rules, noDouble)).toBe('stand')
+    expect(getOptimalAction([card('A'), card('7')], card('3'), s17, noDouble)).toBe('stand')
+  })
+
+  test('soft 19 vs 6 is "double, else stand"', () => {
+    expect(getOptimalAction([card('A'), card('8')], card('6'), rules, noDouble)).toBe('stand')
+  })
+
+  test('soft 17 and lower, and hard 9–11, are "double, else hit"', () => {
+    expect(getOptimalAction([card('A'), card('6')], card('4'), rules, noDouble)).toBe('hit')
+    expect(getOptimalAction([card('A'), card('2')], card('5'), rules, noDouble)).toBe('hit')
+    expect(getOptimalAction([card('6'), card('5')], card('6'), rules, noDouble)).toBe('hit')
+    expect(getOptimalAction([card('5'), card('4')], card('4'), rules, noDouble)).toBe('hit')
+  })
+
+  test('a pair that can’t be split is played as its total', () => {
+    const noSplit = { double: true, split: false, surrender: true }
+    expect(getOptimalAction([card('8'), card('8')], card('6'), rules, noSplit)).toBe('stand')
+    expect(getOptimalAction([card('A'), card('A')], card('6'), rules, noSplit)).toBe('hit')
+    expect(getOptimalAction([card('5'), card('5')], card('6'), rules, noSplit)).toBe('double')
+  })
+
+  test('no surrender: 16 vs 10 hits', () => {
+    expect(getOptimalAction([card('9'), card('7')], card('K'), rules, { double: true, split: true, surrender: false }))
+      .toBe('hit')
+  })
+
+  test('with everything allowed, nothing changes', () => {
+    expect(getOptimalAction([card('A'), card('7')], card('4'), rules)).toBe('double')
+    expect(getOptimalAction([card('8'), card('8')], card('6'), rules)).toBe('split')
+  })
+})
