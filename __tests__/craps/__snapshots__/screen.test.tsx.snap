@@ -1336,58 +1336,124 @@ exports[`phone portrait list (must not change) come-out, no bets 1`] = `
         $1,000
       </Text>
       <View
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": true,
-            "expanded": undefined,
-            "selected": undefined,
-          }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
-          }
-        }
-        accessible={true}
-        collapsable={false}
-        focusable={false}
-        onClick={[Function]}
-        onResponderGrant={[Function]}
-        onResponderMove={[Function]}
-        onResponderRelease={[Function]}
-        onResponderTerminate={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
         style={
           {
-            "alignItems": "center",
-            "backgroundColor": "#FFD700",
-            "borderRadius": 10,
-            "margin": 16,
-            "opacity": 0.4,
-            "padding": 18,
+            "alignItems": "stretch",
+            "flexDirection": "row",
+            "paddingLeft": 16,
           }
         }
-        testID="craps-roll"
       >
-        <Text
-          maxFontSizeMultiplier={1.3}
-          style={
+        <View
+          accessibilityState={
             {
-              "color": "#13131f",
-              "fontSize": 18,
-              "fontWeight": "800",
-              "letterSpacing": 2,
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": true,
+              "expanded": undefined,
+              "selected": undefined,
             }
           }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={false}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "alignItems": "center",
+              "backgroundColor": "#2a2a3e",
+              "borderRadius": 10,
+              "justifyContent": "center",
+              "marginVertical": 16,
+              "opacity": 0.4,
+              "paddingHorizontal": 18,
+            }
+          }
+          testID="craps-clear"
         >
-          ROLL
-        </Text>
+          <Text
+            maxFontSizeMultiplier={1.3}
+            style={
+              {
+                "color": "#fff",
+                "fontSize": 15,
+                "fontWeight": "700",
+              }
+            }
+          >
+            Clear
+          </Text>
+        </View>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": true,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={false}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "alignItems": "center",
+              "backgroundColor": "#FFD700",
+              "borderRadius": 10,
+              "flex": 1,
+              "margin": 16,
+              "marginLeft": 10,
+              "opacity": 0.4,
+              "padding": 18,
+            }
+          }
+          testID="craps-roll"
+        >
+          <Text
+            maxFontSizeMultiplier={1.3}
+            style={
+              {
+                "color": "#13131f",
+                "fontSize": 18,
+                "fontWeight": "800",
+                "letterSpacing": 2,
+              }
+            }
+          >
+            ROLL
+          </Text>
+        </View>
       </View>
     </View>
   </RNCSafeAreaView>
@@ -2656,58 +2722,124 @@ exports[`phone portrait list (must not change) crapless table 1`] = `
         $1,000
       </Text>
       <View
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": true,
-            "expanded": undefined,
-            "selected": undefined,
-          }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
-          }
-        }
-        accessible={true}
-        collapsable={false}
-        focusable={false}
-        onClick={[Function]}
-        onResponderGrant={[Function]}
-        onResponderMove={[Function]}
-        onResponderRelease={[Function]}
-        onResponderTerminate={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
         style={
           {
-            "alignItems": "center",
-            "backgroundColor": "#FFD700",
-            "borderRadius": 10,
-            "margin": 16,
-            "opacity": 0.4,
-            "padding": 18,
+            "alignItems": "stretch",
+            "flexDirection": "row",
+            "paddingLeft": 16,
           }
         }
-        testID="craps-roll"
       >
-        <Text
-          maxFontSizeMultiplier={1.3}
-          style={
+        <View
+          accessibilityState={
             {
-              "color": "#13131f",
-              "fontSize": 18,
-              "fontWeight": "800",
-              "letterSpacing": 2,
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": true,
+              "expanded": undefined,
+              "selected": undefined,
             }
           }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={false}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "alignItems": "center",
+              "backgroundColor": "#2a2a3e",
+              "borderRadius": 10,
+              "justifyContent": "center",
+              "marginVertical": 16,
+              "opacity": 0.4,
+              "paddingHorizontal": 18,
+            }
+          }
+          testID="craps-clear"
         >
-          ROLL
-        </Text>
+          <Text
+            maxFontSizeMultiplier={1.3}
+            style={
+              {
+                "color": "#fff",
+                "fontSize": 15,
+                "fontWeight": "700",
+              }
+            }
+          >
+            Clear
+          </Text>
+        </View>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": true,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={false}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "alignItems": "center",
+              "backgroundColor": "#FFD700",
+              "borderRadius": 10,
+              "flex": 1,
+              "margin": 16,
+              "marginLeft": 10,
+              "opacity": 0.4,
+              "padding": 18,
+            }
+          }
+          testID="craps-roll"
+        >
+          <Text
+            maxFontSizeMultiplier={1.3}
+            style={
+              {
+                "color": "#13131f",
+                "fontSize": 18,
+                "fontWeight": "800",
+                "letterSpacing": 2,
+              }
+            }
+          >
+            ROLL
+          </Text>
+        </View>
       </View>
     </View>
   </RNCSafeAreaView>
@@ -3754,58 +3886,124 @@ exports[`phone portrait list (must not change) easy table 1`] = `
         $1,000
       </Text>
       <View
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": true,
-            "expanded": undefined,
-            "selected": undefined,
-          }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
-          }
-        }
-        accessible={true}
-        collapsable={false}
-        focusable={false}
-        onClick={[Function]}
-        onResponderGrant={[Function]}
-        onResponderMove={[Function]}
-        onResponderRelease={[Function]}
-        onResponderTerminate={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
         style={
           {
-            "alignItems": "center",
-            "backgroundColor": "#FFD700",
-            "borderRadius": 10,
-            "margin": 16,
-            "opacity": 0.4,
-            "padding": 18,
+            "alignItems": "stretch",
+            "flexDirection": "row",
+            "paddingLeft": 16,
           }
         }
-        testID="craps-roll"
       >
-        <Text
-          maxFontSizeMultiplier={1.3}
-          style={
+        <View
+          accessibilityState={
             {
-              "color": "#13131f",
-              "fontSize": 18,
-              "fontWeight": "800",
-              "letterSpacing": 2,
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": true,
+              "expanded": undefined,
+              "selected": undefined,
             }
           }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={false}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "alignItems": "center",
+              "backgroundColor": "#2a2a3e",
+              "borderRadius": 10,
+              "justifyContent": "center",
+              "marginVertical": 16,
+              "opacity": 0.4,
+              "paddingHorizontal": 18,
+            }
+          }
+          testID="craps-clear"
         >
-          ROLL
-        </Text>
+          <Text
+            maxFontSizeMultiplier={1.3}
+            style={
+              {
+                "color": "#fff",
+                "fontSize": 15,
+                "fontWeight": "700",
+              }
+            }
+          >
+            Clear
+          </Text>
+        </View>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": true,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={false}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "alignItems": "center",
+              "backgroundColor": "#FFD700",
+              "borderRadius": 10,
+              "flex": 1,
+              "margin": 16,
+              "marginLeft": 10,
+              "opacity": 0.4,
+              "padding": 18,
+            }
+          }
+          testID="craps-roll"
+        >
+          <Text
+            maxFontSizeMultiplier={1.3}
+            style={
+              {
+                "color": "#13131f",
+                "fontSize": 18,
+                "fontWeight": "800",
+                "letterSpacing": 2,
+              }
+            }
+          >
+            ROLL
+          </Text>
+        </View>
       </View>
     </View>
   </RNCSafeAreaView>
@@ -5482,58 +5680,124 @@ exports[`phone portrait list (must not change) point 6 with pass + odds, place 8
         $953
       </Text>
       <View
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": false,
-            "expanded": undefined,
-            "selected": undefined,
-          }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
-          }
-        }
-        accessible={true}
-        collapsable={false}
-        focusable={true}
-        onClick={[Function]}
-        onResponderGrant={[Function]}
-        onResponderMove={[Function]}
-        onResponderRelease={[Function]}
-        onResponderTerminate={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
         style={
           {
-            "alignItems": "center",
-            "backgroundColor": "#FFD700",
-            "borderRadius": 10,
-            "margin": 16,
-            "opacity": 1,
-            "padding": 18,
+            "alignItems": "stretch",
+            "flexDirection": "row",
+            "paddingLeft": 16,
           }
         }
-        testID="craps-roll"
       >
-        <Text
-          maxFontSizeMultiplier={1.3}
-          style={
+        <View
+          accessibilityState={
             {
-              "color": "#13131f",
-              "fontSize": 18,
-              "fontWeight": "800",
-              "letterSpacing": 2,
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": false,
+              "expanded": undefined,
+              "selected": undefined,
             }
           }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "alignItems": "center",
+              "backgroundColor": "#2a2a3e",
+              "borderRadius": 10,
+              "justifyContent": "center",
+              "marginVertical": 16,
+              "opacity": 1,
+              "paddingHorizontal": 18,
+            }
+          }
+          testID="craps-clear"
         >
-          ROLL
-        </Text>
+          <Text
+            maxFontSizeMultiplier={1.3}
+            style={
+              {
+                "color": "#fff",
+                "fontSize": 15,
+                "fontWeight": "700",
+              }
+            }
+          >
+            Clear
+          </Text>
+        </View>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": false,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "alignItems": "center",
+              "backgroundColor": "#FFD700",
+              "borderRadius": 10,
+              "flex": 1,
+              "margin": 16,
+              "marginLeft": 10,
+              "opacity": 1,
+              "padding": 18,
+            }
+          }
+          testID="craps-roll"
+        >
+          <Text
+            maxFontSizeMultiplier={1.3}
+            style={
+              {
+                "color": "#13131f",
+                "fontSize": 18,
+                "fontWeight": "800",
+                "letterSpacing": 2,
+              }
+            }
+          >
+            ROLL
+          </Text>
+        </View>
       </View>
     </View>
   </RNCSafeAreaView>

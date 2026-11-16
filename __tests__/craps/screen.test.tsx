@@ -210,6 +210,37 @@ describe('phone portrait list assist info', () => {
   })
 })
 
+describe('phone portrait list Clear', () => {
+  const { fireEvent } = require('@testing-library/react-native')
+  const disabled = (node: any) => node.props.accessibilityState?.disabled === true
+
+  test('takes down every bet allowed; contract bets stay without their odds', () => {
+    seedTable({ phase: 'point', point: 6, bets: [
+      bet('pass', 10, { odds: 20 }), bet('place', 12, { number: 8 }), bet('field', 5),
+    ] })
+    useCrapsStore.setState({ notice: null })
+    const { getByTestId } = render(<CrapsScreen />)
+    expect(disabled(getByTestId('craps-clear'))).toBe(false)
+    fireEvent.press(getByTestId('craps-clear'))
+    expect(useCrapsStore.getState().bets).toEqual([expect.objectContaining({ type: 'pass', amount: 10, odds: 0 })])
+    expect(getByTestId('craps-list-notice')).toHaveTextContent('Pass and Come bets on a point stay up; the rest came down')
+    expect(disabled(getByTestId('craps-clear'))).toBe(true)
+  })
+
+  test('disabled on an empty table and while the dice roll', () => {
+    seedTable({})
+    const empty = render(<CrapsScreen />)
+    expect(disabled(empty.getByTestId('craps-clear'))).toBe(true)
+    empty.unmount()
+    seedTable({ bets: [bet('pass', 5), bet('place', 6, { number: 6, working: false })] })
+    jest.spyOn(Math, 'random').mockReturnValueOnce(2.5 / 6).mockReturnValueOnce(3.5 / 6)
+    const { getByTestId, getByText } = render(<CrapsScreen />)
+    fireEvent.press(getByText('ROLL'))
+    expect(disabled(getByTestId('craps-clear'))).toBe(true)
+    jest.restoreAllMocks()
+  })
+})
+
 describe('pickCrapsView', () => {
   test.each([
     ['compact', 'portrait', 'list'],

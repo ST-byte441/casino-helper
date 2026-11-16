@@ -60,6 +60,10 @@ export function CrapsListView() {
   const { phase, dice, point, bets, tableRules, assistEnabled, lastRoll, lastDelta } = store
 
   const variant = tableRules.variant
+  // Clear: take down every bet allowed (contract bets keep their flat bet, lose their odds).
+  const notice = useCrapsStore(s => s.notice)
+  const canClear = useCrapsStore(s => s.canClear())
+  const clearOff = !canClear || rolling !== null
   const passBet = bets.find(b => b.type === 'pass')
   const dontPassBet = bets.find(b => b.type === 'dont-pass')
 
@@ -345,11 +349,20 @@ export function CrapsListView() {
 
       <View style={styles.footer}>
         {showFundsWarning && <Text style={styles.fundsWarning}>Insufficient funds</Text>}
+        {/* The store's reason line (e.g. what Clear left up); only shown when there is one. */}
+        {notice && !showFundsWarning && <Text testID="craps-list-notice" style={styles.notice}>{notice}</Text>}
         <FlashingBalance testID="craps-balance" value={shown} color={shown != null && shown < 0 ? '#ff5555' : '#aaa'}
           style={styles.balanceText}>
           Balance: {balance}
         </FlashingBalance>
-        <RollButton testID="craps-roll" onRoll={handleRoll} disabled={bets.length === 0 || rolling !== null} />
+        <View style={styles.actions}>
+          <TouchableOpacity testID="craps-clear" disabled={clearOff} style={[styles.clear, clearOff && styles.clearOff]}
+            onPress={() => useCrapsStore.getState().clearTable()}>
+            <Text style={styles.clearText}>Clear</Text>
+          </TouchableOpacity>
+          <RollButton testID="craps-roll" onRoll={handleRoll} disabled={bets.length === 0 || rolling !== null}
+            style={styles.roll} />
+        </View>
       </View>
 
       {showBanner && (
@@ -378,5 +391,13 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   footer: { borderTopWidth: 1, borderColor: '#2a2a3e', paddingBottom: 4 },
   balanceText: { fontSize: 13, textAlign: 'center', paddingTop: 8, fontWeight: '700' },
+  notice: { color: '#aaa', fontSize: 12, textAlign: 'center', paddingTop: 6, paddingHorizontal: 12 },
+  // Clear beside ROLL: ROLL keeps its margins and most of the width.
+  actions: { flexDirection: 'row', alignItems: 'stretch', paddingLeft: 16 },
+  clear: { marginVertical: 16, paddingHorizontal: 18, borderRadius: 10, backgroundColor: '#2a2a3e',
+    alignItems: 'center', justifyContent: 'center' },
+  clearOff: { opacity: 0.4 },
+  clearText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  roll: { flex: 1, marginLeft: 10 },
   fundsWarning: { color: '#e74c3c', fontSize: 12, fontWeight: '600', textAlign: 'center', paddingTop: 6 },
 })
