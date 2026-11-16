@@ -18,7 +18,7 @@ npx jest <path>   # single file
 npx tsc --noEmit  # type check only
 ```
 
-1580 tests cover the game engines, the shared chip helpers, strategy lookup, roulette and craps felt layouts, roulette wheel maths, screens, profile store and stats, and update utility.
+1582 tests cover the game engines, the shared chip helpers, strategy lookup, roulette and craps felt layouts, roulette wheel maths, screens, profile store and stats, and update utility.
 
 ## Project Structure
 
@@ -45,7 +45,7 @@ features/
     engine.ts     # Pure TS: deck, scoring, rule checks, hand resolution
     strategy.ts   # Pure TS: basic strategy lookup table
     store.ts      # Session Zustand store
-    components/   # UI components (Card — sizes regular/medium/large, also used by baccarat; Hand, ActionButtons, BetControls, TableSetup)
+    components/   # UI components (Card — sizes regular/medium/large, also used by baccarat; Hand, ActionButtons, BetControls, TableSetup, AssistInfo — the ⓘ pop-up beside Assist (TableHeader owns its open state))
       table/      # Screen pieces shared by every layout (TableHeader, DealerArea, HandsArea, ResultBanner, Controls, BalanceFooter)
   craps/
     engine.ts     # Pure TS: dice, phase helpers, bet validity, odds helpers, payout calc, roll resolution
@@ -96,6 +96,7 @@ lib/
 components/
   Text.tsx        # Text/TextInput wrappers that cap font scaling at 1.3x; import these, not react-native's
   UpdateModal.tsx # In-app update prompt modal
+  InfoSheet.tsx   # InfoSheet (scrolling info pop-up; the backdrop sits behind the card so the text scrolls), InfoButton (the ⓘ, placed left of a toggle), Bullet, infoStyles; used by craps and blackjack AssistInfo
   FlashingBalance.tsx # Balance text that flashes green when its value rises, red when it drops (0.5s, `FLASH_MS`); used by every game's balance
   chips/          # Shared chip table: chips.ts (colours, sizes, drag lift), ChipFace, DragHandle (drag/tap race), ChipTray (row or column), useChipTable (origins, ghost, highlight/flash, board tap); used by roulette and the craps table. `chipSize` (default CHIP_SIZE 44) scales the tray, the ghost and the drag lift (`dragLift(size)`); roulette uses the default
 assets/

@@ -22,6 +22,7 @@ import { RollButton } from '../RollButton'
 import { RollResultBanner } from '../RollResultBanner'
 import { RollOverlay } from '../RollOverlay'
 import { AssistInfo } from '../AssistInfo'
+import { InfoButton } from '../../../../components/InfoSheet'
 import { BetType } from '../../../../lib/types'
 
 type CrapsSnapshot = Pick<ReturnType<typeof useCrapsStore.getState>,
@@ -147,9 +148,7 @@ export function CrapsListView() {
         <Text style={styles.headerTitle} numberOfLines={1}>CRAPS · {tableRules.oddsMultiple}</Text>
         <View style={styles.assistGroup}>
           {/* Left of Assist, clear of its on/off dot. */}
-          <TouchableOpacity testID="assist-info-button" accessibilityLabel="What Assist shows" onPress={() => setInfoOpen(true)} hitSlop={10}>
-            <Text style={styles.info}>ⓘ</Text>
-          </TouchableOpacity>
+          <InfoButton testID="assist-info-button" label="What Assist shows" onPress={() => setInfoOpen(true)} style={styles.info} />
           <TouchableOpacity onPress={store.toggleAssist}>
             <Text style={[styles.assist, assistEnabled && styles.assistOn]}>Assist {assistEnabled ? '●' : '○'}</Text>
           </TouchableOpacity>

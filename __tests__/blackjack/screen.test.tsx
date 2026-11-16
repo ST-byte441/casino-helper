@@ -268,3 +268,26 @@ describe('final review fixes', () => {
     expect(clear.props.adjustsFontSizeToFit).toBe(true)
   })
 })
+
+describe('Assist info', () => {
+  test('an ⓘ sits left of Assist and opens what Assist shows, with Assist on or off', () => {
+    const screen = renderTable()
+    const order = screen.getAllByText(/^(ⓘ|Assist)/).map(n => String([].concat(n.props.children)[0]))
+    expect(order).toEqual(['ⓘ', 'Assist: '])
+    expect(screen.queryByTestId('assist-info')).toBeNull()
+    fireEvent.press(screen.getByTestId('assist-info-button'))
+    const info = screen.getByTestId('assist-info')
+    expect(info).toHaveTextContent(/basic strategy/)
+    expect(info).toHaveTextContent(/gold outline/i)
+    expect(info).toHaveTextContent(/dealer's up card/)
+    expect(useBlackjackStore.getState().assistEnabled).toBe(false)
+    fireEvent.press(screen.getByTestId('assist-info-close'))
+    expect(screen.queryByTestId('assist-info')).toBeNull()
+  })
+
+  test('the card doesn’t take touches, so its text scrolls', () => {
+    const screen = renderTable(LARGE_LANDSCAPE)
+    fireEvent.press(screen.getByTestId('assist-info-button'))
+    expect(screen.getByTestId('assist-info').props.onStartShouldSetResponder).toBeUndefined()
+  })
+})

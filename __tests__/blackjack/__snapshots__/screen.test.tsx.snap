@@ -109,51 +109,110 @@ exports[`phone layout is pinned compact 320x700 playing 1`] = `
       H17 · 6D · 3:2 · LS
     </Text>
     <View
-      accessibilityState={
-        {
-          "busy": undefined,
-          "checked": undefined,
-          "disabled": undefined,
-          "expanded": undefined,
-          "selected": undefined,
-        }
-      }
-      accessibilityValue={
-        {
-          "max": undefined,
-          "min": undefined,
-          "now": undefined,
-          "text": undefined,
-        }
-      }
-      accessible={true}
-      collapsable={false}
-      focusable={true}
-      onClick={[Function]}
-      onResponderGrant={[Function]}
-      onResponderMove={[Function]}
-      onResponderRelease={[Function]}
-      onResponderTerminate={[Function]}
-      onResponderTerminationRequest={[Function]}
-      onStartShouldSetResponder={[Function]}
       style={
         {
-          "opacity": 1,
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 10,
         }
       }
     >
-      <Text
-        maxFontSizeMultiplier={1.3}
+      <View
+        accessibilityLabel="What Assist shows"
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        hitSlop={10}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
         style={
           {
-            "color": "#FFD700",
-            "fontSize": 15,
+            "opacity": 1,
+          }
+        }
+        testID="assist-info-button"
+      >
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={
+            {
+              "color": "#FFD700",
+              "fontSize": 17,
+            }
+          }
+        >
+          ⓘ
+        </Text>
+      </View>
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "opacity": 1,
           }
         }
       >
-        Assist: 
-        ○
-      </Text>
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={
+            {
+              "color": "#FFD700",
+              "fontSize": 15,
+            }
+          }
+        >
+          Assist: 
+          ○
+        </Text>
+      </View>
     </View>
   </View>
   <View
@@ -929,51 +988,110 @@ exports[`phone layout is pinned phone betting 1`] = `
       H17 · 6D · 3:2 · LS
     </Text>
     <View
-      accessibilityState={
-        {
-          "busy": undefined,
-          "checked": undefined,
-          "disabled": undefined,
-          "expanded": undefined,
-          "selected": undefined,
-        }
-      }
-      accessibilityValue={
-        {
-          "max": undefined,
-          "min": undefined,
-          "now": undefined,
-          "text": undefined,
-        }
-      }
-      accessible={true}
-      collapsable={false}
-      focusable={true}
-      onClick={[Function]}
-      onResponderGrant={[Function]}
-      onResponderMove={[Function]}
-      onResponderRelease={[Function]}
-      onResponderTerminate={[Function]}
-      onResponderTerminationRequest={[Function]}
-      onStartShouldSetResponder={[Function]}
       style={
         {
-          "opacity": 1,
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 10,
         }
       }
     >
-      <Text
-        maxFontSizeMultiplier={1.3}
+      <View
+        accessibilityLabel="What Assist shows"
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        hitSlop={10}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
         style={
           {
-            "color": "#FFD700",
-            "fontSize": 15,
+            "opacity": 1,
+          }
+        }
+        testID="assist-info-button"
+      >
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={
+            {
+              "color": "#FFD700",
+              "fontSize": 17,
+            }
+          }
+        >
+          ⓘ
+        </Text>
+      </View>
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "opacity": 1,
           }
         }
       >
-        Assist: 
-        ○
-      </Text>
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={
+            {
+              "color": "#FFD700",
+              "fontSize": 15,
+            }
+          }
+        >
+          Assist: 
+          ○
+        </Text>
+      </View>
     </View>
   </View>
   <View
@@ -1576,51 +1694,110 @@ exports[`phone layout is pinned phone dealer phase 1`] = `
       H17 · 6D · 3:2 · LS
     </Text>
     <View
-      accessibilityState={
-        {
-          "busy": undefined,
-          "checked": undefined,
-          "disabled": undefined,
-          "expanded": undefined,
-          "selected": undefined,
-        }
-      }
-      accessibilityValue={
-        {
-          "max": undefined,
-          "min": undefined,
-          "now": undefined,
-          "text": undefined,
-        }
-      }
-      accessible={true}
-      collapsable={false}
-      focusable={true}
-      onClick={[Function]}
-      onResponderGrant={[Function]}
-      onResponderMove={[Function]}
-      onResponderRelease={[Function]}
-      onResponderTerminate={[Function]}
-      onResponderTerminationRequest={[Function]}
-      onStartShouldSetResponder={[Function]}
       style={
         {
-          "opacity": 1,
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 10,
         }
       }
     >
-      <Text
-        maxFontSizeMultiplier={1.3}
+      <View
+        accessibilityLabel="What Assist shows"
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        hitSlop={10}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
         style={
           {
-            "color": "#FFD700",
-            "fontSize": 15,
+            "opacity": 1,
+          }
+        }
+        testID="assist-info-button"
+      >
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={
+            {
+              "color": "#FFD700",
+              "fontSize": 17,
+            }
+          }
+        >
+          ⓘ
+        </Text>
+      </View>
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "opacity": 1,
           }
         }
       >
-        Assist: 
-        ○
-      </Text>
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={
+            {
+              "color": "#FFD700",
+              "fontSize": 15,
+            }
+          }
+        >
+          Assist: 
+          ○
+        </Text>
+      </View>
     </View>
   </View>
   <View
@@ -2126,51 +2303,110 @@ exports[`phone layout is pinned phone playing 1`] = `
       H17 · 6D · 3:2 · LS
     </Text>
     <View
-      accessibilityState={
-        {
-          "busy": undefined,
-          "checked": undefined,
-          "disabled": undefined,
-          "expanded": undefined,
-          "selected": undefined,
-        }
-      }
-      accessibilityValue={
-        {
-          "max": undefined,
-          "min": undefined,
-          "now": undefined,
-          "text": undefined,
-        }
-      }
-      accessible={true}
-      collapsable={false}
-      focusable={true}
-      onClick={[Function]}
-      onResponderGrant={[Function]}
-      onResponderMove={[Function]}
-      onResponderRelease={[Function]}
-      onResponderTerminate={[Function]}
-      onResponderTerminationRequest={[Function]}
-      onStartShouldSetResponder={[Function]}
       style={
         {
-          "opacity": 1,
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 10,
         }
       }
     >
-      <Text
-        maxFontSizeMultiplier={1.3}
+      <View
+        accessibilityLabel="What Assist shows"
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        hitSlop={10}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
         style={
           {
-            "color": "#FFD700",
-            "fontSize": 15,
+            "opacity": 1,
+          }
+        }
+        testID="assist-info-button"
+      >
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={
+            {
+              "color": "#FFD700",
+              "fontSize": 17,
+            }
+          }
+        >
+          ⓘ
+        </Text>
+      </View>
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "opacity": 1,
           }
         }
       >
-        Assist: 
-        ○
-      </Text>
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={
+            {
+              "color": "#FFD700",
+              "fontSize": 15,
+            }
+          }
+        >
+          Assist: 
+          ○
+        </Text>
+      </View>
     </View>
   </View>
   <View
@@ -2946,51 +3182,110 @@ exports[`phone layout is pinned phone playing split 1`] = `
       H17 · 6D · 3:2 · LS
     </Text>
     <View
-      accessibilityState={
-        {
-          "busy": undefined,
-          "checked": undefined,
-          "disabled": undefined,
-          "expanded": undefined,
-          "selected": undefined,
-        }
-      }
-      accessibilityValue={
-        {
-          "max": undefined,
-          "min": undefined,
-          "now": undefined,
-          "text": undefined,
-        }
-      }
-      accessible={true}
-      collapsable={false}
-      focusable={true}
-      onClick={[Function]}
-      onResponderGrant={[Function]}
-      onResponderMove={[Function]}
-      onResponderRelease={[Function]}
-      onResponderTerminate={[Function]}
-      onResponderTerminationRequest={[Function]}
-      onStartShouldSetResponder={[Function]}
       style={
         {
-          "opacity": 1,
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 10,
         }
       }
     >
-      <Text
-        maxFontSizeMultiplier={1.3}
+      <View
+        accessibilityLabel="What Assist shows"
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        hitSlop={10}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
         style={
           {
-            "color": "#FFD700",
-            "fontSize": 15,
+            "opacity": 1,
+          }
+        }
+        testID="assist-info-button"
+      >
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={
+            {
+              "color": "#FFD700",
+              "fontSize": 17,
+            }
+          }
+        >
+          ⓘ
+        </Text>
+      </View>
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "opacity": 1,
           }
         }
       >
-        Assist: 
-        ○
-      </Text>
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={
+            {
+              "color": "#FFD700",
+              "fontSize": 15,
+            }
+          }
+        >
+          Assist: 
+          ○
+        </Text>
+      </View>
     </View>
   </View>
   <View
@@ -4094,51 +4389,110 @@ exports[`phone layout is pinned phone result 1`] = `
       H17 · 6D · 3:2 · LS
     </Text>
     <View
-      accessibilityState={
-        {
-          "busy": undefined,
-          "checked": undefined,
-          "disabled": undefined,
-          "expanded": undefined,
-          "selected": undefined,
-        }
-      }
-      accessibilityValue={
-        {
-          "max": undefined,
-          "min": undefined,
-          "now": undefined,
-          "text": undefined,
-        }
-      }
-      accessible={true}
-      collapsable={false}
-      focusable={true}
-      onClick={[Function]}
-      onResponderGrant={[Function]}
-      onResponderMove={[Function]}
-      onResponderRelease={[Function]}
-      onResponderTerminate={[Function]}
-      onResponderTerminationRequest={[Function]}
-      onStartShouldSetResponder={[Function]}
       style={
         {
-          "opacity": 1,
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 10,
         }
       }
     >
-      <Text
-        maxFontSizeMultiplier={1.3}
+      <View
+        accessibilityLabel="What Assist shows"
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        hitSlop={10}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
         style={
           {
-            "color": "#FFD700",
-            "fontSize": 15,
+            "opacity": 1,
+          }
+        }
+        testID="assist-info-button"
+      >
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={
+            {
+              "color": "#FFD700",
+              "fontSize": 17,
+            }
+          }
+        >
+          ⓘ
+        </Text>
+      </View>
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "opacity": 1,
           }
         }
       >
-        Assist: 
-        ○
-      </Text>
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={
+            {
+              "color": "#FFD700",
+              "fontSize": 15,
+            }
+          }
+        >
+          Assist: 
+          ○
+        </Text>
+      </View>
     </View>
   </View>
   <View

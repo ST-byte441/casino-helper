@@ -26,6 +26,7 @@ import { StackMenu } from './StackMenu'
 import { MoreBetsSheet } from './MoreBetsSheet'
 import { RollOverlay } from '../RollOverlay'
 import { AssistInfo } from '../AssistInfo'
+import { InfoButton } from '../../../../components/InfoSheet'
 import { FlashingBalance } from '../../../../components/FlashingBalance'
 import { shownBalance } from '../../bankroll'
 import { payoutCheck, payoutHint } from '../../assist'
@@ -340,9 +341,7 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
           <Text style={[styles.assist, rolling && styles.dimmed]}>More bets</Text>
         </TouchableOpacity>
         {/* Left of Assist, clear of its on/off dot. */}
-        <TouchableOpacity testID="assist-info-button" accessibilityLabel="What Assist shows" onPress={() => setInfoOpen(true)} hitSlop={10}>
-          <Text style={styles.info}>ⓘ</Text>
-        </TouchableOpacity>
+        <InfoButton testID="assist-info-button" label="What Assist shows" onPress={() => setInfoOpen(true)} style={styles.info} />
         <TouchableOpacity onPress={toggleAssist} hitSlop={8}>
           <Text style={[styles.assist, assistEnabled && styles.assistOn]}>Assist {assistEnabled ? '●' : '○'}</Text>
         </TouchableOpacity>

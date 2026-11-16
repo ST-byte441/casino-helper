@@ -1,6 +1,7 @@
 import React from 'react'
-import { Modal, Pressable, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import { Text } from '../../../components/Text'
+import { Bullet, InfoSheet, infoStyles as styles } from '../../../components/InfoSheet'
 import { BetQuality } from '../../../lib/types'
 import { PAYOUT_RING, QUALITY_COLORS } from './table/CrapsFelt'
 
@@ -20,89 +21,62 @@ const QUALITY: Array<{ q: BetQuality; name: string; what: string }> = [
 ]
 
 function Swatch({ color, ring }: { color: string; ring?: boolean }) {
-  return <View style={[styles.swatch, ring ? { borderColor: color, borderWidth: 3 } : { backgroundColor: color }]} />
-}
-
-function Bullet({ children }: { children: React.ReactNode }) {
-  return <Text style={styles.body}>•  {children}</Text>
+  return <View style={[own.swatch, ring ? { borderColor: color, borderWidth: 3 } : { backgroundColor: color }]} />
 }
 
 /** The pop-up behind the ⓘ beside Assist: what Assist's colours and helpers mean, for players new to craps. */
 export function AssistInfo({ visible, view, onClose }: Props) {
   return (
-    <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        {/* Behind the card, not round it: a pressable card takes the touch and its text won't scroll. */}
-        <Pressable testID="assist-info-backdrop" style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View testID="assist-info" style={styles.card}>
-          <ScrollView contentContainerStyle={styles.content}>
-            <Text style={styles.title}>What Assist shows</Text>
-            <Text style={styles.body}>
-              Assist points out the smarter bets and helps you size bets so they pay in full. Turn it on with the
-              Assist button.
-            </Text>
+    <InfoSheet visible={visible} title="What Assist shows" testID="assist-info" onClose={onClose}>
+      <Text style={styles.body}>
+        Assist points out the smarter bets and helps you size bets so they pay in full. Turn it on with the
+        Assist button.
+      </Text>
 
-            <Text style={styles.heading}>Bet quality</Text>
-            <Text style={styles.body}>
-              {view === 'table' ? 'The border of each area on the felt' : 'The left edge of each row'} is coloured by
-              how good the bet is for you (its house edge):
-            </Text>
-            {QUALITY.map(({ q, name, what }) => (
-              <View key={q} style={styles.item}>
-                <Swatch color={QUALITY_COLORS[q]} />
-                <Text style={styles.itemText}><Text style={styles.strong}>{name}</Text>{'  '}{what}</Text>
-              </View>
-            ))}
-
-            <Text style={styles.heading}>Paying exactly</Text>
-            <Text style={styles.body}>
-              Casinos pay to the dollar and round down. A Place 6 pays 7 to 6, so $15 on the 6 wins $17, not $17.50,
-              while $18 wins exactly $21. These amounts pay in full:
-            </Text>
-            <Bullet>Place 6 and 8 in $6s; Place 4, 5, 9 and 10 in $5s.</Bullet>
-            <Bullet>Odds on 6 or 8 in $5s, on 5 or 9 in $2s, on 4 or 10 any amount.</Bullet>
-            <Bullet>Lay odds on 4 or 10 in $2s, on 5 or 9 in $3s, on 6 or 8 in $6s.</Bullet>
-
-            {view === 'table' ? (
-              <>
-                <View style={styles.item}>
-                  <Swatch color={PAYOUT_RING.exact} ring />
-                  <Text style={styles.itemText}><Text style={styles.strong}>Green ring</Text>{'  '}round a Place bet or odds: it pays exactly.</Text>
-                </View>
-                <View style={styles.item}>
-                  <Swatch color={PAYOUT_RING.inexact} ring />
-                  <Text style={styles.itemText}><Text style={styles.strong}>Amber ring</Text>{'  '}the win will be rounded down. The line at the top suggests amounts that pay exactly.</Text>
-                </View>
-                <Bullet>Tap a stack: "Make it $18" fixes the amount in one tap.</Bullet>
-                <Bullet>In the odds buttons, green ones land on an amount that pays exactly; "Max exact" takes the most odds that do.</Bullet>
-              </>
-            ) : (
-              <>
-                <Bullet>A Place row with a green left edge pays exactly. Place 6 and 8 add in $6s.</Bullet>
-                <Bullet>An odds row turns gold when the odds pay exactly.</Bullet>
-              </>
-            )}
-          </ScrollView>
-          <TouchableOpacity testID="assist-info-close" style={styles.close} onPress={onClose}>
-            <Text style={styles.closeText}>Got it</Text>
-          </TouchableOpacity>
+      <Text style={styles.heading}>Bet quality</Text>
+      <Text style={styles.body}>
+        {view === 'table' ? 'The border of each area on the felt' : 'The left edge of each row'} is coloured by
+        how good the bet is for you (its house edge):
+      </Text>
+      {QUALITY.map(({ q, name, what }) => (
+        <View key={q} style={styles.item}>
+          <Swatch color={QUALITY_COLORS[q]} />
+          <Text style={styles.itemText}><Text style={styles.strong}>{name}</Text>{'  '}{what}</Text>
         </View>
-      </View>
-    </Modal>
+      ))}
+
+      <Text style={styles.heading}>Paying exactly</Text>
+      <Text style={styles.body}>
+        Casinos pay to the dollar and round down. A Place 6 pays 7 to 6, so $15 on the 6 wins $17, not $17.50,
+        while $18 wins exactly $21. These amounts pay in full:
+      </Text>
+      <Bullet>Place 6 and 8 in $6s; Place 4, 5, 9 and 10 in $5s.</Bullet>
+      <Bullet>Odds on 6 or 8 in $5s, on 5 or 9 in $2s, on 4 or 10 any amount.</Bullet>
+      <Bullet>Lay odds on 4 or 10 in $2s, on 5 or 9 in $3s, on 6 or 8 in $6s.</Bullet>
+
+      {view === 'table' ? (
+        <>
+          <View style={styles.item}>
+            <Swatch color={PAYOUT_RING.exact} ring />
+            <Text style={styles.itemText}><Text style={styles.strong}>Green ring</Text>{'  '}round a Place bet or odds: it pays exactly.</Text>
+          </View>
+          <View style={styles.item}>
+            <Swatch color={PAYOUT_RING.inexact} ring />
+            <Text style={styles.itemText}><Text style={styles.strong}>Amber ring</Text>{'  '}the win will be rounded down. The line at the top suggests amounts that pay exactly.</Text>
+          </View>
+          <Bullet>Tap a stack: "Make it $18" fixes the amount in one tap.</Bullet>
+          <Bullet>In the odds buttons, green ones land on an amount that pays exactly; "Max exact" takes the most odds that do.</Bullet>
+        </>
+      ) : (
+        <>
+          <Bullet>A Place row with a green left edge pays exactly. Place 6 and 8 add in $6s.</Bullet>
+          <Bullet>An odds row turns gold when the odds pay exactly.</Bullet>
+        </>
+      )}
+    </InfoSheet>
   )
 }
 
-const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center', padding: 16 },
-  card: { backgroundColor: '#1e1e2e', borderRadius: 12, maxWidth: 520, width: '100%', maxHeight: '100%', padding: 14 },
-  content: { gap: 8, paddingBottom: 4 },
-  title: { color: '#FFD700', fontWeight: '800', fontSize: 17 },
-  heading: { color: '#fff', fontWeight: '800', fontSize: 14, marginTop: 6 },
-  body: { color: '#ccc', fontSize: 13, lineHeight: 18 },
-  item: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  itemText: { color: '#ccc', fontSize: 13, lineHeight: 18, flex: 1 },
-  strong: { color: '#fff', fontWeight: '800' },
+const own = StyleSheet.create({
   swatch: { width: 16, height: 16, borderRadius: 8, marginTop: 1 },
-  close: { backgroundColor: '#FFD700', borderRadius: 8, paddingVertical: 10, alignItems: 'center', marginTop: 10 },
-  closeText: { color: '#13131f', fontWeight: '800', fontSize: 15 },
 })
