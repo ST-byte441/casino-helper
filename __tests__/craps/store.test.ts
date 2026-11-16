@@ -402,3 +402,60 @@ describe('stale notices', () => {
     expect(s().bets).toHaveLength(2)
   })
 })
+
+describe('clearTable: take down everything allowed', () => {
+  const b = (id: string, type: ActiveBet['type'], amount: number, extra: Partial<ActiveBet> = {}): ActiveBet =>
+    ({ id, type, amount, working: true, ...extra })
+  const s = () => useCrapsStore.getState()
+
+  test('on the come-out every bet comes down, the Pass Line too', () => {
+    useCrapsStore.setState({ phase: 'come-out', point: null, notice: null,
+      bets: [b('p', 'pass', 10), b('f', 'field', 5), b('h', 'hardway', 1, { number: 6 })] })
+    expect(s().clearTable()).toBe(3)
+    expect(s().bets).toEqual([])
+    expect(s().notice).toBeNull()
+  })
+
+  test('after the point: contract bets stay without their odds, the rest come down', () => {
+    pointPhase([
+      b('p', 'pass', 10, { odds: 20 }), b('c', 'come', 5, { comePoint: 8, odds: 10 }),
+      b('pl', 'place', 12, { number: 6 }), b('f', 'field', 5), b('dp', 'dont-pass', 10, { odds: 12 }),
+    ])
+    useCrapsStore.setState({ notice: null })
+    expect(s().clearTable()).toBe(5) // 3 bets down, 2 odds off
+    expect(s().bets).toEqual([
+      expect.objectContaining({ id: 'p', amount: 10, odds: 0 }),
+      expect.objectContaining({ id: 'c', amount: 5, odds: 0, comePoint: 8 }),
+    ])
+    expect(s().notice).toBe('Pass and Come bets on a point stay up; the rest came down')
+  })
+
+  test('a Come bet still in the Come box comes down', () => {
+    pointPhase([b('c', 'come', 5)])
+    expect(s().clearTable()).toBe(1)
+    expect(s().bets).toEqual([])
+  })
+
+  test('nothing allowed to come down: the reason line says so and nothing changes', () => {
+    pointPhase([b('p', 'pass', 10)])
+    expect(s().clearTable()).toBe(0)
+    expect(s().bets).toEqual([b('p', 'pass', 10)])
+    expect(s().notice).toBe('Pass and Come bets on a point can’t come down')
+  })
+
+  test('an empty table is a no-op', () => {
+    pointPhase([])
+    useCrapsStore.setState({ notice: 'old' })
+    expect(s().clearTable()).toBe(0)
+    expect(s().notice).toBe('old')
+  })
+
+  test('canClear: true only when something can come down', () => {
+    pointPhase([b('p', 'pass', 10)])
+    expect(s().canClear()).toBe(false)
+    pointPhase([b('p', 'pass', 10, { odds: 10 })])
+    expect(s().canClear()).toBe(true)
+    pointPhase([])
+    expect(s().canClear()).toBe(false)
+  })
+})

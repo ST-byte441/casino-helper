@@ -192,6 +192,7 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
   const toggleAssist = useCrapsStore(s => s.toggleAssist)
   const selectedChip = useCrapsStore(s => s.selectedChip)
   const selectChip = useCrapsStore(s => s.selectChip)
+  const canClear = useCrapsStore(s => s.canClear())
   const active = useProfileStore(s => s.profiles.find(p => p.id === s.activeProfileId))
   // The balance less the chips on the table (null: infinite bankroll or no profile).
   const liveBalance = active && active.bankrollMode !== 'infinite' ? shownBalance(active.balance, liveBets) : null
@@ -284,9 +285,20 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
   const lit = highlight && !highlight.startsWith(STACK_PREFIX) ? (highlight as SpotKey) : null
 
   const reason = <Text testID="craps-reason" style={styles.reason} numberOfLines={1}>{notice ?? ' '}</Text>
+  // Clear: take down every bet allowed (contract bets keep their flat bet, lose their odds).
+  const clearOff = !canClear || rolling !== null
+  const clear = (
+    <TouchableOpacity testID="craps-clear" disabled={clearOff} style={[styles.clear, clearOff && styles.dimmed]}
+      onPress={() => useCrapsStore.getState().clearTable()}>
+      <Text style={styles.clearText}>Clear</Text>
+    </TouchableOpacity>
+  )
   const tray = (
-    <ChipTray chips={CRAPS_CHIPS} selected={selectedChip} onSelect={selectChip} handlers={handlers} size={chip}
-      direction={portrait ? 'row' : 'column'} style={portrait ? styles.trayRow : styles.tray} />
+    <View style={portrait ? styles.trayRowWrap : styles.trayWrap}>
+      <ChipTray chips={CRAPS_CHIPS} selected={selectedChip} onSelect={selectChip} handlers={handlers} size={chip}
+        direction={portrait ? 'row' : 'column'} style={portrait ? styles.trayRow : styles.tray} />
+      {clear}
+    </View>
   )
   const boardFrame = (
       <View style={portrait ? styles.boardFramePortrait : styles.boardFrame}>
@@ -408,10 +420,18 @@ function makeSheets(c: Record<TableSize, TableChrome>) {
     // A 44dp touch target that fits the shortest Pass Line band (68dp on the Fold cover).
     roll: { margin: 0, width: ROLL_W, minHeight: 44, paddingVertical: 10, paddingHorizontal: 0, justifyContent: 'center' },
     fitInner: { alignSelf: 'center' },
-    tray: { width: c.regular.trayW, paddingHorizontal: 0 },
+    // The chip column and Clear under it; the divider moves from the chips to the whole column.
+    trayWrap: { width: c.regular.trayW, borderRightWidth: 1, borderColor: '#2a2a3e', alignItems: 'center',
+      paddingBottom: 6 },
+    tray: { width: c.regular.trayW, flex: 1, paddingHorizontal: 0, borderRightWidth: 0 },
+    clear: { minHeight: 36, width: c.regular.trayW - 10, borderRadius: 6, backgroundColor: '#2a2a3e',
+      alignItems: 'center', justifyContent: 'center' },
+    clearText: { color: '#fff', fontWeight: '700', fontSize: 13 },
     below: { flex: 1 },
     reasonRow: { height: c.regular.reasonH, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12 },
-    trayRow: { height: c.regular.trayRowH, paddingVertical: 0 },
+    trayRowWrap: { height: c.regular.trayRowH, flexDirection: 'row', alignItems: 'center', borderTopWidth: 1,
+      borderColor: '#2a2a3e', paddingRight: 12 },
+    trayRow: { flex: 1, height: c.regular.trayRowH, paddingVertical: 0, borderTopWidth: 0 },
     // Slightly see-through so the highlighted area shows through the chip.
     ghost: { position: 'absolute', left: 0, top: 0, opacity: 0.8 },
   } as const
@@ -423,9 +443,13 @@ function makeSheets(c: Record<TableSize, TableChrome>) {
     assist: { fontSize: 15 },
     info: { fontSize: 19 },
     balance: { fontSize: 16 },
-    tray: { width: c.large.trayW, paddingHorizontal: 0 },
+    trayWrap: { width: c.large.trayW },
+    tray: { width: c.large.trayW },
+    clear: { minHeight: 44, width: c.large.trayW - 12, paddingHorizontal: 12 },
+    clearText: { fontSize: 16 },
     reasonRow: { height: c.large.reasonH },
-    trayRow: { height: c.large.trayRowH, paddingVertical: 0 },
+    trayRowWrap: { height: c.large.trayRowH },
+    trayRow: { height: c.large.trayRowH },
   })
 }
 

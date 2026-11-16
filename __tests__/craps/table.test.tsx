@@ -13,7 +13,7 @@ import 'react-native-gesture-handler/jestSetup'
 import React from 'react'
 import { StyleSheet } from 'react-native'
 import { GestureHandlerRootView, State } from 'react-native-gesture-handler'
-import { render as rtlRender, fireEvent, act } from '@testing-library/react-native'
+import { render as rtlRender, fireEvent, act, within } from '@testing-library/react-native'
 import { DRAG_LIFT } from '../../components/chips/chips'
 import { CrapsTable } from '../../features/craps/components/table/CrapsTable'
 import { placeFromSheet } from '../../features/craps/components/table/MoreBetsSheet'
@@ -659,5 +659,44 @@ describe('Assist info', () => {
     expect(store().assistEnabled).toBe(false)
     fireEvent.press(getByTestId('assist-info-close'))
     expect(queryByTestId('assist-info')).toBeNull()
+  })
+})
+
+describe('Clear', () => {
+  const disabled = (node: any) => node.props.accessibilityState?.disabled === true
+
+  test('takes down every bet allowed; contract bets stay without their odds', async () => {
+    seed({ phase: 'point', point: 6, bets: [
+      bet('pass', 10, { odds: 20 }), bet('place', 12, { number: 8 }), bet('field', 5),
+    ] })
+    const { getByTestId } = await mount()
+    expect(disabled(getByTestId('craps-clear'))).toBe(false)
+    fireEvent.press(getByTestId('craps-clear'))
+    expect(store().bets).toEqual([expect.objectContaining({ type: 'pass', amount: 10, odds: 0 })])
+    expect(getByTestId('craps-reason').props.children).toBe('Pass and Come bets on a point stay up; the rest came down')
+    expect(disabled(getByTestId('craps-clear'))).toBe(true)
+  })
+
+  test('disabled on an empty table', async () => {
+    const { getByTestId } = await mount()
+    expect(disabled(getByTestId('craps-clear'))).toBe(true)
+  })
+
+  test('disabled while the dice roll', async () => {
+    seed({ bets: [bet('pass', 5), bet('place', 6, { number: 6, working: false })] })
+    jest.spyOn(Math, 'random').mockReturnValueOnce(2.5 / 6).mockReturnValueOnce(3.5 / 6)
+    const { getByTestId, getByText } = await mount({ onRoll: () => store().roll() })
+    fireEvent.press(getByText('ROLL'))
+    expect(disabled(getByTestId('craps-clear'))).toBe(true)
+    jest.restoreAllMocks()
+  })
+
+  test('large portrait has it too, at the end of the chip row', async () => {
+    seed({ bets: [bet('field', 5)] })
+    const { getByTestId } = await mount({ size: 'large', orientation: 'portrait' })
+    const below = getByTestId('craps-table-below')
+    expect(within(below).getByTestId('craps-clear')).toBeTruthy()
+    fireEvent.press(getByTestId('craps-clear'))
+    expect(store().bets).toEqual([])
   })
 })

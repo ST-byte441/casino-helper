@@ -27,6 +27,13 @@ type CrapsActions = {
   roll(): void
   placeBet(type: BetType, amount: number, number?: number, hopDice?: [number, number]): boolean
   removeBet(id: string): void
+  /**
+   * Takes down every bet allowed (canRemoveBet) and the odds off contract bets (Pass on a point, Come on its number),
+   * which stay up. Returns how many bets and odds came off; the notice says what stayed.
+   */
+  clearTable(): number
+  /** Whether clearTable would take anything down. */
+  canClear(): boolean
   reduceBet(id: string, amount: number): void
   addOdds(betId: string, amount: number): boolean
   canAfford(amount: number): boolean
@@ -120,6 +127,28 @@ export const useCrapsStore = create<CrapsState & CrapsActions>((set, get) => ({
       return
     }
     set({ bets: bets.filter(b => b.id !== id), notice: null })
+  },
+
+  clearTable() {
+    const { bets, phase } = get()
+    if (bets.length === 0) return 0
+    let cleared = 0
+    const kept: ActiveBet[] = []
+    for (const bet of bets) {
+      if (canRemoveBet(bet, phase)) { cleared++; continue }
+      if ((bet.odds ?? 0) > 0) cleared++
+      kept.push((bet.odds ?? 0) > 0 ? { ...bet, odds: 0 } : bet)
+    }
+    const notice = kept.length === 0 ? null
+      : cleared > 0 ? 'Pass and Come bets on a point stay up; the rest came down'
+      : 'Pass and Come bets on a point can’t come down'
+    set({ bets: kept, notice })
+    return cleared
+  },
+
+  canClear() {
+    const { bets, phase } = get()
+    return bets.some(b => canRemoveBet(b, phase) || (b.odds ?? 0) > 0)
   },
 
   reduceBet(id, amount) {
