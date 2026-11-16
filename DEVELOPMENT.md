@@ -94,7 +94,7 @@ lib/
 components/
   Text.tsx        # Text/TextInput wrappers that cap font scaling at 1.3x; import these, not react-native's
   UpdateModal.tsx # In-app update prompt modal
-  FlashingBalance.tsx # Balance text that flashes green when its value rises, red when it drops (0.75s, `FLASH_MS`); used by every game's balance
+  FlashingBalance.tsx # Balance text that flashes green when its value rises, red when it drops (0.5s, `FLASH_MS`); used by every game's balance
   chips/          # Shared chip table: chips.ts (colours, sizes, drag lift), ChipFace, DragHandle (drag/tap race), ChipTray (row or column), useChipTable (origins, ghost, highlight/flash, board tap); used by roulette and the craps table. `chipSize` (default CHIP_SIZE 44) scales the tray, the ghost and the drag lift (`dragLift(size)`); roulette uses the default
 assets/
   avatars/        # Bundled 256px profile pictures + default (originals in gitignored assets/profile-pictures/)

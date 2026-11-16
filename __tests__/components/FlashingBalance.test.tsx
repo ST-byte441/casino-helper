@@ -16,8 +16,8 @@ describe('FlashingBalance', () => {
     expect(color(getByTestId('b'))).toBe('rgba(170, 170, 170, 1)')
   })
 
-  test('the flash lasts 0.75 s', () => {
-    expect(FLASH_MS).toBe(750)
+  test('the flash lasts 0.5 s', () => {
+    expect(FLASH_MS).toBe(500)
   })
 
   test('flashes red when the value drops, then returns to normal', () => {
