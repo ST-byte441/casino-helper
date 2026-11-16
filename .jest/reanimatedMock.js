@@ -8,6 +8,8 @@ const useSharedValue = initial => {
   return React.useRef({ value: initial }).current
 }
 const useAnimatedStyle = updater => updater()
+const useAnimatedProps = updater => updater()
+const useDerivedValue = updater => ({ value: updater() })
 const withTiming = toValue => toValue
 const withSpring = toValue => toValue
 const withDelay = (_delay, animation) => animation
@@ -25,6 +27,8 @@ module.exports = {
   default: Animated,
   useSharedValue,
   useAnimatedStyle,
+  useAnimatedProps,
+  useDerivedValue,
   withTiming,
   withSpring,
   withDelay,

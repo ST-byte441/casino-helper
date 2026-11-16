@@ -240,10 +240,6 @@ describe('CrapsTable drags', () => {
 })
 
 describe('CrapsTable chrome', () => {
-  /** The face a rolling die shows (the one face layer at full opacity). */
-  const shownFace = (getByTestId: (id: string) => any, die: number) =>
-    [1, 2, 3, 4, 5, 6].filter(f => StyleSheet.flatten(getByTestId(`roll-die-${die}-face-${f}`).props.style).opacity === 1)
-
   async function rollNatural() {
     // The place bet (off on the come-out) stays up after the roll, so ROLL stays enabled for a bet.
     seed({ bets: [bet('pass', 5), bet('place', 6, { number: 6, working: false })] })
@@ -261,8 +257,8 @@ describe('CrapsTable chrome', () => {
     expect(store().dice).toEqual([3, 4])
     expect(store().lastRoll?.phaseChange).toBe('natural')
     expect(getByTestId('craps-roll-overlay')).toBeTruthy()
-    expect(shownFace(getByTestId, 0)).toEqual([3])
-    expect(shownFace(getByTestId, 1)).toEqual([4])
+    expect(getByTestId('roll-die-0').props.accessibilityLabel).toBe('Die showing 3')
+    expect(getByTestId('roll-die-1').props.accessibilityLabel).toBe('Die showing 4')
     expect(queryByText('Natural!')).toBeNull()
     expect(getByTestId('craps-roll')).toBeDisabled()
   })

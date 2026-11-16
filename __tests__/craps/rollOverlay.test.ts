@@ -1,13 +1,16 @@
 jest.mock('react-native-worklets', () => require('react-native-worklets/src/mock'))
 jest.mock('react-native-reanimated', () => require('../../.jest/reanimatedMock'))
-import { faceIndexAt, LAND_AT, REST_MS, ROLL_ANIM_MS, TUMBLE_MS } from '../../features/craps/components/table/RollOverlay'
+import { REST_MS, ROLL_ANIM_MS, TUMBLE_MS } from '../../features/craps/components/table/RollOverlay'
+import { frontFace, randomSpin, tumbleOrientation } from '../../features/craps/dice3d'
 
 describe('roll overlay timing', () => {
-  test('the rolled face is up from the landing point to the end, never before', () => {
-    const n = 12
-    for (let p = 0; p < LAND_AT; p += 0.01) expect(faceIndexAt(p, n)).toBeLessThan(n - 1)
-    for (let p = LAND_AT; p <= 1; p += 0.01) expect(faceIndexAt(p, n)).toBe(n - 1)
-    expect(faceIndexAt(1, n)).toBe(n - 1)
+  test('the rolled face is front-most for the last part of every tumble (from 98.5% of it), not just at the end', () => {
+    // 98.5% of the eased tumble is ~75% of TUMBLE_MS: the dice settle on the right face, then rest on it.
+    for (let k = 0; k < 300; k++) {
+      const v = 1 + (k % 6)
+      const spin = randomSpin()
+      for (let e = 0.985; e <= 1; e += 0.003) expect(frontFace(tumbleOrientation(v, e, spin))).toBe(v)
+    }
   })
 
   test('the dice rest 1.2 s on the result before the banner', () => {
