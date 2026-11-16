@@ -267,8 +267,12 @@ export function tapTarget(
 
 export function resolveDrop(layout: BoardLayout, wheel: RouletteWheel, source: DragSource, x: number, y: number): DropAction {
   const offBoard = x < 0 || x > layout.width || y < 0 || y > layout.height
+  return dropAction(source, offBoard ? null : hitTest(layout, wheel, x, y), offBoard)
+}
+
+/** What dropping `source` on bet `id` (null: no bet there) does; off the board a stack is removed. */
+export function dropAction(source: DragSource, id: string | null, offBoard: boolean): DropAction {
   if (offBoard) return source.type === 'stack' ? { type: 'remove', betId: source.betId } : { type: 'none' }
-  const id = hitTest(layout, wheel, x, y)
   if (!id) return { type: 'none' }
   if (source.type === 'tray') return { type: 'place', betId: id, amount: source.amount }
   return id === source.betId ? { type: 'none' } : { type: 'move', from: source.betId, to: id }

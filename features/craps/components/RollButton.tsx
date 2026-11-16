@@ -1,12 +1,15 @@
 import React from 'react'
-import { TouchableOpacity, StyleSheet } from 'react-native'
+import { TouchableOpacity, StyleSheet, StyleProp, ViewStyle } from 'react-native'
 import { Text } from '../../../components/Text'
 
-type Props = { disabled?: boolean; onRoll(): void }
+type Props = { disabled?: boolean; onRoll(): void; testID?: string; style?: StyleProp<ViewStyle> }
 
-export function RollButton({ disabled, onRoll }: Props) {
+export function RollButton({ disabled, onRoll, testID, style }: Props) {
+  // The list passes neither testID nor style; leave its props exactly as they were.
+  const extra = testID ? { testID } : {}
   return (
-    <TouchableOpacity style={[styles.btn, disabled && styles.disabled]} disabled={disabled} onPress={onRoll}>
+    <TouchableOpacity {...extra} style={style ? [styles.btn, disabled && styles.disabled, style] : [styles.btn, disabled && styles.disabled]}
+      disabled={disabled} onPress={onRoll}>
       <Text style={styles.text}>ROLL</Text>
     </TouchableOpacity>
   )

@@ -1,5 +1,6 @@
 import { View, TouchableOpacity, StyleSheet } from 'react-native'
 import { Text } from '../../../../components/Text'
+import { BackButton } from '../../../../components/BackButton'
 import { sizedStyles, TableSize } from '../../../../lib/tableSize'
 
 type Props = {
@@ -15,9 +16,7 @@ export function TableHeader({ size, squeezeOn, locked, onBack, onToggleSqueeze }
   const s = SHEETS[size]
   return (
     <View style={s.header}>
-      <TouchableOpacity onPress={onBack}>
-        <Text style={s.back}>← Back</Text>
-      </TouchableOpacity>
+      <BackButton onPress={onBack} style={s.back} />
       <Text style={s.title} numberOfLines={1}>BACCARAT</Text>
       <TouchableOpacity disabled={locked} style={locked && s.toggleDisabled} onPress={onToggleSqueeze}>
         <Text style={[s.toggle, squeezeOn && s.toggleOn]}>

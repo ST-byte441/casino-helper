@@ -4,7 +4,8 @@ import { Text } from '../../components/Text'
 import { LegacyScrollView } from 'react-native-gesture-handler'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
-import { useBaccaratStore } from '../../features/baccarat/store'
+import { useBaccaratStore, stakeOnTable } from '../../features/baccarat/store'
+import { shownBalanceFor } from '../../lib/bankroll'
 import { useProfileStore } from '../../features/profile/store'
 import { formatMoney } from '../../features/profile/format'
 import { usePreferencesStore } from '../../features/preferences/store'
@@ -33,7 +34,9 @@ export default function BaccaratScreen() {
   const active = profiles.find(p => p.id === activeProfileId)
   const isInfinite = active?.bankrollMode === 'infinite'
   const numericBalance = isInfinite ? Infinity : (active?.balance ?? 0)
-  const balance = active ? (isInfinite ? '∞' : formatMoney(active.balance)) : '—'
+  // The footer shows the balance less the stake on the table.
+  const shown = shownBalanceFor(active, stakeOnTable(store))
+  const balance = !active ? '—' : shown == null ? '∞' : formatMoney(shown)
 
   const [showFundsWarning, setFundsWarning] = useState(false)
   const [mainChip, setMainChip] = useState<number>(BACCARAT_CHIPS[0])
@@ -154,7 +157,8 @@ export default function BaccaratScreen() {
     showFundsWarning,
     minBet: isBetting && !canDeal ? BACCARAT_MIN_MAIN_BET : null,
     balanceText: balance,
-    negative: numericBalance < 0,
+    value: shown,
+    negative: shown != null && shown < 0,
     action: isResult ? { label: 'Next Hand' as const, disabled: false, onPress: store.newHand }
       : isBetting ? { label: 'DEAL' as const, disabled: !canDeal, onPress: () => store.deal(baccaratRevealMode) }
       : null,

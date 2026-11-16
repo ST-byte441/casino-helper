@@ -60,27 +60,84 @@ exports[`phone layout is pinned compact 320x700 playing 1`] = `
         {
           "alignItems": "center",
           "flexDirection": "row",
-          "gap": 4,
+          "gap": 4.05,
           "opacity": 1,
         }
       }
     >
-      <Text
-        maxFontSizeMultiplier={1.3}
+      <RNSVGSvgView
+        align="xMidYMid"
+        bbHeight={9.3}
+        bbWidth={12}
+        focusable={false}
+        height={9.3}
+        meetOrSlice={0}
+        minX={0}
+        minY={0}
         style={
-          {
-            "color": "#fff",
-            "fontSize": 15,
-            "transform": [
-              {
-                "translateY": -1,
-              },
-            ],
-          }
+          [
+            {
+              "backgroundColor": "transparent",
+              "borderWidth": 0,
+            },
+            {
+              "transform": [
+                {
+                  "translateY": -0.21,
+                },
+              ],
+            },
+            {
+              "flex": 0,
+              "height": 9,
+              "width": 12,
+            },
+          ]
         }
+        testID="back-arrow"
+        transform={
+          [
+            {
+              "translateY": -0.21,
+            },
+          ]
+        }
+        vbHeight={9.3}
+        vbWidth={12}
+        width={12}
       >
-        ←
-      </Text>
+        <RNSVGGroup
+          fill={
+            {
+              "payload": 4278190080,
+              "type": 0,
+            }
+          }
+        >
+          <RNSVGPath
+            d="M11.32 4.65 H0.68 M5.33 0.68 L0.68 4.65 L5.33 8.62"
+            fill={null}
+            propList={
+              [
+                "fill",
+                "stroke",
+                "strokeWidth",
+                "strokeLinecap",
+                "strokeLinejoin",
+              ]
+            }
+            stroke={
+              {
+                "payload": 4294967295,
+                "type": 0,
+              }
+            }
+            strokeLinecap={1}
+            strokeLinejoin={1}
+            strokeWidth={1.35}
+          />
+        </RNSVGGroup>
+      </RNSVGSvgView>
       <Text
         maxFontSizeMultiplier={1.3}
         style={
@@ -109,51 +166,110 @@ exports[`phone layout is pinned compact 320x700 playing 1`] = `
       H17 · 6D · 3:2 · LS
     </Text>
     <View
-      accessibilityState={
-        {
-          "busy": undefined,
-          "checked": undefined,
-          "disabled": undefined,
-          "expanded": undefined,
-          "selected": undefined,
-        }
-      }
-      accessibilityValue={
-        {
-          "max": undefined,
-          "min": undefined,
-          "now": undefined,
-          "text": undefined,
-        }
-      }
-      accessible={true}
-      collapsable={false}
-      focusable={true}
-      onClick={[Function]}
-      onResponderGrant={[Function]}
-      onResponderMove={[Function]}
-      onResponderRelease={[Function]}
-      onResponderTerminate={[Function]}
-      onResponderTerminationRequest={[Function]}
-      onStartShouldSetResponder={[Function]}
       style={
         {
-          "opacity": 1,
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 10,
         }
       }
     >
-      <Text
-        maxFontSizeMultiplier={1.3}
+      <View
+        accessibilityLabel="What Assist shows"
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        hitSlop={10}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
         style={
           {
-            "color": "#FFD700",
-            "fontSize": 15,
+            "opacity": 1,
+          }
+        }
+        testID="assist-info-button"
+      >
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={
+            {
+              "color": "#FFD700",
+              "fontSize": 17,
+            }
+          }
+        >
+          ⓘ
+        </Text>
+      </View>
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "opacity": 1,
           }
         }
       >
-        Assist: 
-        ○
-      </Text>
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={
+            {
+              "color": "#FFD700",
+              "fontSize": 15,
+            }
+          }
+        >
+          Assist: 
+          ○
+        </Text>
+      </View>
     </View>
   </View>
   <View
@@ -803,19 +919,18 @@ exports[`phone layout is pinned compact 320x700 playing 1`] = `
     }
   >
     <Text
+      collapsable={false}
       maxFontSizeMultiplier={1.3}
       style={
-        [
-          {
-            "color": "#aaa",
-            "fontSize": 14,
-          },
-          false,
-        ]
+        {
+          "color": "rgba(170, 170, 170, 1)",
+          "fontSize": 14,
+        }
       }
+      testID="balance"
     >
       Balance: 
-      $1,000
+      $975
     </Text>
   </View>
 </RNCSafeAreaView>
@@ -881,27 +996,84 @@ exports[`phone layout is pinned phone betting 1`] = `
         {
           "alignItems": "center",
           "flexDirection": "row",
-          "gap": 4,
+          "gap": 4.05,
           "opacity": 1,
         }
       }
     >
-      <Text
-        maxFontSizeMultiplier={1.3}
+      <RNSVGSvgView
+        align="xMidYMid"
+        bbHeight={9.3}
+        bbWidth={12}
+        focusable={false}
+        height={9.3}
+        meetOrSlice={0}
+        minX={0}
+        minY={0}
         style={
-          {
-            "color": "#fff",
-            "fontSize": 15,
-            "transform": [
-              {
-                "translateY": -1,
-              },
-            ],
-          }
+          [
+            {
+              "backgroundColor": "transparent",
+              "borderWidth": 0,
+            },
+            {
+              "transform": [
+                {
+                  "translateY": -0.21,
+                },
+              ],
+            },
+            {
+              "flex": 0,
+              "height": 9,
+              "width": 12,
+            },
+          ]
         }
+        testID="back-arrow"
+        transform={
+          [
+            {
+              "translateY": -0.21,
+            },
+          ]
+        }
+        vbHeight={9.3}
+        vbWidth={12}
+        width={12}
       >
-        ←
-      </Text>
+        <RNSVGGroup
+          fill={
+            {
+              "payload": 4278190080,
+              "type": 0,
+            }
+          }
+        >
+          <RNSVGPath
+            d="M11.32 4.65 H0.68 M5.33 0.68 L0.68 4.65 L5.33 8.62"
+            fill={null}
+            propList={
+              [
+                "fill",
+                "stroke",
+                "strokeWidth",
+                "strokeLinecap",
+                "strokeLinejoin",
+              ]
+            }
+            stroke={
+              {
+                "payload": 4294967295,
+                "type": 0,
+              }
+            }
+            strokeLinecap={1}
+            strokeLinejoin={1}
+            strokeWidth={1.35}
+          />
+        </RNSVGGroup>
+      </RNSVGSvgView>
       <Text
         maxFontSizeMultiplier={1.3}
         style={
@@ -930,51 +1102,110 @@ exports[`phone layout is pinned phone betting 1`] = `
       H17 · 6D · 3:2 · LS
     </Text>
     <View
-      accessibilityState={
-        {
-          "busy": undefined,
-          "checked": undefined,
-          "disabled": undefined,
-          "expanded": undefined,
-          "selected": undefined,
-        }
-      }
-      accessibilityValue={
-        {
-          "max": undefined,
-          "min": undefined,
-          "now": undefined,
-          "text": undefined,
-        }
-      }
-      accessible={true}
-      collapsable={false}
-      focusable={true}
-      onClick={[Function]}
-      onResponderGrant={[Function]}
-      onResponderMove={[Function]}
-      onResponderRelease={[Function]}
-      onResponderTerminate={[Function]}
-      onResponderTerminationRequest={[Function]}
-      onStartShouldSetResponder={[Function]}
       style={
         {
-          "opacity": 1,
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 10,
         }
       }
     >
-      <Text
-        maxFontSizeMultiplier={1.3}
+      <View
+        accessibilityLabel="What Assist shows"
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        hitSlop={10}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
         style={
           {
-            "color": "#FFD700",
-            "fontSize": 15,
+            "opacity": 1,
+          }
+        }
+        testID="assist-info-button"
+      >
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={
+            {
+              "color": "#FFD700",
+              "fontSize": 17,
+            }
+          }
+        >
+          ⓘ
+        </Text>
+      </View>
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "opacity": 1,
           }
         }
       >
-        Assist: 
-        ○
-      </Text>
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={
+            {
+              "color": "#FFD700",
+              "fontSize": 15,
+            }
+          }
+        >
+          Assist: 
+          ○
+        </Text>
+      </View>
     </View>
   </View>
   <View
@@ -1451,19 +1682,18 @@ exports[`phone layout is pinned phone betting 1`] = `
     }
   >
     <Text
+      collapsable={false}
       maxFontSizeMultiplier={1.3}
       style={
-        [
-          {
-            "color": "#aaa",
-            "fontSize": 14,
-          },
-          false,
-        ]
+        {
+          "color": "rgba(170, 170, 170, 1)",
+          "fontSize": 14,
+        }
       }
+      testID="balance"
     >
       Balance: 
-      $1,000
+      $975
     </Text>
   </View>
 </RNCSafeAreaView>
@@ -1529,27 +1759,84 @@ exports[`phone layout is pinned phone dealer phase 1`] = `
         {
           "alignItems": "center",
           "flexDirection": "row",
-          "gap": 4,
+          "gap": 4.05,
           "opacity": 1,
         }
       }
     >
-      <Text
-        maxFontSizeMultiplier={1.3}
+      <RNSVGSvgView
+        align="xMidYMid"
+        bbHeight={9.3}
+        bbWidth={12}
+        focusable={false}
+        height={9.3}
+        meetOrSlice={0}
+        minX={0}
+        minY={0}
         style={
-          {
-            "color": "#fff",
-            "fontSize": 15,
-            "transform": [
-              {
-                "translateY": -1,
-              },
-            ],
-          }
+          [
+            {
+              "backgroundColor": "transparent",
+              "borderWidth": 0,
+            },
+            {
+              "transform": [
+                {
+                  "translateY": -0.21,
+                },
+              ],
+            },
+            {
+              "flex": 0,
+              "height": 9,
+              "width": 12,
+            },
+          ]
         }
+        testID="back-arrow"
+        transform={
+          [
+            {
+              "translateY": -0.21,
+            },
+          ]
+        }
+        vbHeight={9.3}
+        vbWidth={12}
+        width={12}
       >
-        ←
-      </Text>
+        <RNSVGGroup
+          fill={
+            {
+              "payload": 4278190080,
+              "type": 0,
+            }
+          }
+        >
+          <RNSVGPath
+            d="M11.32 4.65 H0.68 M5.33 0.68 L0.68 4.65 L5.33 8.62"
+            fill={null}
+            propList={
+              [
+                "fill",
+                "stroke",
+                "strokeWidth",
+                "strokeLinecap",
+                "strokeLinejoin",
+              ]
+            }
+            stroke={
+              {
+                "payload": 4294967295,
+                "type": 0,
+              }
+            }
+            strokeLinecap={1}
+            strokeLinejoin={1}
+            strokeWidth={1.35}
+          />
+        </RNSVGGroup>
+      </RNSVGSvgView>
       <Text
         maxFontSizeMultiplier={1.3}
         style={
@@ -1578,51 +1865,110 @@ exports[`phone layout is pinned phone dealer phase 1`] = `
       H17 · 6D · 3:2 · LS
     </Text>
     <View
-      accessibilityState={
-        {
-          "busy": undefined,
-          "checked": undefined,
-          "disabled": undefined,
-          "expanded": undefined,
-          "selected": undefined,
-        }
-      }
-      accessibilityValue={
-        {
-          "max": undefined,
-          "min": undefined,
-          "now": undefined,
-          "text": undefined,
-        }
-      }
-      accessible={true}
-      collapsable={false}
-      focusable={true}
-      onClick={[Function]}
-      onResponderGrant={[Function]}
-      onResponderMove={[Function]}
-      onResponderRelease={[Function]}
-      onResponderTerminate={[Function]}
-      onResponderTerminationRequest={[Function]}
-      onStartShouldSetResponder={[Function]}
       style={
         {
-          "opacity": 1,
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 10,
         }
       }
     >
-      <Text
-        maxFontSizeMultiplier={1.3}
+      <View
+        accessibilityLabel="What Assist shows"
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        hitSlop={10}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
         style={
           {
-            "color": "#FFD700",
-            "fontSize": 15,
+            "opacity": 1,
+          }
+        }
+        testID="assist-info-button"
+      >
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={
+            {
+              "color": "#FFD700",
+              "fontSize": 17,
+            }
+          }
+        >
+          ⓘ
+        </Text>
+      </View>
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "opacity": 1,
           }
         }
       >
-        Assist: 
-        ○
-      </Text>
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={
+            {
+              "color": "#FFD700",
+              "fontSize": 15,
+            }
+          }
+        >
+          Assist: 
+          ○
+        </Text>
+      </View>
     </View>
   </View>
   <View
@@ -2002,19 +2348,18 @@ exports[`phone layout is pinned phone dealer phase 1`] = `
     }
   >
     <Text
+      collapsable={false}
       maxFontSizeMultiplier={1.3}
       style={
-        [
-          {
-            "color": "#aaa",
-            "fontSize": 14,
-          },
-          false,
-        ]
+        {
+          "color": "rgba(170, 170, 170, 1)",
+          "fontSize": 14,
+        }
       }
+      testID="balance"
     >
       Balance: 
-      $1,000
+      $975
     </Text>
   </View>
 </RNCSafeAreaView>
@@ -2080,27 +2425,84 @@ exports[`phone layout is pinned phone playing 1`] = `
         {
           "alignItems": "center",
           "flexDirection": "row",
-          "gap": 4,
+          "gap": 4.05,
           "opacity": 1,
         }
       }
     >
-      <Text
-        maxFontSizeMultiplier={1.3}
+      <RNSVGSvgView
+        align="xMidYMid"
+        bbHeight={9.3}
+        bbWidth={12}
+        focusable={false}
+        height={9.3}
+        meetOrSlice={0}
+        minX={0}
+        minY={0}
         style={
-          {
-            "color": "#fff",
-            "fontSize": 15,
-            "transform": [
-              {
-                "translateY": -1,
-              },
-            ],
-          }
+          [
+            {
+              "backgroundColor": "transparent",
+              "borderWidth": 0,
+            },
+            {
+              "transform": [
+                {
+                  "translateY": -0.21,
+                },
+              ],
+            },
+            {
+              "flex": 0,
+              "height": 9,
+              "width": 12,
+            },
+          ]
         }
+        testID="back-arrow"
+        transform={
+          [
+            {
+              "translateY": -0.21,
+            },
+          ]
+        }
+        vbHeight={9.3}
+        vbWidth={12}
+        width={12}
       >
-        ←
-      </Text>
+        <RNSVGGroup
+          fill={
+            {
+              "payload": 4278190080,
+              "type": 0,
+            }
+          }
+        >
+          <RNSVGPath
+            d="M11.32 4.65 H0.68 M5.33 0.68 L0.68 4.65 L5.33 8.62"
+            fill={null}
+            propList={
+              [
+                "fill",
+                "stroke",
+                "strokeWidth",
+                "strokeLinecap",
+                "strokeLinejoin",
+              ]
+            }
+            stroke={
+              {
+                "payload": 4294967295,
+                "type": 0,
+              }
+            }
+            strokeLinecap={1}
+            strokeLinejoin={1}
+            strokeWidth={1.35}
+          />
+        </RNSVGGroup>
+      </RNSVGSvgView>
       <Text
         maxFontSizeMultiplier={1.3}
         style={
@@ -2129,51 +2531,110 @@ exports[`phone layout is pinned phone playing 1`] = `
       H17 · 6D · 3:2 · LS
     </Text>
     <View
-      accessibilityState={
-        {
-          "busy": undefined,
-          "checked": undefined,
-          "disabled": undefined,
-          "expanded": undefined,
-          "selected": undefined,
-        }
-      }
-      accessibilityValue={
-        {
-          "max": undefined,
-          "min": undefined,
-          "now": undefined,
-          "text": undefined,
-        }
-      }
-      accessible={true}
-      collapsable={false}
-      focusable={true}
-      onClick={[Function]}
-      onResponderGrant={[Function]}
-      onResponderMove={[Function]}
-      onResponderRelease={[Function]}
-      onResponderTerminate={[Function]}
-      onResponderTerminationRequest={[Function]}
-      onStartShouldSetResponder={[Function]}
       style={
         {
-          "opacity": 1,
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 10,
         }
       }
     >
-      <Text
-        maxFontSizeMultiplier={1.3}
+      <View
+        accessibilityLabel="What Assist shows"
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        hitSlop={10}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
         style={
           {
-            "color": "#FFD700",
-            "fontSize": 15,
+            "opacity": 1,
+          }
+        }
+        testID="assist-info-button"
+      >
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={
+            {
+              "color": "#FFD700",
+              "fontSize": 17,
+            }
+          }
+        >
+          ⓘ
+        </Text>
+      </View>
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "opacity": 1,
           }
         }
       >
-        Assist: 
-        ○
-      </Text>
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={
+            {
+              "color": "#FFD700",
+              "fontSize": 15,
+            }
+          }
+        >
+          Assist: 
+          ○
+        </Text>
+      </View>
     </View>
   </View>
   <View
@@ -2823,19 +3284,18 @@ exports[`phone layout is pinned phone playing 1`] = `
     }
   >
     <Text
+      collapsable={false}
       maxFontSizeMultiplier={1.3}
       style={
-        [
-          {
-            "color": "#aaa",
-            "fontSize": 14,
-          },
-          false,
-        ]
+        {
+          "color": "rgba(170, 170, 170, 1)",
+          "fontSize": 14,
+        }
       }
+      testID="balance"
     >
       Balance: 
-      $1,000
+      $975
     </Text>
   </View>
 </RNCSafeAreaView>
@@ -2901,27 +3361,84 @@ exports[`phone layout is pinned phone playing split 1`] = `
         {
           "alignItems": "center",
           "flexDirection": "row",
-          "gap": 4,
+          "gap": 4.05,
           "opacity": 1,
         }
       }
     >
-      <Text
-        maxFontSizeMultiplier={1.3}
+      <RNSVGSvgView
+        align="xMidYMid"
+        bbHeight={9.3}
+        bbWidth={12}
+        focusable={false}
+        height={9.3}
+        meetOrSlice={0}
+        minX={0}
+        minY={0}
         style={
-          {
-            "color": "#fff",
-            "fontSize": 15,
-            "transform": [
-              {
-                "translateY": -1,
-              },
-            ],
-          }
+          [
+            {
+              "backgroundColor": "transparent",
+              "borderWidth": 0,
+            },
+            {
+              "transform": [
+                {
+                  "translateY": -0.21,
+                },
+              ],
+            },
+            {
+              "flex": 0,
+              "height": 9,
+              "width": 12,
+            },
+          ]
         }
+        testID="back-arrow"
+        transform={
+          [
+            {
+              "translateY": -0.21,
+            },
+          ]
+        }
+        vbHeight={9.3}
+        vbWidth={12}
+        width={12}
       >
-        ←
-      </Text>
+        <RNSVGGroup
+          fill={
+            {
+              "payload": 4278190080,
+              "type": 0,
+            }
+          }
+        >
+          <RNSVGPath
+            d="M11.32 4.65 H0.68 M5.33 0.68 L0.68 4.65 L5.33 8.62"
+            fill={null}
+            propList={
+              [
+                "fill",
+                "stroke",
+                "strokeWidth",
+                "strokeLinecap",
+                "strokeLinejoin",
+              ]
+            }
+            stroke={
+              {
+                "payload": 4294967295,
+                "type": 0,
+              }
+            }
+            strokeLinecap={1}
+            strokeLinejoin={1}
+            strokeWidth={1.35}
+          />
+        </RNSVGGroup>
+      </RNSVGSvgView>
       <Text
         maxFontSizeMultiplier={1.3}
         style={
@@ -2950,51 +3467,110 @@ exports[`phone layout is pinned phone playing split 1`] = `
       H17 · 6D · 3:2 · LS
     </Text>
     <View
-      accessibilityState={
-        {
-          "busy": undefined,
-          "checked": undefined,
-          "disabled": undefined,
-          "expanded": undefined,
-          "selected": undefined,
-        }
-      }
-      accessibilityValue={
-        {
-          "max": undefined,
-          "min": undefined,
-          "now": undefined,
-          "text": undefined,
-        }
-      }
-      accessible={true}
-      collapsable={false}
-      focusable={true}
-      onClick={[Function]}
-      onResponderGrant={[Function]}
-      onResponderMove={[Function]}
-      onResponderRelease={[Function]}
-      onResponderTerminate={[Function]}
-      onResponderTerminationRequest={[Function]}
-      onStartShouldSetResponder={[Function]}
       style={
         {
-          "opacity": 1,
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 10,
         }
       }
     >
-      <Text
-        maxFontSizeMultiplier={1.3}
+      <View
+        accessibilityLabel="What Assist shows"
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        hitSlop={10}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
         style={
           {
-            "color": "#FFD700",
-            "fontSize": 15,
+            "opacity": 1,
+          }
+        }
+        testID="assist-info-button"
+      >
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={
+            {
+              "color": "#FFD700",
+              "fontSize": 17,
+            }
+          }
+        >
+          ⓘ
+        </Text>
+      </View>
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "opacity": 1,
           }
         }
       >
-        Assist: 
-        ○
-      </Text>
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={
+            {
+              "color": "#FFD700",
+              "fontSize": 15,
+            }
+          }
+        >
+          Assist: 
+          ○
+        </Text>
+      </View>
     </View>
   </View>
   <View
@@ -3972,19 +4548,18 @@ exports[`phone layout is pinned phone playing split 1`] = `
     }
   >
     <Text
+      collapsable={false}
       maxFontSizeMultiplier={1.3}
       style={
-        [
-          {
-            "color": "#aaa",
-            "fontSize": 14,
-          },
-          false,
-        ]
+        {
+          "color": "rgba(170, 170, 170, 1)",
+          "fontSize": 14,
+        }
       }
+      testID="balance"
     >
       Balance: 
-      $1,000
+      $925
     </Text>
   </View>
 </RNCSafeAreaView>
@@ -4050,27 +4625,84 @@ exports[`phone layout is pinned phone result 1`] = `
         {
           "alignItems": "center",
           "flexDirection": "row",
-          "gap": 4,
+          "gap": 4.05,
           "opacity": 1,
         }
       }
     >
-      <Text
-        maxFontSizeMultiplier={1.3}
+      <RNSVGSvgView
+        align="xMidYMid"
+        bbHeight={9.3}
+        bbWidth={12}
+        focusable={false}
+        height={9.3}
+        meetOrSlice={0}
+        minX={0}
+        minY={0}
         style={
-          {
-            "color": "#fff",
-            "fontSize": 15,
-            "transform": [
-              {
-                "translateY": -1,
-              },
-            ],
-          }
+          [
+            {
+              "backgroundColor": "transparent",
+              "borderWidth": 0,
+            },
+            {
+              "transform": [
+                {
+                  "translateY": -0.21,
+                },
+              ],
+            },
+            {
+              "flex": 0,
+              "height": 9,
+              "width": 12,
+            },
+          ]
         }
+        testID="back-arrow"
+        transform={
+          [
+            {
+              "translateY": -0.21,
+            },
+          ]
+        }
+        vbHeight={9.3}
+        vbWidth={12}
+        width={12}
       >
-        ←
-      </Text>
+        <RNSVGGroup
+          fill={
+            {
+              "payload": 4278190080,
+              "type": 0,
+            }
+          }
+        >
+          <RNSVGPath
+            d="M11.32 4.65 H0.68 M5.33 0.68 L0.68 4.65 L5.33 8.62"
+            fill={null}
+            propList={
+              [
+                "fill",
+                "stroke",
+                "strokeWidth",
+                "strokeLinecap",
+                "strokeLinejoin",
+              ]
+            }
+            stroke={
+              {
+                "payload": 4294967295,
+                "type": 0,
+              }
+            }
+            strokeLinecap={1}
+            strokeLinejoin={1}
+            strokeWidth={1.35}
+          />
+        </RNSVGGroup>
+      </RNSVGSvgView>
       <Text
         maxFontSizeMultiplier={1.3}
         style={
@@ -4099,51 +4731,110 @@ exports[`phone layout is pinned phone result 1`] = `
       H17 · 6D · 3:2 · LS
     </Text>
     <View
-      accessibilityState={
-        {
-          "busy": undefined,
-          "checked": undefined,
-          "disabled": undefined,
-          "expanded": undefined,
-          "selected": undefined,
-        }
-      }
-      accessibilityValue={
-        {
-          "max": undefined,
-          "min": undefined,
-          "now": undefined,
-          "text": undefined,
-        }
-      }
-      accessible={true}
-      collapsable={false}
-      focusable={true}
-      onClick={[Function]}
-      onResponderGrant={[Function]}
-      onResponderMove={[Function]}
-      onResponderRelease={[Function]}
-      onResponderTerminate={[Function]}
-      onResponderTerminationRequest={[Function]}
-      onStartShouldSetResponder={[Function]}
       style={
         {
-          "opacity": 1,
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 10,
         }
       }
     >
-      <Text
-        maxFontSizeMultiplier={1.3}
+      <View
+        accessibilityLabel="What Assist shows"
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        hitSlop={10}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
         style={
           {
-            "color": "#FFD700",
-            "fontSize": 15,
+            "opacity": 1,
+          }
+        }
+        testID="assist-info-button"
+      >
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={
+            {
+              "color": "#FFD700",
+              "fontSize": 17,
+            }
+          }
+        >
+          ⓘ
+        </Text>
+      </View>
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "opacity": 1,
           }
         }
       >
-        Assist: 
-        ○
-      </Text>
+        <Text
+          maxFontSizeMultiplier={1.3}
+          style={
+            {
+              "color": "#FFD700",
+              "fontSize": 15,
+            }
+          }
+        >
+          Assist: 
+          ○
+        </Text>
+      </View>
     </View>
   </View>
   <View
@@ -4600,16 +5291,15 @@ exports[`phone layout is pinned phone result 1`] = `
     }
   >
     <Text
+      collapsable={false}
       maxFontSizeMultiplier={1.3}
       style={
-        [
-          {
-            "color": "#aaa",
-            "fontSize": 14,
-          },
-          false,
-        ]
+        {
+          "color": "rgba(170, 170, 170, 1)",
+          "fontSize": 14,
+        }
       }
+      testID="balance"
     >
       Balance: 
       $1,000

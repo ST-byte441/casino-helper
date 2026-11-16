@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from 'react'
 import { View, StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
-import { useBlackjackStore } from '../../features/blackjack/store'
+import { useBlackjackStore, stakeOnTable } from '../../features/blackjack/store'
+import { shownBalanceFor } from '../../lib/bankroll'
 import { useProfileStore } from '../../features/profile/store'
 import { usePreferencesStore } from '../../features/preferences/store'
 import { formatMoney } from '../../features/profile/format'
@@ -17,7 +18,7 @@ import { pickLayout } from '../../lib/tableLayout'
 import { TableSize } from '../../lib/tableSize'
 import { useScreenClass } from '../../lib/useScreenClass'
 import { TableRules } from '../../lib/types'
-import { canDouble, canSplit, canSurrender, scoreHand } from '../../features/blackjack/engine'
+import { canSplit, canSurrender, scoreHand } from '../../features/blackjack/engine'
 
 export default function BlackjackScreen() {
   const router = useRouter()
@@ -30,9 +31,6 @@ export default function BlackjackScreen() {
   const { blackjackRules: savedRules, saveBlackjackRules } = usePreferencesStore()
   const activeProfile = profiles.find(p => p.id === activeProfileId)
   const isInfinite = activeProfile?.bankrollMode === 'infinite'
-  const balance = activeProfile
-    ? isInfinite ? Infinity : activeProfile.balance
-    : 0
 
   const [showFundsWarning, setFundsWarning] = useState(false)
   const fundsTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -103,7 +101,7 @@ export default function BlackjackScreen() {
     phase: store.phase,
     actions: {
       suggestedAction: store.suggestedAction,
-      canDouble: canDouble(activeHand, store.activeHandIndex > 0, rules) && store.canAffordExtra(),
+      canDouble: store.canDoubleNow(),
       canSplit: canSplit(activeHand) && store.canAffordExtra(),
       canSurrender: canSurrender(activeHand, rules) && store.playerHands.length === 1,
       onHit: store.hit,
@@ -123,10 +121,13 @@ export default function BlackjackScreen() {
     },
   }
   const controls = <Controls {...controlProps} />
+  // The footer shows the balance less the stake on the table; the bet controls still check the settled balance.
+  const shown = shownBalanceFor(activeProfile, stakeOnTable(store))
   const footerProps = {
     size,
-    balanceText: isInfinite ? '∞' : formatMoney(balance),
-    negative: balance < 0,
+    balanceText: !activeProfile ? formatMoney(0) : shown == null ? '∞' : formatMoney(shown),
+    value: shown,
+    negative: shown != null && shown < 0,
     showFundsWarning,
   } as const
   const footer = <BalanceFooter {...footerProps} />

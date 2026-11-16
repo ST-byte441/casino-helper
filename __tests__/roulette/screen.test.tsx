@@ -133,6 +133,6 @@ test('a full spin: wheel, result after 7000 ms, back to the board with the marke
 
 test('the Back button leaves the screen', () => {
   const screen = startTable()
-  fireEvent.press(screen.getByText('← Back'))
+  fireEvent.press(screen.getByText('Back'))
   expect(mockBack).toHaveBeenCalled()
 })

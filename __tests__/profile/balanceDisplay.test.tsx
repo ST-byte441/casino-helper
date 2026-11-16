@@ -8,6 +8,12 @@ jest.mock('zustand/middleware', () => {
   return { ...actual, persist: (config: any) => config, createJSONStorage: () => undefined }
 })
 jest.mock('expo-router', () => ({ useRouter: () => ({ back: jest.fn(), push: jest.fn() }) }))
+// null: the default jest window (750x1334, a large screen). The craps list test pins a phone window.
+let mockWindow: { width: number; height: number; scale: number; fontScale: number } | null = null
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => {
+  const actual = jest.requireActual('react-native/Libraries/Utilities/useWindowDimensions').default
+  return { __esModule: true, default: () => mockWindow ?? actual() }
+})
 import 'react-native-gesture-handler/jestSetup'
 
 import React from 'react'
@@ -38,7 +44,7 @@ function setProfile(mode: 'finite' | 'infinite', balance: number) {
 const colorOf = (el: any) => StyleSheet.flatten(el.props.style)?.color
 
 beforeEach(() => jest.useFakeTimers())
-afterEach(() => jest.useRealTimers())
+afterEach(() => { jest.useRealTimers(); mockWindow = null })
 
 describe('negative balances on game screens', () => {
   test('lobby shows −$X in red', () => {
@@ -57,22 +63,31 @@ describe('negative balances on game screens', () => {
     setProfile('finite', -50)
     const { getByText } = render(<BlackjackScreen />)
     fireEvent.press(getByText('Play'))
-    expect(colorOf(getByText('Balance: −$50'))).toBe('#ff5555')
+    expect(colorOf(getByText('Balance: −$50'))).toBe('rgba(255, 85, 85, 1)')
   })
 
   test('baccarat footer shows −$X in red', () => {
     setProfile('finite', -50)
     useBaccaratStore.getState().newHand()
     const { getByText } = render(<BaccaratScreen />)
-    expect(colorOf(getByText('Balance: −$50'))).toBe('#ff5555')
+    expect(colorOf(getByText('Balance: −$50'))).toBe('rgba(255, 85, 85, 1)')
   })
 
   test('craps footer shows −$X in red', () => {
+    mockWindow = { width: 384, height: 832, scale: 3, fontScale: 1 }
     setProfile('finite', -50)
     useCrapsStore.getState().setTableRules({ variant: 'craps', oddsMultiple: '3-4-5x', fieldPays3on12: false })
     const { getByText } = render(<CrapsScreen />)
     // Animated color (it flashes green on a win) resolves to rgba at rest
     expect(colorOf(getByText('Balance: −$50'))).toBe('rgba(255, 85, 85, 1)')
+  })
+
+  test('craps table header shows −$X in red', () => {
+    setProfile('finite', -50)
+    useCrapsStore.getState().setTableRules({ variant: 'craps', oddsMultiple: '3-4-5x', fieldPays3on12: false })
+    const { getByText, getByTestId } = render(<CrapsScreen />)
+    expect(getByTestId('craps-board')).toBeTruthy()
+    expect(colorOf(getByText('−$50'))).toBe('rgba(255, 85, 85, 1)')
   })
 
   test('positive balances use the same $X format and are not red', () => {

@@ -18,7 +18,7 @@ npx jest <path>   # single file
 npx tsc --noEmit  # type check only
 ```
 
-706 tests cover the game engines, strategy lookup, roulette layout and wheel maths, screens, profile store and stats, and update utility.
+1613 tests cover the game engines, the shared chip helpers, strategy lookup, roulette and craps felt layouts, roulette wheel maths, screens, profile store and stats, and update utility.
 
 ## Project Structure
 
@@ -31,7 +31,7 @@ app/
   blackjack/
     index.tsx     # Blackjack table screen
   craps/
-    index.tsx     # Craps table screen
+    index.tsx     # Craps screen: setup, then pickCrapsView → list (phone portrait) or CrapsTable; requests rotation after setup
   baccarat/
     index.tsx     # Baccarat table screen
   roulette/
@@ -43,15 +43,22 @@ app/
 features/
   blackjack/
     engine.ts     # Pure TS: deck, scoring, rule checks, hand resolution
-    strategy.ts   # Pure TS: basic strategy lookup table
+    strategy.ts   # Pure TS: basic strategy lookup table; getOptimalAction takes the AllowedMoves (double/split/surrender) and falls back correctly: unsplittable pairs play as totals, "double, else stand" for soft 18/19, otherwise hit. The store's `allowedMoves` (two cards, DAS after a split, affordability, no surrender after a split) drives Assist, `canDoubleNow()` (the Double button) and `doubleDown`
     store.ts      # Session Zustand store
-    components/   # UI components (Card — sizes regular/medium/large, also used by baccarat; Hand, ActionButtons, BetControls, TableSetup)
+    components/   # UI components (Card — sizes regular/medium/large, also used by baccarat; Hand, ActionButtons, BetControls, TableSetup, AssistInfo — the ⓘ pop-up beside Assist (TableHeader owns its open state))
       table/      # Screen pieces shared by every layout (TableHeader, DealerArea, HandsArea, ResultBanner, Controls, BalanceFooter)
   craps/
     engine.ts     # Pure TS: dice, phase helpers, bet validity, odds helpers, payout calc, roll resolution
     strategy.ts   # Pure TS: getBetQuality — rates any bet type as optimal/acceptable/poor/avoid
+    layout.ts     # Pure TS: felt geometry per variant (areas, box stack slots packed per box (`packBox`: puck top-right, Don't Come top-left, come/lay bottom corners, place bottom-centre or as near as fits, odds chips (≥20dp, amount ≥8pt) against their flat bet; no two overlap; stacks shrink to 22dp at the least until the number reaches 16pt and 3/4 of the font a roomy box's middle band allows; the number — `boxLabels` text box — takes the biggest font clear of them, spelled SIX/NINE only when that costs little; tiny felts fall back without throwing), pucks, `labelRect` label boxes (line labels left of centre with their odds strip to the right; box numbers under the puck row), `diceRect` — the dice + ROLL block at the Pass Line band's right end, the props box running to the felt's right edge — the More bets strip `moreRect` under the props cells for World/Hi-Lo/hop stacks), hitCraps, slotFor, stackSizeFor/puckSizeFor; table chrome (TABLE_CHROME regular/large, tableFeltSize)
+    bankroll.ts   # Pure TS: atRisk(bets), shownBalance — the balance shown is the settled balance less the chips on the table (display only; the persisted balance moves only on settled rolls); affordability uses it too
+    assist.ts     # Pure TS: the payout assist — payoutCheck (Place on its amount, line bets on their odds at their own point), payoutFor (engine payouts), nearbyExact, payoutHint, fixTarget (up if balance/cap allow, else down), maxExactOdds. Steps are the engine's `placeStep`/`oddsStep`, which `isCleanPlace`/`isCleanOdds`/`isCleanLayOdds` also use
+    dice3d.ts     # Pure TS worklets: the 3D die — face frames (FACE_DEFS), rest orientation (rolled face square to the viewer, seen from directly above), DiceColors / DEFAULT_DICE_COLORS / faceRgb (every face a shade of the face colour, no outline; ready for a dice-colour setting), tumbleOrientation (two whole-ish spins unwinding to rest), perspective projection to SVG paths with back-face culling and lighting (projectDie), throwOffset (fly-in with three bounces). Worklet plugin note: function declarations become consts, so module-level constants can't call them
+    spots.ts      # Pure TS: spotAction/stackTapAction resolve a dropped or tapped spot/stack to a store call
     store.ts      # Session Zustand store (phase, dice, point, bets, roll, assist toggle)
-    components/   # UI components (TableSetup, DiceDisplay, BetCategoryPanel, BetRow, OddsRow, HopBetGrid, RollButton, RollResultBanner)
+    components/   # UI components (TableSetup, DiceDisplay, BetCategoryPanel, BetRow, OddsRow, HopBetGrid, RollButton, RollResultBanner, RollOverlay — the 3D dice throw, shared by the list and the table; AssistInfo — the ⓘ pop-up left of Assist (its backdrop sits behind the card: a pressable card steals the ScrollView's touches) explaining the quality colours and paying exactly, `view` 'table' (rings, stack menu) or 'list' (row edges))
+      list/       # CrapsListView — the phone-portrait bet list (panels and rows, its own banner and funds warning); Clear beside ROLL (the store's `clearTable`, like the table's) and the store notice shown above the balance when set; ROLL throws the 3D dice over the whole list (RollOverlay), and until they land the list renders a pre-roll snapshot of the store (dice, point, bets, last result, shown balance) with ROLL disabled; pinned by the phone snapshots
+      table/      # Drawn table pieces (CrapsFelt — presentational felt: areas, chip stacks with BUY/LAY/WORLD/HI-LO/hop-dice tags and odds, the More bets strip (one row of stacks, a "+N" count past what fits), ON/OFF puck, Assist tints; CrapsTable — slim header with the reason line, chip tray column at the left, felt with drag/tap chips (stack first, then area; drag a removable stack off to take it down), dice + ROLL in the dice block at the Pass Line's right end, roll result banner after RollOverlay — ROLL resolves the bets at once, then two 3D dice are thrown in from the right, seen from above (bigger while in the air, shadow falling away), tumbling and bouncing to a stop (1s, `TUMBLE_MS`; the rolled face is front-most from ~98% of the eased tumble) and rest on the result 1.2s (`REST_MS`). Each frame `useDerivedValue` projects a die (`dice3d.ts`) and `useAnimatedProps` feeds react-native-svg paths: shaded faces and pips (optional `colors` prop, a DiceColors). Animated colour props must be rgb()/rgba() strings: Reanimated rejects SVG keywords like `none`. In Jest the progress never runs, so test the maths in `dice3d.test.ts`; each die carries `accessibilityLabel` "Die showing N" before the banner; until they land the felt, dice block and balance show the pre-roll table, chips can't go down and More bets is disabled; a tap skips it; Clear under the chip tray (end of the row in large portrait) calls the store's `clearTable` — every bet `canRemoveBet` allows comes down and contract bets lose their odds, disabled while rolling or when `canClear` is false; StackMenu — tap a stack with no chip for Take down, Odds ±$1/$5/$25 (each disabled past the cap or the balance; cap from engine `oddsCap`, shared with the store), ON/OFF, and its own notice line; with Assist, the payout hint, "Make it $X (pays $Y)" (`fixTarget`), green odds steps that land exact (`EXACT_STEP_BG`) and Max exact odds; with Assist the felt rings Place stacks and odds chips green/amber (`PAYOUT_RING`) and a chip that leaves a bet paying inexactly puts `payoutHint` on the reason line; MoreBetsSheet — header "More bets" modal with Buy/Lay, Hi-Lo, World and hops)
   baccarat/
     engine.ts     # Pure TS: deck, scoring, natural/third-card rules, hand resolution
     strategy.ts   # Pure TS: bet quality ratings (player/banker/tie/side bets)
@@ -80,6 +87,7 @@ lib/
   types.ts        # Shared types
   constants.ts    # Suits, values, chip denominations, default table rules
   updates.ts      # GitHub release version check utility
+  bankroll.ts     # shownBalanceFor(profile, onTable): the balance every game screen shows, the settled balance less the stake on the table (null when infinite / no profile); each game supplies its stake (blackjack/baccarat `stakeOnTable` in their stores, roulette `totalStake`, craps `atRisk`)
   screenClass.ts  # Pure: size class (compact <360dp / regular / large >=600dp, by the shorter side) + orientation
   useScreenClass.ts # Hook wrapping screenClass with useWindowDimensions
   orientation.ts  # Orientation lock owner (useOrientationLock) + rotation-request store
@@ -88,6 +96,10 @@ lib/
 components/
   Text.tsx        # Text/TextInput wrappers that cap font scaling at 1.3x; import these, not react-native's
   UpdateModal.tsx # In-app update prompt modal
+  BackButton.tsx  # The header back button on every screen: a drawn SVG arrow (not the left-arrow character, which Roboto lacks, so Android drew it from a fallback font, low) sized from the label's font size and the system font scale (capped at 1.3x), centred on "Back" and moved by CAP_MIDDLE_OFFSET (measured from Roboto's metrics) so its middle is on the middle of the "B". A guard test fails if any screen draws the left-arrow character
+  InfoSheet.tsx   # InfoSheet (scrolling info pop-up; the backdrop sits behind the card so the text scrolls), InfoButton (the ⓘ, placed left of a toggle), Bullet, infoStyles; used by craps and blackjack AssistInfo
+  FlashingBalance.tsx # Balance text that flashes green when its value rises, red when it drops (0.5s, `FLASH_MS`); used by every game's balance
+  chips/          # Shared chip table: chips.ts (colours, sizes, drag lift), ChipFace, DragHandle (drag/tap race), ChipTray (row or column), useChipTable (origins, ghost, highlight/flash, board tap); used by roulette and the craps table. `chipSize` (default CHIP_SIZE 44) scales the tray, the ghost and the drag lift (`dragLift(size)`); roulette uses the default
 assets/
   avatars/        # Bundled 256px profile pictures + default (originals in gitignored assets/profile-pictures/)
   rules-docs/     # Per-game rules references (*-rules.md, blackjack-basic-strategy.md); roulette-rules.md and craps-rules.md are the cited sources of truth for those games
@@ -109,7 +121,7 @@ __tests__/        # Mirrors the feature folder structure
 
 `lib/screenClass.ts` sorts the window into `compact` (shorter side under 360dp, e.g. a Galaxy Fold cover screen), `regular` (360–599dp, most phones) or `large` (600dp and up, a Fold inner screen or tablet). It uses the shorter side, so rotating never changes the class. Components read it with `useScreenClass()`.
 
-`app.json` sets `"orientation": "default"` so the native build may rotate. The root layout is the only place that locks: `useOrientationLock()` (`lib/orientation.ts`) unlocks on `large` screens and otherwise locks `PORTRAIT_UP`, re-applying on fold/unfold. A screen that should follow the phone on regular phones sets `useOrientationStore.setRotationRequested(true)` while open and `false` on unmount. Today only the roulette table does this. Android 16+ ignores orientation locks on large screens anyway. Jest gets a default `expo-screen-orientation` mock in `.jest/setup.js`.
+`app.json` sets `"orientation": "default"` so the native build may rotate. The root layout is the only place that locks: `useOrientationLock()` (`lib/orientation.ts`) unlocks on `large` screens and otherwise locks `PORTRAIT_UP`, re-applying on fold/unfold. A screen that should follow the phone on regular phones sets `useOrientationStore.setRotationRequested(true)` while open and `false` on unmount. The roulette table and the craps screen (once setup is done) do this. Android 16+ ignores orientation locks on large screens anyway. Jest gets a default `expo-screen-orientation` mock in `.jest/setup.js`.
 
 **Roulette chip gestures.** Each tray chip races a Pan (drag; moves 2px+) against a Tap (selects the chip, `selectedChip` in the roulette store). The board area has one Tap that places the selected chip via `tapTarget()` (an existing stack under the finger first, otherwise `hitTest`). Stack handles keep only their Pan, so a tap on a stack is handled once, by the board. A drag handle re-measures its window origin at touch-down (`onBegin`) because `onLayout` misses moves of the whole tray. Gesture tests use RNGH `fireGestureHandler` with `withTestId` ids (`drag-chip-<n>`, `tap-chip-<n>`, `tap-board`) and flush microtasks/timers after each gesture.
 
@@ -117,10 +129,11 @@ __tests__/        # Mirrors the feature folder structure
 
 ### Per-game large-screen layouts
 
-Blackjack and baccarat have their own large-screen layouts; craps should follow the same pattern:
+Blackjack and baccarat have their own large-screen layouts (craps is below):
 - `lib/tableLayout.ts`: `pickLayout(sizeClass, orientation)` returns `phone`, `largePortrait` or `largeLandscape`. Phones keep one layout whatever the orientation.
 - The screen is built from small pieces (`components/table/`). Each layout only arranges them: the phone order, the same order bigger with the controls in a centred `maxWidth: 520` column, or the felt plus a right-hand control panel (300dp blackjack, 340dp baccarat so its chip rows fit).
 - Sizing: components take `size: 'regular' | 'large'` (default `regular`) and pick a whole style sheet from `sizedStyles(base, largeOverrides)` (`lib/tableSize.ts`). Baccarat's landscape felt uses `Card size="medium"` (68×99) so a three-card hand fits each half of the Fold's inner screen; `__tests__/baccarat/screen.test.tsx` pins that arithmetic. Don't write `size === 'large' && styles.x`: that adds `false` to style arrays and changes the phone output.
+- **Craps** picks a view instead: `pickCrapsView(sizeClass, orientation)` (`app/craps/index.tsx`) gives the list for `compact`/`regular` portrait and the table for `compact`/`regular` landscape (Fold cover included) and `large` in either orientation. The table is keyed on orientation, so a rotation remounts it (cancelling a drag); bets, point and the selected chip live in the store. Its chrome comes from `TABLE_CHROME` (`features/craps/layout.ts`): regular is a 28dp header with the reason line, a 60dp tray column and 44dp chips; large is a 36dp header, a 75dp tray column and 55dp chips (×1.25, fixed so tablets don't get giant chips). Large portrait puts the felt at full width with a landscape shape (`PORTRAIT_FELT_RATIO` 0.625) and the reason line and a tray row below it. `tableFeltSize(w, h, size)` gives the felt each screen gets; `__tests__/craps/layout.test.ts` checks every area is ≥32×32 on those felts.
 - Guard: `__tests__/<game>/screen.test.tsx` snapshots the phone screen in every phase. Never update those snapshots with `-u` as part of large-screen work, because a diff there means phones changed.
 
 ## Publishing a Release

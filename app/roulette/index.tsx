@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
 import { View, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native'
 import { Text } from '../../components/Text'
+import { BackButton } from '../../components/BackButton'
+import { FlashingBalance } from '../../components/FlashingBalance'
+import { shownBalanceFor } from '../../lib/bankroll'
+import { totalStake } from '../../features/roulette/engine'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useOrientationStore } from '../../lib/orientation'
@@ -23,6 +27,8 @@ const WHEEL_LABEL: Record<RouletteWheel, string> = {
 const SPEED_LABEL: Record<RouletteSpeed, string> = { slow: 'Slow', fast: 'Fast' }
 
 const noop = () => {}
+const BALANCE = '#FFD700'
+const NEGATIVE = '#ff5555'
 
 export default function RouletteScreen() {
   const router = useRouter()
@@ -33,8 +39,10 @@ export default function RouletteScreen() {
   const { rouletteSettings, saveRouletteSettings } = usePreferencesStore()
   const active = profiles.find(p => p.id === activeProfileId)
   const isInfinite = active?.bankrollMode === 'infinite'
-  const balance = active ? (isInfinite ? '∞' : formatMoney(active.balance)) : '—'
-  const isNegative = !!active && !isInfinite && active.balance < 0
+  // The header shows the balance less the chips on the layout (winning bets left up after a spin count too).
+  const shown = shownBalanceFor(active, totalStake(store.bets))
+  const balance = !active ? '—' : shown == null ? '∞' : formatMoney(shown)
+  const isNegative = shown != null && shown < 0
 
   const { width, height } = useWindowDimensions()
   const orientation: BoardOrientation = width > height ? 'landscape' : 'portrait'
@@ -64,11 +72,11 @@ export default function RouletteScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.back}>← Back</Text>
-        </TouchableOpacity>
+        <BackButton onPress={() => router.back()} style={styles.back} />
         <Text style={styles.pill}>{pill}</Text>
-        <Text style={[styles.balance, isNegative && styles.negative]}>{balance}</Text>
+        <FlashingBalance testID="balance" value={shown} color={isNegative ? NEGATIVE : BALANCE} style={styles.balance}>
+          {balance}
+        </FlashingBalance>
       </View>
 
       {phase === 'betting' && (
@@ -100,8 +108,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 1, borderColor: '#2a2a3e' },
   back: { color: '#fff', fontSize: 15 },
   pill: { color: '#FFD700', fontSize: 12, fontWeight: '600' },
-  balance: { color: '#FFD700', fontSize: 15, fontWeight: '700' },
-  negative: { color: '#ff5555' },
+  balance: { fontSize: 15, fontWeight: '700' },
   // Flex-bounded so the wheel's onLayout sizing grows and shrinks with rotation.
   wheelArea: { flex: 1, padding: 12 },
 })

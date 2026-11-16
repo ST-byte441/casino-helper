@@ -1,7 +1,7 @@
 import { View, StyleSheet } from 'react-native'
 import { Text } from '../../../components/Text'
 import { PlacedBets, Pocket, RouletteWheel } from '../../../lib/types'
-import { ROULETTE_CHIPS } from '../../../lib/constants'
+import { CHIP_COLORS, stackChip } from '../../../components/chips/chips'
 import { betById, makeBetId } from '../engine'
 import { BoardCell, BoardLayout } from '../layout'
 
@@ -13,18 +13,9 @@ export const FELT = '#0f5132'
 export const POCKET_BG: Record<BoardCell['color'], string> = {
   red: '#c62828', black: '#111', green: '#1b8a4a', felt: FELT,
 }
-export const CHIP_COLORS: Record<number, { bg: string; fg: string }> = {
-  1: { bg: '#fff', fg: '#000' },
-  5: { bg: '#c62828', fg: '#fff' },
-  25: { bg: '#2e7d32', fg: '#fff' },
-  100: { bg: '#111', fg: '#fff' },
-}
 export const STACK_SIZE = 28
 
-/** A stack is drawn in the colour of the largest chip its total covers. */
-export function stackChip(total: number): number {
-  return [...ROULETTE_CHIPS].reverse().find(c => c <= total) ?? ROULETTE_CHIPS[0]
-}
+export { CHIP_COLORS, stackChip }
 
 function Cell({ cell, lit }: { cell: BoardCell; lit: boolean }) {
   const { x, y, w, h } = cell.rect

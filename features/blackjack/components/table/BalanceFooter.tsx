@@ -1,32 +1,37 @@
 import { View, StyleSheet } from 'react-native'
 import { Text } from '../../../../components/Text'
+import { FlashingBalance } from '../../../../components/FlashingBalance'
 import { sizedStyles, TableSize } from '../../../../lib/tableSize'
 
 type Props = {
   size: TableSize
   balanceText: string
+  /** The shown balance, for the red/green flash; null (infinite, no profile) never flashes. */
+  value: number | null
   negative: boolean
   showFundsWarning: boolean
   /** 'bar': full-width footer strip (phone, large portrait). 'panel': pinned to the bottom of the landscape side panel. */
   variant?: 'bar' | 'panel'
 }
 
-export function BalanceFooter({ size, balanceText, negative, showFundsWarning, variant = 'bar' }: Props) {
+export function BalanceFooter({ size, balanceText, value, negative, showFundsWarning, variant = 'bar' }: Props) {
   const s = SHEETS[size]
   return (
     <View style={variant === 'panel' ? [s.footer, panelStyles.footer] : s.footer}>
       {showFundsWarning && <Text style={s.fundsWarning}>Insufficient funds</Text>}
-      <Text style={[s.footerText, negative && s.negative]}>
+      <FlashingBalance testID="balance" value={value} color={negative ? NEGATIVE : BALANCE} style={s.footerText}>
         Balance: {balanceText}
-      </Text>
+      </FlashingBalance>
     </View>
   )
 }
 
+const BALANCE = '#aaa'
+const NEGATIVE = '#ff5555'
+
 const base = StyleSheet.create({
   footer: { padding: 12, backgroundColor: '#0a4a24', alignItems: 'flex-end' },
-  footerText: { color: '#aaa', fontSize: 14 },
-  negative: { color: '#ff5555' },
+  footerText: { fontSize: 14 },
   fundsWarning: { color: '#e74c3c', fontSize: 12, fontWeight: '600', marginBottom: 2 },
 })
 
