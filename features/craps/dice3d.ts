@@ -210,7 +210,8 @@ export function projectDie(m: Mat3, size: number): DieFrame {
   const faces: Array<{ d: string; fill: string }> = []
   for (let v = 1; v <= 6; v++) {
     if (vis.indexOf(v) < 0) {
-      faces.push({ d: '', fill: 'none' })
+      // Nothing is drawn (empty path); the fill must still parse as a colour for Reanimated (not 'none').
+      faces.push({ d: '', fill: 'rgba(0,0,0,0)' })
       continue
     }
     const b = shade(m, v)

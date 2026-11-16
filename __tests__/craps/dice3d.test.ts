@@ -65,6 +65,13 @@ describe('projection', () => {
     expect(frame.body).not.toBe('')
   })
 
+  test('every face fill is a colour Reanimated can parse, hidden faces included (never "none")', () => {
+    // Reanimated runs animated `fill` through its colour parser; "none" throws "Invalid color value" on device.
+    for (let v = 1; v <= 6; v++) {
+      for (const f of projectDie(tumbleOrientation(v, 0.3, SPIN), 100).faces) expect(f.fill).toMatch(/^rgba?\(/)
+    }
+  })
+
   test('the front face is the brightest and the drawing stays inside the box', () => {
     const R = restOrientation(1)
     const frame = projectDie(R, 100)
