@@ -104,15 +104,64 @@ describe('phone portrait list (must not change)', () => {
 })
 
 describe('phone portrait list roll', () => {
-  test('shows its result banner at once, with no rolling overlay', () => {
-    const { fireEvent } = require('@testing-library/react-native')
-    seedTable({ bets: [bet('pass', 5)] })
-    jest.spyOn(Math, 'random').mockReturnValueOnce(2.5 / 6).mockReturnValueOnce(3.5 / 6) // 3 + 4: natural
-    const { getByText, queryByTestId } = render(<CrapsScreen />)
-    fireEvent.press(getByText('ROLL'))
-    expect(getByText('Natural!')).toBeTruthy()
+  const { fireEvent, act: rtlAct } = require('@testing-library/react-native')
+  const { ROLL_ANIM_MS } = require('../../features/craps/components/RollOverlay')
+  const { useProfileStore } = require('../../features/profile/store')
+
+  function rollNatural() {
+    // Previous dice 2 + 3; a $5 Pass and a $6 Place 6 (off on the come-out, so it stays up and ROLL stays enabled).
+    // This roll is 3 + 4: a natural, the Pass is paid (+$5) and taken down.
+    seedTable({ bets: [bet('pass', 5), bet('place', 6, { number: 6, working: false })] })
+    useCrapsStore.setState({ dice: [2, 3] })
+    jest.spyOn(Math, 'random').mockReturnValueOnce(2.5 / 6).mockReturnValueOnce(3.5 / 6)
+    const utils = render(<CrapsScreen />)
+    fireEvent.press(utils.getByText('ROLL'))
+    return utils
+  }
+  afterEach(() => jest.restoreAllMocks())
+
+  test('throws the 3D dice over the list, landing on the roll', () => {
+    const { getByTestId, queryByText } = rollNatural()
+    expect(useCrapsStore.getState().dice).toEqual([3, 4])
+    expect(getByTestId('craps-roll-overlay')).toBeTruthy()
+    expect(getByTestId('roll-die-0').props.accessibilityLabel).toBe('Die showing 3')
+    expect(getByTestId('roll-die-1').props.accessibilityLabel).toBe('Die showing 4')
+    expect(queryByText('Natural!')).toBeNull()
+  })
+
+  test('while the dice roll the list keeps the pre-roll dice, bets and balance', () => {
+    const { getByTestId, getByText, queryByText } = rollNatural()
+    expect(useProfileStore.getState().profiles[0].balance).toBe(1005)
+    expect(getByTestId('craps-balance')).toHaveTextContent('Balance: $989')
+    expect(getByText('= 5')).toBeTruthy()
+    expect(queryByText('= 7')).toBeNull()
+  })
+
+  test('after the rest the overlay gives way to the banner and the settled list', () => {
+    const { getByTestId, getByText, queryByTestId, queryByText } = rollNatural()
+    rtlAct(() => { jest.advanceTimersByTime(ROLL_ANIM_MS - 100) })
+    expect(queryByTestId('craps-roll-overlay')).toBeTruthy()
+    expect(queryByText('Natural!')).toBeNull()
+    rtlAct(() => { jest.advanceTimersByTime(200) })
     expect(queryByTestId('craps-roll-overlay')).toBeNull()
-    jest.restoreAllMocks()
+    expect(getByText('Natural!')).toBeTruthy()
+    expect(getByText('= 7')).toBeTruthy()
+    expect(getByTestId('craps-balance')).toHaveTextContent('Balance: $999')
+  })
+
+  test('tapping the overlay skips to the result', () => {
+    const { getByTestId, getByText, queryByTestId } = rollNatural()
+    fireEvent.press(getByTestId('craps-roll-overlay'))
+    expect(queryByTestId('craps-roll-overlay')).toBeNull()
+    expect(getByText('Natural!')).toBeTruthy()
+  })
+
+  test('ROLL is disabled while the dice roll, and back once they land', () => {
+    const { getByText, getByTestId } = rollNatural()
+    fireEvent.press(getByText('ROLL'))
+    expect(useCrapsStore.getState().dice).toEqual([3, 4])
+    fireEvent.press(getByTestId('craps-roll-overlay'))
+    expect(getByTestId('craps-roll')).not.toBeDisabled()
   })
 })
 

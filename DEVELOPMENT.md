@@ -18,7 +18,7 @@ npx jest <path>   # single file
 npx tsc --noEmit  # type check only
 ```
 
-1541 tests cover the game engines, the shared chip helpers, strategy lookup, roulette and craps felt layouts, roulette wheel maths, screens, profile store and stats, and update utility.
+1545 tests cover the game engines, the shared chip helpers, strategy lookup, roulette and craps felt layouts, roulette wheel maths, screens, profile store and stats, and update utility.
 
 ## Project Structure
 
@@ -55,8 +55,8 @@ features/
     dice3d.ts     # Pure TS worklets: the 3D die — face frames (FACE_DEFS), rest orientation (rolled face front, top and right sides showing), tumbleOrientation (two whole-ish spins unwinding to rest), perspective projection to SVG paths with back-face culling and lighting (projectDie), throwOffset (fly-in with three bounces). Worklet plugin note: function declarations become consts, so module-level constants can't call them
     spots.ts      # Pure TS: spotAction/stackTapAction resolve a dropped or tapped spot/stack to a store call
     store.ts      # Session Zustand store (phase, dice, point, bets, roll, assist toggle)
-    components/   # UI components (TableSetup, DiceDisplay, BetCategoryPanel, BetRow, OddsRow, HopBetGrid, RollButton, RollResultBanner)
-      list/       # CrapsListView — the phone-portrait bet list (panels and rows, its own banner and funds warning); pinned by the phone snapshots
+    components/   # UI components (TableSetup, DiceDisplay, BetCategoryPanel, BetRow, OddsRow, HopBetGrid, RollButton, RollResultBanner, RollOverlay — the 3D dice throw, shared by the list and the table)
+      list/       # CrapsListView — the phone-portrait bet list (panels and rows, its own banner and funds warning); ROLL throws the 3D dice over the whole list (RollOverlay), and until they land the list renders a pre-roll snapshot of the store (dice, point, bets, last result, shown balance) with ROLL disabled; pinned by the phone snapshots
       table/      # Drawn table pieces (CrapsFelt — presentational felt: areas, chip stacks with BUY/LAY/WORLD/HI-LO/hop-dice tags and odds, the More bets strip (one row of stacks, a "+N" count past what fits), ON/OFF puck, Assist tints; CrapsTable — slim header with the reason line, chip tray column at the left, felt with drag/tap chips (stack first, then area; drag a removable stack off to take it down), dice + ROLL in the dice block at the Pass Line's right end, roll result banner after RollOverlay — ROLL resolves the bets at once, then two 3D dice are thrown in from the right, tumbling and bouncing to a stop (1s, `TUMBLE_MS`; the rolled face is front-most from ~98% of the eased tumble) and rest on the result 1.2s (`REST_MS`). Each frame `useDerivedValue` projects a die (`dice3d.ts`) and `useAnimatedProps` feeds react-native-svg paths: body, lit faces, pips. In Jest the progress never runs, so test the maths in `dice3d.test.ts`; each die carries `accessibilityLabel` "Die showing N" before the banner; until they land the felt, dice block and balance show the pre-roll table, chips can't go down and More bets is disabled; a tap skips it; StackMenu — tap a stack with no chip for Take down, Odds ±$1/$5/$25 (each disabled past the cap or the balance; cap from engine `oddsCap`, shared with the store), ON/OFF, and its own notice line; MoreBetsSheet — header "More bets" modal with Buy/Lay, Hi-Lo, World and hops)
   baccarat/
     engine.ts     # Pure TS: deck, scoring, natural/third-card rules, hand resolution

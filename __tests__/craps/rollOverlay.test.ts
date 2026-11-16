@@ -1,6 +1,6 @@
 jest.mock('react-native-worklets', () => require('react-native-worklets/src/mock'))
 jest.mock('react-native-reanimated', () => require('../../.jest/reanimatedMock'))
-import { REST_MS, ROLL_ANIM_MS, TUMBLE_MS } from '../../features/craps/components/table/RollOverlay'
+import { REST_MS, ROLL_ANIM_MS, TUMBLE_MS } from '../../features/craps/components/RollOverlay'
 import { frontFace, randomSpin, tumbleOrientation } from '../../features/craps/dice3d'
 
 describe('roll overlay timing', () => {

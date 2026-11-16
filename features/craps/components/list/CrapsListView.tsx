@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, ScrollView, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native'
 import { Text } from '../../../../components/Text'
 import { FlashingBalance } from '../../../../components/FlashingBalance'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -20,17 +20,27 @@ import { OddsRow } from '../OddsRow'
 import { HopBetGrid } from '../HopBetGrid'
 import { RollButton } from '../RollButton'
 import { RollResultBanner } from '../RollResultBanner'
+import { RollOverlay } from '../RollOverlay'
 import { BetType } from '../../../../lib/types'
+
+type CrapsSnapshot = Pick<ReturnType<typeof useCrapsStore.getState>,
+  'phase' | 'dice' | 'point' | 'bets' | 'lastRoll' | 'lastDelta'>
 
 /** Today's phone-portrait craps screen: the bet list (panels and rows), the dice and the roll footer. */
 export function CrapsListView() {
   const router = useRouter()
-  const store = useCrapsStore()
+  const { width } = useWindowDimensions()
+  const live = useCrapsStore()
+  // The dice thrown over the list after ROLL. The store has already rolled; until the dice land the list shows
+  // `before` (the table as it was, and its balance), so nothing gives the result away. Actions stay live.
+  const [rolling, setRolling] = useState<{ dice: [number, number]; before: CrapsSnapshot; shown: number | null } | null>(null)
+  const store = rolling ? { ...live, ...rolling.before } : live
   const { profiles, activeProfileId } = useProfileStore()
   const active = profiles.find(p => p.id === activeProfileId)
   const isInfinite = active?.bankrollMode === 'infinite'
   // The balance less the chips on the table, as on a digital craps machine.
-  const shown = active && !isInfinite ? shownBalance(active.balance, store.bets) : null
+  const liveShown = active && !isInfinite ? shownBalance(active.balance, live.bets) : null
+  const shown = rolling ? rolling.shown : liveShown
   const balance = !active ? '—' : shown == null ? '∞' : formatMoney(shown)
 
   const [showBanner, setShowBanner] = useState(false)
@@ -50,7 +60,20 @@ export function CrapsListView() {
   const dontPassBet = bets.find(b => b.type === 'dont-pass')
 
   function handleRoll() {
-    store.roll()
+    const s0 = useCrapsStore.getState()
+    const before: CrapsSnapshot = {
+      phase: s0.phase, dice: s0.dice, point: s0.point, bets: s0.bets, lastRoll: s0.lastRoll, lastDelta: s0.lastDelta,
+    }
+    setShowBanner(false)
+    live.roll()
+    const s1 = useCrapsStore.getState()
+    // The store refused (no new roll): don't replay the old dice.
+    if (s1.lastRoll === s0.lastRoll || !s1.dice) return
+    setRolling({ dice: s1.dice, before, shown: liveShown })
+  }
+
+  function rollShown() {
+    setRolling(null)
     setShowBanner(true)
   }
 
@@ -320,7 +343,7 @@ export function CrapsListView() {
           style={styles.balanceText}>
           Balance: {balance}
         </FlashingBalance>
-        <RollButton onRoll={handleRoll} disabled={bets.length === 0} />
+        <RollButton testID="craps-roll" onRoll={handleRoll} disabled={bets.length === 0 || rolling !== null} />
       </View>
 
       {showBanner && (
@@ -330,6 +353,7 @@ export function CrapsListView() {
           onDismiss={() => setShowBanner(false)}
         />
       )}
+      {rolling && <RollOverlay dice={rolling.dice} size={Math.round(Math.min(width * 0.26, 110))} onDone={rollShown} />}
     </SafeAreaView>
   )
 }

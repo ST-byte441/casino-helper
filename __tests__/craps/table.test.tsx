@@ -20,7 +20,7 @@ import { placeFromSheet } from '../../features/craps/components/table/MoreBetsSh
 import { QUALITY_COLORS, feltStacks } from '../../features/craps/components/table/CrapsFelt'
 import { buildCrapsLayout, tableFeltSize, SpotKey } from '../../features/craps/layout'
 import { useCrapsStore } from '../../features/craps/store'
-import { ROLL_ANIM_MS } from '../../features/craps/components/table/RollOverlay'
+import { ROLL_ANIM_MS } from '../../features/craps/components/RollOverlay'
 import { useProfileStore } from '../../features/profile/store'
 import { emptyStats } from '../../features/profile/stats'
 import { ActiveBet, BetType, CrapsTableRules } from '../../lib/types'

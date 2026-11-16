@@ -24,7 +24,7 @@ import { RollResultBanner } from '../RollResultBanner'
 import { CrapsFelt, feltStacks } from './CrapsFelt'
 import { StackMenu } from './StackMenu'
 import { MoreBetsSheet } from './MoreBetsSheet'
-import { RollOverlay } from './RollOverlay'
+import { RollOverlay } from '../RollOverlay'
 import { FlashingBalance } from '../../../../components/FlashingBalance'
 import { shownBalance } from '../../bankroll'
 

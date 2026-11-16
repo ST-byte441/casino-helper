@@ -4,10 +4,10 @@ import Svg, { Path } from 'react-native-svg'
 import Animated, {
   Easing, SharedValue, useAnimatedProps, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming,
 } from 'react-native-reanimated'
-import { DieFrame, Spin, projectDie, randomSpin, throwOffset, tumbleOrientation } from '../../dice3d'
+import { DieFrame, Spin, projectDie, randomSpin, throwOffset, tumbleOrientation } from '../dice3d'
 
 /*
- * The craps roll: two 3D dice thrown in from the right, tumbling and bouncing to a stop on the rolled values, then
+ * The craps roll (table and list views): two 3D dice thrown in from the right, tumbling and bouncing to a stop on the rolled values, then
  * resting there for REST_MS so the result can be read. The store has already rolled; this is presentation only.
  * A tap skips it.
  *
