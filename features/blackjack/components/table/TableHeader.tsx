@@ -23,7 +23,7 @@ export function TableHeader({ size, rulePill, assistEnabled, onBack, onToggleAss
       <Text style={s.pill} numberOfLines={1}>{rulePill}</Text>
       <View style={s.assistGroup}>
         {/* Left of Assist, clear of its on/off dot. */}
-        <InfoButton testID="assist-info-button" label="What Assist shows" onPress={() => setInfoOpen(true)} style={s.info} />
+        <InfoButton testID="assist-info-button" label="How to play and what Assist shows" onPress={() => setInfoOpen(true)} style={s.info} />
         <TouchableOpacity onPress={onToggleAssist}>
           <Text style={s.assist}>Assist: {assistEnabled ? '●' : '○'}</Text>
         </TouchableOpacity>

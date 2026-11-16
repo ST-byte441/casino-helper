@@ -352,7 +352,7 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
           <Text style={[styles.assist, rolling && styles.dimmed]}>More bets</Text>
         </TouchableOpacity>
         {/* Left of Assist, clear of its on/off dot. */}
-        <InfoButton testID="assist-info-button" label="What Assist shows" onPress={() => setInfoOpen(true)} style={styles.info} />
+        <InfoButton testID="assist-info-button" label="How to play and what Assist shows" onPress={() => setInfoOpen(true)} style={styles.info} />
         <TouchableOpacity onPress={toggleAssist} hitSlop={8}>
           <Text style={[styles.assist, assistEnabled && styles.assistOn]}>Assist {assistEnabled ? '●' : '○'}</Text>
         </TouchableOpacity>

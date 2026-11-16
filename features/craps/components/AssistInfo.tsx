@@ -2,6 +2,7 @@ import React from 'react'
 import { StyleSheet, View } from 'react-native'
 import { Text } from '../../../components/Text'
 import { Bullet, InfoSheet, infoStyles as styles } from '../../../components/InfoSheet'
+import { HOW_TO_PLAY_TITLE, HowToPlayContent } from './HowToPlay'
 import { BetQuality } from '../../../lib/types'
 import { PAYOUT_RING, QUALITY_COLORS } from './table/CrapsFelt'
 
@@ -24,10 +25,10 @@ function Swatch({ color, ring }: { color: string; ring?: boolean }) {
   return <View style={[own.swatch, ring ? { borderColor: color, borderWidth: 3 } : { backgroundColor: color }]} />
 }
 
-/** The pop-up behind the ⓘ beside Assist: what Assist's colours and helpers mean, for players new to craps. */
-export function AssistInfo({ visible, view, onClose }: Props) {
+/** What Assist's colours and helpers mean, for players new to craps (the Assist tab of the ⓘ sheet). */
+export function AssistContent({ view }: { view: Props['view'] }) {
   return (
-    <InfoSheet visible={visible} title="What Assist shows" testID="assist-info" onClose={onClose}>
+    <>
       <Text style={styles.body}>
         Assist points out the smarter bets and helps you size bets so they pay in full. Turn it on with the
         Assist button.
@@ -73,7 +74,17 @@ export function AssistInfo({ visible, view, onClose }: Props) {
           <Bullet>An odds row turns gold when the odds pay exactly.</Bullet>
         </>
       )}
-    </InfoSheet>
+    </>
+  )
+}
+
+/** The ⓘ beside Assist: two tabs, How to play and What Assist shows; it opens on the Assist tab. */
+export function AssistInfo({ visible, onClose, view }: Props) {
+  return (
+    <InfoSheet visible={visible} testID="assist-info" onClose={onClose} initialTab="assist" tabs={[
+      { key: 'how', label: 'How to play', title: HOW_TO_PLAY_TITLE, content: <HowToPlayContent /> },
+      { key: 'assist', label: 'What Assist shows', title: 'What Assist shows', content: <AssistContent view={view} /> },
+    ]} />
   )
 }
 

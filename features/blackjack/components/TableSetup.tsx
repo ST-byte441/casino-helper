@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { View, TouchableOpacity, ScrollView, StyleSheet, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
+import { HowToPlayButton } from '../../../components/InfoSheet'
+import { HowToPlay } from './HowToPlay'
 import { Text } from '../../../components/Text'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { TableRules, PayoutMode, SoftSeven, SurrenderMode, DeckCount } from '../../../lib/types'
@@ -41,6 +43,7 @@ function RuleRow<T extends string | number | boolean>({ label, note, options, va
 }
 
 export function TableSetup({ onStart, initialRules }: Props) {
+  const [howOpen, setHowOpen] = useState(false)
   const [rules, setRules] = useState<TableRules>(initialRules ?? DEFAULT_TABLE_RULES)
   const [showScrollHint, setShowScrollHint] = useState(true)
   const { sizeClass } = useScreenClass()
@@ -54,7 +57,11 @@ export function TableSetup({ onStart, initialRules }: Props) {
 
   const content = (
     <>
-      <Text style={styles.title}>Table Rules</Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.title} numberOfLines={1}>Table Rules</Text>
+        <HowToPlayButton onPress={() => setHowOpen(true)} />
+      </View>
+      <HowToPlay visible={howOpen} onClose={() => setHowOpen(false)} />
       <View style={styles.scrollWrapper}>
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -125,7 +132,8 @@ export function TableSetup({ onStart, initialRules }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#13131f' },
   largeColumn: { flex: 1, width: '100%', maxWidth: 520, alignSelf: 'center' },
-  title: { color: '#fff', fontSize: 24, fontWeight: '700', padding: 16 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingRight: 16 },
+  title: { color: '#fff', fontSize: 24, fontWeight: '700', padding: 16, flexShrink: 1 },
   scrollWrapper: { flex: 1 },
   scroll: { paddingHorizontal: 16, paddingBottom: 16 },
   scrollHint: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingVertical: 12, alignItems: 'center', backgroundColor: 'rgba(19,19,31,0.85)' },

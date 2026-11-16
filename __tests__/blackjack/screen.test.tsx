@@ -291,3 +291,23 @@ describe('Assist info', () => {
     expect(screen.getByTestId('assist-info').props.onStartShouldSetResponder).toBeUndefined()
   })
 })
+
+describe('How to play', () => {
+  test('the setup screen has "ⓘ How to play", which opens the blackjack guide', () => {
+    const screen = render(<BlackjackScreen />)
+    expect(screen.getByText('Table Rules')).toBeTruthy()
+    fireEvent.press(screen.getByTestId('how-to-play-button'))
+    expect(screen.getByTestId('how-to-play')).toHaveTextContent(/How to play blackjack/)
+    fireEvent.press(screen.getByTestId('how-to-play-close'))
+    expect(screen.queryByTestId('how-to-play')).toBeNull()
+  })
+
+  test('in play, the ⓘ opens on What Assist shows, with How to play one tab away', () => {
+    const screen = renderTable()
+    fireEvent.press(screen.getByTestId('assist-info-button'))
+    expect(screen.getByTestId('assist-info')).toHaveTextContent(/gold outline/i)
+    fireEvent.press(screen.getByTestId('assist-info-tab-how'))
+    expect(screen.getByTestId('assist-info')).toHaveTextContent(/How to play blackjack/)
+    expect(screen.getByTestId('assist-info')).not.toHaveTextContent(/gold outline/i)
+  })
+})

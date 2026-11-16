@@ -241,6 +241,29 @@ describe('phone portrait list Clear', () => {
   })
 })
 
+describe('How to play', () => {
+  const { fireEvent } = require('@testing-library/react-native')
+
+  test('the setup screen has "ⓘ How to play", which opens the craps guide', () => {
+    useCrapsStore.setState({ phase: 'setup' })
+    const { getByTestId, getByText, queryByTestId } = render(<CrapsScreen />)
+    expect(getByText('Table Setup')).toBeTruthy()
+    fireEvent.press(getByTestId('how-to-play-button'))
+    expect(getByTestId('how-to-play')).toHaveTextContent(/How to play craps/)
+    fireEvent.press(getByTestId('how-to-play-close'))
+    expect(queryByTestId('how-to-play')).toBeNull()
+  })
+
+  test('in the list, the ⓘ opens on What Assist shows, with How to play one tab away', () => {
+    seedTable({})
+    const { getByTestId } = render(<CrapsScreen />)
+    fireEvent.press(getByTestId('assist-info-button'))
+    expect(getByTestId('assist-info')).toHaveTextContent(/green left edge/)
+    fireEvent.press(getByTestId('assist-info-tab-how'))
+    expect(getByTestId('assist-info')).toHaveTextContent(/How to play craps/)
+  })
+})
+
 describe('pickCrapsView', () => {
   test.each([
     ['compact', 'portrait', 'list'],
