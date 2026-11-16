@@ -21,6 +21,7 @@ import { HopBetGrid } from '../HopBetGrid'
 import { RollButton } from '../RollButton'
 import { RollResultBanner } from '../RollResultBanner'
 import { RollOverlay } from '../RollOverlay'
+import { AssistInfo } from '../AssistInfo'
 import { BetType } from '../../../../lib/types'
 
 type CrapsSnapshot = Pick<ReturnType<typeof useCrapsStore.getState>,
@@ -44,6 +45,7 @@ export function CrapsListView() {
   const balance = !active ? '—' : shown == null ? '∞' : formatMoney(shown)
 
   const [showBanner, setShowBanner] = useState(false)
+  const [infoOpen, setInfoOpen] = useState(false)
   const [showFundsWarning, setFundsWarning] = useState(false)
   const fundsTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
@@ -143,9 +145,14 @@ export function CrapsListView() {
           <Text style={styles.back}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>CRAPS · {tableRules.oddsMultiple}</Text>
-        <TouchableOpacity onPress={store.toggleAssist}>
-          <Text style={[styles.assist, assistEnabled && styles.assistOn]}>Assist {assistEnabled ? '●' : '○'}</Text>
-        </TouchableOpacity>
+        <View style={styles.assistGroup}>
+          <TouchableOpacity onPress={store.toggleAssist}>
+            <Text style={[styles.assist, assistEnabled && styles.assistOn]}>Assist {assistEnabled ? '●' : '○'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity testID="assist-info-button" accessibilityLabel="What Assist shows" onPress={() => setInfoOpen(true)} hitSlop={10}>
+            <Text style={styles.info}>ⓘ</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <DiceDisplay dice={dice} point={point} />
@@ -353,6 +360,7 @@ export function CrapsListView() {
           onDismiss={() => setShowBanner(false)}
         />
       )}
+      <AssistInfo visible={infoOpen} view="list" onClose={() => setInfoOpen(false)} />
       {rolling && <RollOverlay dice={rolling.dice} size={Math.round(Math.min(width * 0.26, 110))} onDone={rollShown} />}
     </SafeAreaView>
   )
@@ -364,6 +372,8 @@ const styles = StyleSheet.create({
   back: { color: '#aaa', fontSize: 15 },
   headerTitle: { color: '#FFD700', fontWeight: '700', fontSize: 15, flexShrink: 1, marginHorizontal: 8 },
   assist: { color: '#aaa', fontSize: 13 },
+  assistGroup: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  info: { color: '#aaa', fontSize: 16 },
   assistOn: { color: '#FFD700' },
   rotateHint: { color: '#888', fontSize: 12, textAlign: 'center', paddingBottom: 6 },
   scroll: { flex: 1 },

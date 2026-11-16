@@ -25,6 +25,7 @@ import { CrapsFelt, feltStacks } from './CrapsFelt'
 import { StackMenu } from './StackMenu'
 import { MoreBetsSheet } from './MoreBetsSheet'
 import { RollOverlay } from '../RollOverlay'
+import { AssistInfo } from '../AssistInfo'
 import { FlashingBalance } from '../../../../components/FlashingBalance'
 import { shownBalance } from '../../bankroll'
 import { payoutCheck, payoutHint } from '../../assist'
@@ -181,6 +182,7 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
   const dice = rolling ? rolling.before.dice : liveDice
   const [menuBet, setMenuBet] = useState<ActiveBet | null>(null)
   const [moreOpen, setMoreOpen] = useState(false)
+  const [infoOpen, setInfoOpen] = useState(false)
   const phase = useCrapsStore(s => s.phase)
   const notice = useCrapsStore(s => s.notice)
   const tableRules = useCrapsStore(s => s.tableRules)
@@ -340,6 +342,9 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
         <TouchableOpacity onPress={toggleAssist} hitSlop={8}>
           <Text style={[styles.assist, assistEnabled && styles.assistOn]}>Assist {assistEnabled ? '●' : '○'}</Text>
         </TouchableOpacity>
+        <TouchableOpacity testID="assist-info-button" accessibilityLabel="What Assist shows" onPress={() => setInfoOpen(true)} hitSlop={10}>
+          <Text style={styles.info}>ⓘ</Text>
+        </TouchableOpacity>
         <FlashingBalance testID="craps-balance" value={balanceValue} color={isNegative ? NEGATIVE : BALANCE}
           style={styles.balance}>{balance}</FlashingBalance>
       </View>
@@ -368,6 +373,7 @@ export function CrapsTable({ size, orientation = 'landscape', onRoll, onStackMen
         <StackMenu bet={menuBet} phase={phase} point={point} rules={tableRules} assist={assistEnabled} onClose={() => setMenuBet(null)} />
       )}
       <MoreBetsSheet visible={moreOpen} onClose={() => setMoreOpen(false)} />
+      <AssistInfo visible={infoOpen} view="table" onClose={() => setInfoOpen(false)} />
 
       {dragAmount !== null && (
         <Animated.View testID="chip-ghost" pointerEvents="none" style={[styles.ghost, ghostStyle]}>
@@ -388,6 +394,7 @@ function makeSheets(c: Record<TableSize, TableChrome>) {
     reason: { flex: 1, color: '#aaa', fontSize: 13, textAlign: 'center' },
     spacer: { flex: 1 },
     assist: { color: '#aaa', fontSize: 13 },
+    info: { color: '#aaa', fontSize: 16 },
     assistOn: { color: '#FFD700' },
     dimmed: { opacity: 0.4 },
     balance: { fontWeight: '700', fontSize: 13 },
@@ -415,6 +422,7 @@ function makeSheets(c: Record<TableSize, TableChrome>) {
     title: { fontSize: 17 },
     reason: { fontSize: 15 },
     assist: { fontSize: 15 },
+    info: { fontSize: 19 },
     balance: { fontSize: 16 },
     tray: { width: c.large.trayW, paddingHorizontal: 0 },
     reasonRow: { height: c.large.reasonH },

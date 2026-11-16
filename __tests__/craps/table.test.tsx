@@ -644,3 +644,15 @@ describe('Payout assist', () => {
     })
   })
 })
+
+describe('Assist info', () => {
+  test('the ⓘ beside Assist opens the info sheet, with Assist on or off', async () => {
+    const { getByTestId, queryByTestId } = await mount()
+    expect(queryByTestId('assist-info')).toBeNull()
+    fireEvent.press(getByTestId('assist-info-button'))
+    expect(getByTestId('assist-info')).toHaveTextContent(/Green ring/)
+    expect(store().assistEnabled).toBe(false)
+    fireEvent.press(getByTestId('assist-info-close'))
+    expect(queryByTestId('assist-info')).toBeNull()
+  })
+})

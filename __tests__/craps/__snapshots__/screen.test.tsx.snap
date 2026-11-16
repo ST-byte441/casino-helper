@@ -99,54 +99,113 @@ exports[`phone portrait list (must not change) come-out, no bets 1`] = `
         3-4-5x
       </Text>
       <View
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": undefined,
-            "expanded": undefined,
-            "selected": undefined,
-          }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
-          }
-        }
-        accessible={true}
-        collapsable={false}
-        focusable={true}
-        onClick={[Function]}
-        onResponderGrant={[Function]}
-        onResponderMove={[Function]}
-        onResponderRelease={[Function]}
-        onResponderTerminate={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
         style={
           {
-            "opacity": 1,
+            "alignItems": "center",
+            "flexDirection": "row",
+            "gap": 8,
           }
         }
       >
-        <Text
-          maxFontSizeMultiplier={1.3}
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
           style={
-            [
-              {
-                "color": "#aaa",
-                "fontSize": 13,
-              },
-              false,
-            ]
+            {
+              "opacity": 1,
+            }
           }
         >
-          Assist 
-          ○
-        </Text>
+          <Text
+            maxFontSizeMultiplier={1.3}
+            style={
+              [
+                {
+                  "color": "#aaa",
+                  "fontSize": 13,
+                },
+                false,
+              ]
+            }
+          >
+            Assist 
+            ○
+          </Text>
+        </View>
+        <View
+          accessibilityLabel="What Assist shows"
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          hitSlop={10}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "opacity": 1,
+            }
+          }
+          testID="assist-info-button"
+        >
+          <Text
+            maxFontSizeMultiplier={1.3}
+            style={
+              {
+                "color": "#aaa",
+                "fontSize": 16,
+              }
+            }
+          >
+            ⓘ
+          </Text>
+        </View>
       </View>
     </View>
     <View
@@ -1358,54 +1417,113 @@ exports[`phone portrait list (must not change) crapless table 1`] = `
         3-4-5x
       </Text>
       <View
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": undefined,
-            "expanded": undefined,
-            "selected": undefined,
-          }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
-          }
-        }
-        accessible={true}
-        collapsable={false}
-        focusable={true}
-        onClick={[Function]}
-        onResponderGrant={[Function]}
-        onResponderMove={[Function]}
-        onResponderRelease={[Function]}
-        onResponderTerminate={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
         style={
           {
-            "opacity": 1,
+            "alignItems": "center",
+            "flexDirection": "row",
+            "gap": 8,
           }
         }
       >
-        <Text
-          maxFontSizeMultiplier={1.3}
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
           style={
-            [
-              {
-                "color": "#aaa",
-                "fontSize": 13,
-              },
-              false,
-            ]
+            {
+              "opacity": 1,
+            }
           }
         >
-          Assist 
-          ○
-        </Text>
+          <Text
+            maxFontSizeMultiplier={1.3}
+            style={
+              [
+                {
+                  "color": "#aaa",
+                  "fontSize": 13,
+                },
+                false,
+              ]
+            }
+          >
+            Assist 
+            ○
+          </Text>
+        </View>
+        <View
+          accessibilityLabel="What Assist shows"
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          hitSlop={10}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "opacity": 1,
+            }
+          }
+          testID="assist-info-button"
+        >
+          <Text
+            maxFontSizeMultiplier={1.3}
+            style={
+              {
+                "color": "#aaa",
+                "fontSize": 16,
+              }
+            }
+          >
+            ⓘ
+          </Text>
+        </View>
       </View>
     </View>
     <View
@@ -2543,54 +2661,113 @@ exports[`phone portrait list (must not change) easy table 1`] = `
         3-4-5x
       </Text>
       <View
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": undefined,
-            "expanded": undefined,
-            "selected": undefined,
-          }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
-          }
-        }
-        accessible={true}
-        collapsable={false}
-        focusable={true}
-        onClick={[Function]}
-        onResponderGrant={[Function]}
-        onResponderMove={[Function]}
-        onResponderRelease={[Function]}
-        onResponderTerminate={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
         style={
           {
-            "opacity": 1,
+            "alignItems": "center",
+            "flexDirection": "row",
+            "gap": 8,
           }
         }
       >
-        <Text
-          maxFontSizeMultiplier={1.3}
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
           style={
-            [
-              {
-                "color": "#aaa",
-                "fontSize": 13,
-              },
-              false,
-            ]
+            {
+              "opacity": 1,
+            }
           }
         >
-          Assist 
-          ○
-        </Text>
+          <Text
+            maxFontSizeMultiplier={1.3}
+            style={
+              [
+                {
+                  "color": "#aaa",
+                  "fontSize": 13,
+                },
+                false,
+              ]
+            }
+          >
+            Assist 
+            ○
+          </Text>
+        </View>
+        <View
+          accessibilityLabel="What Assist shows"
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          hitSlop={10}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "opacity": 1,
+            }
+          }
+          testID="assist-info-button"
+        >
+          <Text
+            maxFontSizeMultiplier={1.3}
+            style={
+              {
+                "color": "#aaa",
+                "fontSize": 16,
+              }
+            }
+          >
+            ⓘ
+          </Text>
+        </View>
       </View>
     </View>
     <View
@@ -3506,54 +3683,113 @@ exports[`phone portrait list (must not change) point 6 with pass + odds, place 8
         3-4-5x
       </Text>
       <View
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": undefined,
-            "expanded": undefined,
-            "selected": undefined,
-          }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
-          }
-        }
-        accessible={true}
-        collapsable={false}
-        focusable={true}
-        onClick={[Function]}
-        onResponderGrant={[Function]}
-        onResponderMove={[Function]}
-        onResponderRelease={[Function]}
-        onResponderTerminate={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
         style={
           {
-            "opacity": 1,
+            "alignItems": "center",
+            "flexDirection": "row",
+            "gap": 8,
           }
         }
       >
-        <Text
-          maxFontSizeMultiplier={1.3}
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
           style={
-            [
-              {
-                "color": "#aaa",
-                "fontSize": 13,
-              },
-              false,
-            ]
+            {
+              "opacity": 1,
+            }
           }
         >
-          Assist 
-          ○
-        </Text>
+          <Text
+            maxFontSizeMultiplier={1.3}
+            style={
+              [
+                {
+                  "color": "#aaa",
+                  "fontSize": 13,
+                },
+                false,
+              ]
+            }
+          >
+            Assist 
+            ○
+          </Text>
+        </View>
+        <View
+          accessibilityLabel="What Assist shows"
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          hitSlop={10}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "opacity": 1,
+            }
+          }
+          testID="assist-info-button"
+        >
+          <Text
+            maxFontSizeMultiplier={1.3}
+            style={
+              {
+                "color": "#aaa",
+                "fontSize": 16,
+              }
+            }
+          >
+            ⓘ
+          </Text>
+        </View>
       </View>
     </View>
     <View

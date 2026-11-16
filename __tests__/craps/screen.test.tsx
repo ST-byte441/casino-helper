@@ -192,6 +192,18 @@ describe('phone portrait list balance', () => {
   })
 })
 
+describe('phone portrait list assist info', () => {
+  test('the ⓘ beside Assist opens the list version of the info sheet', () => {
+    const { fireEvent } = require('@testing-library/react-native')
+    seedTable({})
+    const { getByTestId, queryByTestId } = render(<CrapsScreen />)
+    fireEvent.press(getByTestId('assist-info-button'))
+    expect(getByTestId('assist-info')).toHaveTextContent(/green left edge/)
+    fireEvent.press(getByTestId('assist-info-close'))
+    expect(queryByTestId('assist-info')).toBeNull()
+  })
+})
+
 describe('pickCrapsView', () => {
   test.each([
     ['compact', 'portrait', 'list'],
