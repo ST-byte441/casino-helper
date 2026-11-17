@@ -32,7 +32,8 @@ export function ChipTray({ chips, selected, onSelect, handlers, size = CHIP_SIZE
 }
 
 const styles = StyleSheet.create({
-  tray: { flexDirection: 'row', justifyContent: 'space-evenly', paddingVertical: 10, borderTopWidth: 1,
+  // alignItems: 'center' keeps each ring its natural size; the default stretch made it a tall oval in a fixed-height row.
+  tray: { flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center', paddingVertical: 10, borderTopWidth: 1,
     borderColor: '#2a2a3e' },
   column: { flexDirection: 'column', justifyContent: 'space-evenly', alignItems: 'center', paddingHorizontal: 8,
     borderRightWidth: 1, borderColor: '#2a2a3e' },
