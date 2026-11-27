@@ -20,7 +20,7 @@ function finishPendingSteps() {
   finish?.()
 }
 import { Card, Action, Outcome, Phase, TableRules } from '../../lib/types'
-import { DEFAULT_TABLE_RULES } from '../../lib/constants'
+import { DEFAULT_TABLE_RULES, TABLE_MINIMUM } from '../../lib/constants'
 import { canDouble, canSplit, canSurrender, createDeck, dealCard, isBlackjack, needsReshuffle, resolveHand, scoreHand, shouldDealerHit } from './engine'
 import { AllowedMoves, getOptimalAction } from './strategy'
 import { useProfileStore } from '../profile/store'
@@ -157,6 +157,15 @@ export function stakeOnTable(s: Pick<BlackjackState, 'phase' | 'bet' | 'handBets
   if (s.phase === 'betting') return s.bet
   if (s.phase === 'result') return 0
   return s.handBets.reduce((a, b) => a + b, 0)
+}
+
+/**
+ * The bet left on the table for the next hand: the last original bet, capped at the balance (`null` = infinite
+ * bankroll or no profile), and dropped to 0 when what's left is under the table minimum.
+ */
+export function carriedBet(lastBet: number, balance: number | null): number {
+  const bet = balance === null ? lastBet : Math.min(lastBet, balance)
+  return bet < TABLE_MINIMUM ? 0 : bet
 }
 
 type Store = BlackjackState & BlackjackActions
@@ -418,18 +427,23 @@ export const useBlackjackStore = create<Store>((set, get) => ({
     set({ phase: 'result', lastOutcome: 'lose', lastDelta: delta, dealerHand, peekPending: false })
   },
 
+  // The last hand's original bet stays on the table (like chips left in the circle), capped at the settled balance.
   newHand: () => {
     cancelPendingSteps()
-    const { tableRules, deck, assistEnabled } = get()
-    set({ ...initialState, tableRules, deck, assistEnabled })
+    const { tableRules, deck, assistEnabled, bet } = get()
+    const ps = useProfileStore.getState()
+    const profile = ps.profiles.find(p => p.id === ps.activeProfileId)
+    const balance = profile && profile.bankrollMode !== 'infinite' ? profile.balance : null
+    set({ ...initialState, tableRules, deck, assistEnabled, bet: carriedBet(bet, balance) })
   },
 
   // Leaving the table: a hand in progress stands where it is and settles now,
-  // then the next visit starts fresh. Nothing is recorded in betting or result.
+  // then the next visit starts fresh at $0. Nothing is recorded in betting or result.
   abandonHand: () => {
     // Finish any deal/split animation first; a player natural may chain into a dealer reveal
     while (pendingFinish) finishPendingSteps()
     if (get().phase === 'playing') settleRound(get, set, false)
     get().newHand()
+    set({ bet: 0 })
   },
 }))
