@@ -935,6 +935,19 @@ describe('keep last bet', () => {
     expect(s().bet).toBe(0)
   })
 
+  test('newHand carries the bet in full with an infinite bankroll', () => {
+    useProfileStore.setState({
+      profiles: [{
+        id: 'p1', name: 'T', bankrollMode: 'infinite', balance: 10, createdAt: 0,
+        startingBalance: 10, trackingSince: 0, refills: [], stats: emptyStats(),
+      }],
+      activeProfileId: 'p1',
+    })
+    playHand(50, loseDeck)
+    act(() => { s().newHand() })
+    expect(s().bet).toBe(50)
+  })
+
   test('abandonHand from playing starts the next visit at $0', () => {
     setProfile(1000)
     act(() => {
