@@ -11,7 +11,7 @@ jest.mock('zustand/middleware', () => {
 })
 
 import { act, renderHook } from '@testing-library/react-native'
-import { useBlackjackStore } from '../../features/blackjack/store'
+import { useBlackjackStore, carriedBet } from '../../features/blackjack/store'
 import { DEFAULT_TABLE_RULES } from '../../lib/constants'
 import { Card } from '../../lib/types'
 import { useProfileStore } from '../../features/profile/store'
@@ -92,7 +92,7 @@ test('newHand keeps assistEnabled state from previous hand', () => {
   expect(result.current.assistEnabled).toBe(true)
 })
 
-test('newHand resets hands and bet but keeps tableRules', () => {
+test('newHand resets hands, keeps the bet and tableRules', () => {
   const { result } = renderHook(() => useBlackjackStore())
   act(() => {
     result.current.setTableRules(DEFAULT_TABLE_RULES)
@@ -101,7 +101,7 @@ test('newHand resets hands and bet but keeps tableRules', () => {
     jest.runAllTimers()
     result.current.newHand()
   })
-  expect(result.current.bet).toBe(0)
+  expect(result.current.bet).toBe(25)
   expect(result.current.phase).toBe('betting')
   expect(result.current.tableRules).toEqual(DEFAULT_TABLE_RULES)
 })
@@ -860,5 +860,109 @@ describe('early surrender: decide before the dealer checks for blackjack', () =>
     act(() => { s().abandonHand() })
     expect(stats().net).toBe(-15)
     expect(s().phase).toBe('betting')
+  })
+})
+
+describe('keep last bet', () => {
+  const k = (value: Card['value'], suit: Card['suit'] = '♠'): Card => ({ value, suit })
+  function setProfile(balance: number) {
+    useProfileStore.setState({
+      profiles: [{
+        id: 'p1', name: 'T', bankrollMode: 'finite', balance, createdAt: 0,
+        startingBalance: balance, trackingSince: 0, refills: [], stats: emptyStats(),
+      }],
+      activeProfileId: 'p1',
+    })
+  }
+  const s = () => useBlackjackStore.getState()
+  const rules = { ...DEFAULT_TABLE_RULES, deckCount: 1, continuousShuffle: false }
+  const filler = Array.from({ length: 20 }, () => k('2'))
+  // player 10+9 = 19, dealer 9+7 = 16 draws a 2 → 18: player wins
+  const winDeck = [k('10'), k('9'), k('9', '♥'), k('7'), ...filler]
+  // player 10+6 = 16 stands, dealer 10+9 = 19: player loses
+  const loseDeck = [k('10'), k('10', '♥'), k('6'), k('9'), ...filler]
+  function playHand(bet: number, deck: Card[], move: () => void = () => s().stand()) {
+    act(() => {
+      useBlackjackStore.setState({ deck, tableRules: rules, bet })
+      s().deal()
+      jest.runAllTimers()
+      move()
+      jest.runAllTimers()
+    })
+    expect(s().phase).toBe('result')
+  }
+
+  test('carriedBet clamps to balance and drops below the minimum', () => {
+    expect(carriedBet(50, null)).toBe(50)
+    expect(carriedBet(50, 1000)).toBe(50)
+    expect(carriedBet(50, 50)).toBe(50)
+    expect(carriedBet(50, 40)).toBe(40)
+    expect(carriedBet(50, 15)).toBe(15)
+    expect(carriedBet(50, 14)).toBe(0)
+    expect(carriedBet(0, 1000)).toBe(0)
+  })
+
+  test('newHand carries the last bet', () => {
+    setProfile(1000)
+    playHand(25, winDeck)
+    act(() => { s().newHand() })
+    expect(s().phase).toBe('betting')
+    expect(s().bet).toBe(25)
+  })
+
+  test('newHand carries the original bet after a double', () => {
+    setProfile(1000)
+    // player 6+5 = 11 doubles, draws 10 → 21; dealer 9+7 = 16 draws a 2 → 18
+    playHand(25, [k('6'), k('9'), k('5'), k('7'), k('10', '♥'), ...filler], () => s().doubleDown())
+    expect(s().handBets).toEqual([50])
+    act(() => { s().newHand() })
+    expect(s().bet).toBe(25)
+  })
+
+  test('newHand clamps to the balance left after a loss', () => {
+    setProfile(90)
+    playHand(50, loseDeck)
+    expect(useProfileStore.getState().profiles[0].balance).toBe(40)
+    act(() => { s().newHand() })
+    expect(s().bet).toBe(40)
+  })
+
+  test('newHand drops the bet when the balance left is under the minimum', () => {
+    setProfile(60)
+    playHand(50, loseDeck)
+    expect(useProfileStore.getState().profiles[0].balance).toBe(10)
+    act(() => { s().newHand() })
+    expect(s().bet).toBe(0)
+  })
+
+  test('newHand carries the bet in full with an infinite bankroll', () => {
+    useProfileStore.setState({
+      profiles: [{
+        id: 'p1', name: 'T', bankrollMode: 'infinite', balance: 10, createdAt: 0,
+        startingBalance: 10, trackingSince: 0, refills: [], stats: emptyStats(),
+      }],
+      activeProfileId: 'p1',
+    })
+    playHand(50, loseDeck)
+    act(() => { s().newHand() })
+    expect(s().bet).toBe(50)
+  })
+
+  test('abandonHand from playing starts the next visit at $0', () => {
+    setProfile(1000)
+    act(() => {
+      useBlackjackStore.setState({ deck: winDeck, tableRules: rules, bet: 25 })
+      s().deal()
+      jest.runAllTimers()
+      s().abandonHand()
+    })
+    expect(s().bet).toBe(0)
+  })
+
+  test('abandonHand from result starts the next visit at $0', () => {
+    setProfile(1000)
+    playHand(25, winDeck)
+    act(() => { s().abandonHand() })
+    expect(s().bet).toBe(0)
   })
 })
