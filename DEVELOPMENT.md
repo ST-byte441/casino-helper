@@ -46,7 +46,7 @@ features/
   blackjack/
     engine.ts     # Pure TS: deck, scoring, rule checks, hand resolution
     strategy.ts   # Pure TS: basic strategy lookup table (early surrender: hard 5–7/12–17 vs A, 14–16 vs 10, before splits); getOptimalAction takes the AllowedMoves (double/split/surrender) and falls back correctly: unsplittable pairs play as totals, "double, else stand" for soft 18/19, otherwise hit. The store's `allowedMoves` (two cards, DAS after a split, affordability, no surrender after a split; split aces: no hit or double, split again only with resplitAces, otherwise they stand at once) drives Assist, `canDoubleNow()` (the Double button) and `doubleDown`
-    store.ts      # Session Zustand store. `peekPending`: with early surrender a dealer blackjack isn't settled at the deal; surrender loses half, any other move first settles it (settlePendingPeek). resolveHand(…, afterSplit) pays a split 21 1:1
+    store.ts      # Session Zustand store. `peekPending`: with early surrender a dealer blackjack isn't settled at the deal; surrender loses half, any other move first settles it (settlePendingPeek). resolveHand(…, afterSplit) pays a split 21 1:1. `newHand` keeps the last original bet on the table (`carriedBet`: capped at the settled balance, 0 if under the $15 minimum); `abandonHand` resets it to 0
     components/   # UI components (Card — sizes regular/medium/large, also used by baccarat; Hand, ActionButtons, BetControls, TableSetup, AssistInfo — the ⓘ pop-up beside Assist (TableHeader owns its open state))
       table/      # Screen pieces shared by every layout (TableHeader, DealerArea, HandsArea, ResultBanner, Controls, BalanceFooter)
   craps/
