@@ -256,10 +256,11 @@ export function buildCrapsLayout(variant: CrapsVariant, width: number, height: n
   const cell = (row: number, col: number, cols: number): Rect =>
     ({ x: propsX + col * (propsW / cols), y: row * rowH, w: propsW / cols, h: rowH })
   add('any-7', 'SEVEN', cell(0, 0, 1), 'prop')
-  add('hard:6', 'HARD 6', cell(1, 0, 4), 'prop')
-  add('hard:10', 'HARD 10', cell(1, 1, 4), 'prop')
+  // Hardways lowest to highest, left to right (matches the list view).
+  add('hard:4', 'HARD 4', cell(1, 0, 4), 'prop')
+  add('hard:6', 'HARD 6', cell(1, 1, 4), 'prop')
   add('hard:8', 'HARD 8', cell(1, 2, 4), 'prop')
-  add('hard:4', 'HARD 4', cell(1, 3, 4), 'prop')
+  add('hard:10', 'HARD 10', cell(1, 3, 4), 'prop')
   add('craps-2', '2', cell(2, 0, 4), 'prop')
   add('craps-3', '3', cell(2, 1, 4), 'prop')
   add('craps-12', '12', cell(2, 2, 4), 'prop')

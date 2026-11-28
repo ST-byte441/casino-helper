@@ -333,6 +333,12 @@ describe('table felt sizes', () => {
     const hard = props.filter(a => a.key.startsWith('hard:'))
     expect(new Set(hard.map(a => a.rect.y)).size).toBe(1)
   })
+
+  test('the Hardways run lowest to highest, left to right', () => {
+    const L = buildCrapsLayout('craps', 812, 284)
+    const hard = L.areas.filter(a => a.key.startsWith('hard:')).sort((a, b) => a.rect.x - b.rect.x)
+    expect(hard.map(a => a.key)).toEqual(['hard:4', 'hard:6', 'hard:8', 'hard:10'])
+  })
 })
 
 describe('tableFeltSize', () => {
